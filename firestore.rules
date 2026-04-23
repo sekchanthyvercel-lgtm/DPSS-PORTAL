@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} { 
+      allow read, write: if false; 
+    }
+
+    // Primitive Helpers
+    function isSignedIn() { return request.auth != null; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    function isValidAppData(data) {
+      return data.keys().hasAny(['students', 'attendance', 'systemLocked']) &&
+             ( !('students' in data.keys()) || (data.students is list && data.students.size() <= 5000) ) &&
+             ( !('systemLocked' in data.keys()) || data.systemLocked is bool ) &&
+             ( !('moduleLocks' in data.keys()) || data.moduleLocks is map );
+    }
+
+    // The shared app state document
+    match /portal/data {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidAppData(incoming());
+      
+      allow update: if isSignedIn() 
+                    && isValidAppData(incoming())
+                    && incoming().diff(existing()).affectedKeys().hasAny(['students', 'settings', 'attendance', 'moduleLocks', 'staffDirectory', 'systemLocked', 'updatedAt']);
+    }
+
+    // Explicit test document for `testConnection()`
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}
