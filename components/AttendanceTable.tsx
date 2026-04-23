@@ -4,7 +4,7 @@ import { format, addDays, getDaysInMonth, startOfMonth } from 'date-fns';
 import { 
   Plus, UserCheck, 
   ChevronLeft, ChevronRight, ArrowUpDown, Calendar, Maximize2,
-  Trash2, Eye, EyeOff, Zap, Check, AlertCircle
+  Trash2, Zap, Check, AlertCircle, LayoutGrid, Search, EyeOff, Eye
 } from 'lucide-react';
 
 interface Props {
@@ -68,7 +68,7 @@ const getStatusIcon = (status?: number) => {
 };
 
 export const AttendanceTable: React.FC<Props> = ({ 
-  students, data, filters, onUpdate, onAddStudent, isLocked = false, role, onClearCategory
+  students, data, filters, setFilters, onUpdate, onAddStudent, isLocked = false, role, onClearCategory
 }) => {
   const [viewDate, setViewDate] = useState(new Date());
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
@@ -95,6 +95,7 @@ export const AttendanceTable: React.FC<Props> = ({
       const matchesSearch = !query || 
         s.name.toLowerCase().includes(query) ||
         (s.assistant && s.assistant.toLowerCase().includes(query)) ||
+        (s.time && s.time.toLowerCase().includes(query)) ||
         (s.teachers && s.teachers.toLowerCase().includes(query));
 
       return (s.category === 'Class' || s.category === 'Hall') && 
@@ -102,7 +103,8 @@ export const AttendanceTable: React.FC<Props> = ({
         matchesSearch && 
         (!filters.teacher || (s.teachers && s.teachers.toUpperCase().includes(filters.teacher.toUpperCase()))) && 
         (!filters.assistant || (s.assistant && s.assistant.toUpperCase().includes(filters.assistant.toUpperCase()))) && 
-        (!filters.level || (s.level && s.level.toUpperCase() === filters.level.toUpperCase()));
+        (!filters.level || (s.level && s.level.toUpperCase() === filters.level.toUpperCase())) &&
+        (!filters.time || (s.time && s.time.toUpperCase() === filters.time.toUpperCase()));
     });
 
     if (sortConfig) {
@@ -165,41 +167,56 @@ export const AttendanceTable: React.FC<Props> = ({
     </th>
   );
 
+  const resetFilters = () => {
+    setFilters?.({
+      searchQuery: '',
+      teacher: '',
+      assistant: '',
+      time: '',
+      level: '',
+      behavior: '',
+      deadline: '',
+      showHidden: false
+    });
+  };
+
+  const filterSelectStyle = "bg-slate-200/50 mix-blend-multiply border border-slate-300/30 rounded-xl pl-8 pr-3 py-1.5 text-[10px] font-black uppercase text-slate-800 outline-none shadow-sm transition-all focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 hover:bg-slate-300/60 cursor-pointer h-9 appearance-none backdrop-blur-md";
+
   return (
     <div className="flex-1 flex flex-col bg-transparent overflow-hidden p-2 md:p-6 lg:p-8">
       {/* Table Header UI */}
-      <div className="bg-white/[0.02] backdrop-blur-[2px] rounded-[32px] p-6 mb-6 flex items-center justify-between shadow-2xl shadow-indigo-900/10 border border-white/5 flex-none overflow-x-auto no-scrollbar">
+      <div className="bg-white/30 backdrop-blur-3xl rounded-[32px] p-6 mb-6 flex flex-wrap items-center justify-between gap-4 shadow-2xl shadow-slate-300/50 border border-white/60 flex-none relative z-10">
         <div className="flex items-center gap-4 shrink-0">
           <div className="w-12 h-12 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-orange-500/20">
             <UserCheck size={24} strokeWidth={3} />
           </div>
           <div>
             <h2 className="text-lg font-black text-[#1B254B] uppercase tracking-tighter leading-none">Attendance Log</h2>
-            <p className="text-[10px] font-black text-slate-400 uppercase mt-1 tracking-[2px]">{format(viewDate, 'MMMM yyyy')}</p>
+            <p className="text-[10px] font-black text-slate-500 uppercase mt-1 tracking-[2px]">{format(viewDate, 'MMMM yyyy')}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 mx-4 shrink-0">
-          <div className="flex items-center bg-[#F4F7FE] p-1 rounded-xl border border-slate-200">
-            <button onClick={() => setViewDate(d => addDays(d, -1))} className="p-1.5 text-slate-500 hover:text-primary-500 transition-colors"><ChevronLeft size={18}/></button>
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center bg-white p-1 rounded-2xl border border-white/60 shadow-sm backdrop-blur-md">
+            <button onClick={() => setViewDate(d => addDays(d, -1))} className="p-1.5 text-slate-500 hover:text-orange-500 transition-colors"><ChevronLeft size={18}/></button>
             <span className="px-5 text-[11px] font-black text-[#1B254B] uppercase tracking-[2px] min-w-[80px] text-center">
                 {format(viewDate, 'MMM d').toUpperCase()}
             </span>
-            <button onClick={() => setViewDate(d => addDays(d, 1))} className="p-1.5 text-slate-500 hover:text-primary-500 transition-colors"><ChevronRight size={18}/></button>
+            <button onClick={() => setViewDate(d => addDays(d, 1))} className="p-1.5 text-slate-500 hover:text-orange-500 transition-colors"><ChevronRight size={18}/></button>
           </div>
-          <button className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-primary-500 transition-all shadow-sm">
+          <button className="p-2.5 bg-white border border-white/60 rounded-xl text-slate-400 hover:text-orange-500 transition-all shadow-sm">
             <Calendar size={18} />
           </button>
-          <button className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-primary-500 transition-all shadow-sm">
+          <button className="p-2.5 bg-white border border-white/60 rounded-xl text-slate-400 hover:text-orange-500 transition-all shadow-sm">
             <Maximize2 size={18} />
           </button>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2 flex-1 justify-end shrink-0">
           <button 
             disabled={isLocked}
             onClick={markAllPresent}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl transition-all h-11 ${!isLocked ? 'bg-[#F4F7FE] text-slate-300 border border-slate-100 hover:bg-slate-200' : 'opacity-30'}`}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl transition-all h-11 ${!isLocked ? 'bg-white text-slate-400 border border-white hover:bg-slate-50 hover:text-orange-500' : 'bg-white border-white text-slate-300 opacity-60 cursor-not-allowed'}`}
           >
             <Zap size={14} /> Mark All Present
           </button>
@@ -208,7 +225,7 @@ export const AttendanceTable: React.FC<Props> = ({
             <button 
               onClick={() => onClearCategory?.(['Class'])}
               title="CLEAR ALL CLASS RECORDS"
-              className="w-11 h-11 bg-red-50 text-red-500 border border-red-100 rounded-xl flex items-center justify-center shadow-lg hover:bg-red-500 hover:text-white transition-all"
+              className="w-11 h-11 bg-rose-50 text-rose-500 border border-rose-100 rounded-xl flex items-center justify-center shadow-lg hover:bg-rose-500 hover:text-white transition-all"
             >
               <AlertCircle size={20} />
             </button>
@@ -216,10 +233,59 @@ export const AttendanceTable: React.FC<Props> = ({
 
           <button 
             onClick={() => onAddStudent({ category: 'Class' })}
-            className="w-11 h-11 bg-orange-500 text-white rounded-xl flex items-center justify-center shadow-xl shadow-orange-500/20 hover:scale-105 active:scale-95 transition-all"
+            className="w-11 h-11 bg-orange-500 text-white rounded-xl flex items-center justify-center shadow-xl shadow-orange-500/30 hover:bg-orange-600 active:scale-95 transition-all"
           >
             <Plus size={24} strokeWidth={4} />
           </button>
+        </div>
+
+        {/* Filter Bar */}
+        <div className="w-full basis-full flex items-center gap-3 pt-4 border-t border-slate-300/30 overflow-x-auto no-scrollbar pointer-events-auto shrink-0 relative flex-wrap">
+              <div className="relative w-64 shrink-0">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input 
+                      type="text" 
+                      placeholder="Search spreadsheet..." 
+                      className="w-full h-9 pl-9 pr-3 bg-white border border-white/80 rounded-2xl shadow-sm text-[11px] font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all placeholder:text-slate-400"
+                      value={filters.searchQuery || ''}
+                      onChange={e => setFilters && setFilters({...filters, searchQuery: e.target.value})}
+                  />
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0 border-l border-slate-300/30 pl-4">
+                  <div className="relative group">
+                      <LayoutGrid size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <select value={filters.teacher || ''} onChange={e => setFilters && setFilters({...filters, teacher: e.target.value})} className={filterSelectStyle}>
+                          <option value="">Teachers</option>
+                          {Array.from(new Set(students.filter(s => s.category === 'Class' || s.category === 'Hall').map(s => s.teachers?.split('&')?.[0]?.trim()).filter(Boolean))).sort().map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                  </div>
+                  <div className="relative group">
+                      <LayoutGrid size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <select value={filters.assistant || ''} onChange={e => setFilters && setFilters({...filters, assistant: e.target.value})} className={filterSelectStyle}>
+                          <option value="">Assistants</option>
+                          {Array.from(new Set(students.filter(s => s.category === 'Class' || s.category === 'Hall').map(s => s.assistant?.trim()).filter(Boolean))).sort().map(a => <option key={a} value={a}>{a}</option>)}
+                      </select>
+                  </div>
+                  <div className="relative group">
+                      <LayoutGrid size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <select value={filters.level || ''} onChange={e => setFilters && setFilters({...filters, level: e.target.value})} className={filterSelectStyle}>
+                          <option value="">All Levels</option>
+                          {Array.from(new Set(students.filter(s => s.category === 'Class' || s.category === 'Hall').map(s => s.level?.trim()).filter(Boolean))).sort().map(l => <option key={l} value={l}>{l}</option>)}
+                      </select>
+                  </div>
+                  <div className="relative group">
+                      <LayoutGrid size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <select value={filters.time || ''} onChange={e => setFilters && setFilters({...filters, time: e.target.value})} className={filterSelectStyle}>
+                          <option value="">All Times</option>
+                          {Array.from(new Set(students.filter(s => s.category === 'Class' || s.category === 'Hall').map(s => s.time?.trim()).filter(Boolean))).sort().map(tm => <option key={tm} value={tm}>{tm}</option>)}
+                      </select>
+                  </div>
+
+                  <button onClick={resetFilters} className="p-2 ml-1 bg-white/50 border border-slate-300/30 text-slate-800 hover:bg-slate-300/50 rounded-xl transition-all backdrop-blur-md shadow-sm" title="Clear Filters">
+                      <Trash2 size={16} />
+                  </button>
+              </div>
         </div>
       </div>
 

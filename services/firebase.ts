@@ -1,19 +1,29 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, onSnapshot, setDoc, getDoc, getDocFromServer } from 'firebase/firestore';
-import { getAuth, signInAnonymously } from 'firebase/auth'; // Added auto-auth
+import { getAuth, signInAnonymously } from 'firebase/auth'; 
 import { AppData, BackupEntry } from '../types';
-import firebaseConfig from '../firebase-applet-config.json';
 
-// Initialize Firebase
+// 1. Your Firebase Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAIo9Tjed8cUr_K7RPRl2QYIQD1S9JAMY4",
+  authDomain: "dps-staff-portal-5e911.firebaseapp.com",
+  projectId: "dps-staff-portal-5e911",
+  storageBucket: "dps-staff-portal-5e911.firebasestorage.app",
+  messagingSenderId: "671583941979",
+  appId: "1:671583941979:web:c23c0f527cefabfe3fd67e",
+  measurementId: "G-VR9Z385GFV"
+};
+
+// 2. Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = getFirestore(app);
 export const auth = getAuth(app);
 
 const DOC_PATH = 'portal/data';
 
 let isOffline = false;
 
-// Authenticate anonymously so we meet basic security rule requirements
+// 3. Auto-Authenticate
 signInAnonymously(auth).catch(console.error);
 
 async function testConnection() {
@@ -28,6 +38,7 @@ async function testConnection() {
 }
 testConnection();
 
+// 4. Real-time Subscription logic needed by App.tsx
 export const subscribeToData = (
   onData: (data: AppData) => void,
   onError: (error: any) => void
