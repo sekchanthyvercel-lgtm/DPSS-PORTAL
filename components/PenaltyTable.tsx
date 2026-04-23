@@ -101,7 +101,7 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
 
   const getRowBg = (idx: number) => {
     const colors = [
-      'bg-sky-100/30',
+      'bg-emerald-100/30',
       'bg-emerald-100/30',
       'bg-amber-100/30',
       'bg-indigo-100/30',

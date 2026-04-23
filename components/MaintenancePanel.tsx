@@ -151,7 +151,7 @@ export const MaintenancePanel: React.FC<Props> = ({ data, onUpdate }) => {
                 <div className="flex flex-col h-full overflow-hidden">
                     <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                         <div className="flex items-center gap-4">
-                             <History className="text-blue-500" />
+                             <History className="text-emerald-500" />
                              <div>
                                 <h3 className="text-xl font-black text-[#1B254B] uppercase">Restore Hub</h3>
                                 <p className="text-sm font-bold text-slate-400 uppercase tracking-tighter">Recover accidentally deleted data from previous states</p>
@@ -182,7 +182,7 @@ export const MaintenancePanel: React.FC<Props> = ({ data, onUpdate }) => {
                                 { label: 'Monthly Restore', point: keyRestorePoints.monthly, icon: CalendarDays, color: 'purple' }
                             ].map((item, idx) => (
                                 <div key={idx} className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 flex flex-col items-center text-center gap-4 hover:border-primary-500 transition-all group">
-                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-blue-50 text-blue-600 group-hover:scale-110 transition-transform`}>
+                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-emerald-50 text-emerald-600 group-hover:scale-110 transition-transform`}>
                                         <item.icon size={28} />
                                     </div>
                                     <div>
@@ -214,13 +214,13 @@ export const MaintenancePanel: React.FC<Props> = ({ data, onUpdate }) => {
                             ) : backups.map((b) => (
                                 <div key={b.id} className="bg-white border border-slate-100 p-6 rounded-[30px] flex items-center justify-between hover:border-indigo-500 transition-all group shadow-sm">
                                     <div className="flex items-center gap-6">
-                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg ${b.type === 'Auto' ? 'bg-blue-500 text-white' : 'bg-emerald-500 text-white'}`}>
+                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg ${b.type === 'Auto' ? 'bg-emerald-500 text-white' : 'bg-green-500 text-white'}`}>
                                             <Clock size={24} />
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
                                                 <h4 className="text-lg font-black text-[#1B254B] uppercase leading-none">{b.type} Snapshot</h4>
-                                                <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${b.type === 'Auto' ? 'bg-blue-100 text-blue-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                                <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${b.type === 'Auto' ? 'bg-emerald-100 text-emerald-600' : 'bg-green-100 text-green-600'}`}>
                                                     {b.type === 'Auto' ? 'AUTO' : 'MANUAL'}
                                                 </span>
                                             </div>
@@ -288,13 +288,13 @@ export const MaintenancePanel: React.FC<Props> = ({ data, onUpdate }) => {
                         </div>
 
                         <div className="bg-slate-50 rounded-[32px] p-8 border border-slate-200 flex items-center gap-8 shadow-sm">
-                            <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center text-blue-500 shadow-xl border border-slate-100">
+                            <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center text-emerald-500 shadow-xl border border-slate-100">
                                 <Upload size={32} />
                             </div>
                             <div className="flex-1">
                                 <h4 className="font-black text-[#1B254B] uppercase">Import Backup File</h4>
                                 <p className="text-xs text-slate-500 mt-1">Upload a previously exported JSON file to restore the portal state. This overwrites all current cloud data.</p>
-                                <label className="inline-block mt-4 px-6 py-2 bg-blue-500 text-white rounded-xl text-[10px] font-black uppercase cursor-pointer hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-blue-500/30">
+                                <label className="inline-block mt-4 px-6 py-2 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase cursor-pointer hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-emerald-500/30">
                                     Upload JSON
                                     <input type="file" className="hidden" accept=".json" onChange={(e) => {
                                         const file = e.target.files?.[0];

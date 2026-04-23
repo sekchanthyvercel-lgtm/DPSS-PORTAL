@@ -105,16 +105,16 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
     if (l.includes('1A')) return 'border-l-purple-500';
     if (l.includes('1B')) return 'border-l-orange-500';
     if (l.includes('2A')) return 'border-l-amber-500';
-    if (l.includes('2B')) return 'border-l-blue-500';
+    if (l.includes('2B')) return 'border-l-teal-500';
     if (l.includes('3A')) return 'border-l-indigo-500';
     if (l.includes('3B')) return 'border-l-violet-500';
-    if (l.includes('4A')) return 'border-l-sky-500';
+    if (l.includes('4A')) return 'border-l-emerald-500';
     return 'border-l-transparent';
   };
 
   const getStatusColor = (status?: string) => {
     if (status === 'Done') return 'bg-emerald-500 text-white';
-    if (status === 'Not Yet') return 'bg-rose-500 text-white';
+    if (status === 'Not Yet') return 'bg-orange-500 text-white';
     return 'bg-slate-50 text-slate-300';
   };
 
@@ -126,7 +126,7 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
 
   const getRowBg = (idx: number) => {
     const colors = [
-      'bg-sky-400/10',
+      'bg-emerald-400/10',
       'bg-emerald-400/10',
       'bg-amber-400/10',
       'bg-indigo-400/10',
@@ -211,7 +211,7 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
           {role === 'Admin' && (
             <button 
               onClick={() => onClearCategory?.(['DailyTask'])}
-              className="w-9 h-9 bg-rose-50 text-rose-500 border border-rose-100 rounded-xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm"
+              className="w-9 h-9 bg-orange-50 text-orange-500 border border-orange-100 rounded-xl flex items-center justify-center hover:bg-orange-500 hover:text-white transition-all shadow-sm"
               title="Clear All Tasks"
             >
               <Trash2 size={16} />
@@ -292,8 +292,8 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                 
                 {days.map(day => (
                   <th key={day.toString()} className="w-36 border-r border-white/5 p-0 overflow-hidden">
-                    <div className="text-center py-1.5 border-b border-white/5 bg-sky-400/5">
-                      <p className="text-[9px] font-black text-sky-700">{format(day, 'EEE').toUpperCase()}</p>
+                    <div className="text-center py-1.5 border-b border-white/5 bg-emerald-400/5">
+                      <p className="text-[9px] font-black text-emerald-700">{format(day, 'EEE').toUpperCase()}</p>
                       <p className="text-[8px] font-bold text-slate-500">{format(day, 'MMM d')}</p>
                     </div>
                     <div className="flex divide-x divide-white/5 h-8">
@@ -339,7 +339,7 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                     <select 
                       value={s.shift || 'Morning'} 
                       onChange={e => updateField(s.id, 'shift', e.target.value)}
-                      className="w-full h-full px-1 bg-transparent text-[9px] font-black text-sky-600 outline-none text-center appearance-none uppercase"
+                      className="w-full h-full px-1 bg-transparent text-[9px] font-black text-emerald-600 outline-none text-center appearance-none uppercase"
                     >
                       <option value="Morning">Morning</option>
                       <option value="Afternoon">Afternoon</option>
@@ -367,7 +367,7 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                       type="date"
                       value={displayToIso(s.deadline || '')} 
                       onChange={e => updateField(s.id, 'deadline', isoToDisplay(e.target.value))}
-                      className="w-full bg-transparent text-[10px] font-black text-rose-500 outline-none text-center cursor-pointer"
+                      className="w-full bg-transparent text-[10px] font-black text-orange-600 outline-none text-center cursor-pointer"
                     />
                   </td>
 

@@ -37,6 +37,7 @@ export interface Student {
   headTeacher?: boolean;
   photo?: string;
   photoAdjust?: PhotoAdjust;
+  thumbprintNotes?: string;
   [key: string]: any; // Support for dynamic columns
 }
 

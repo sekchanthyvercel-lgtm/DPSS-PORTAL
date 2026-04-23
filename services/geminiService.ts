@@ -114,7 +114,7 @@ export const parseStudentData = async (inputText: string, imageFile?: File, mode
 
   let prompt = '';
   if (mode === 'Hall') {
-      prompt = `Extract Hall Study records: Name (name), Fee (schoolFee), Teacher (teachers), Level (level), Behavior (behavior), Time (time), Start Date (startDate), Assistant (assistant), Duration (duration).`;
+      prompt = `Extract Hall Study records: Name (name), Fee (schoolFee), Teacher (teachers), Level (level), Behavior (behavior), Schedule (schedule - e.g. Mon-Fri or Sat & Sunday), Time (time), Start Date (startDate), Assistant (assistant), Duration (duration).`;
   } else if (mode === 'Finance') {
       prompt = `Extract Finance records: ID (displayId), Name (name), Fee (schoolFee), Level (level), Start Date (startDate), Teachers (teachers), Monthly Payments (paymentList), Duration (duration).`;
   } else if (mode === 'DailyTask') {
@@ -153,6 +153,7 @@ export const parseStudentData = async (inputText: string, imageFile?: File, mode
               teachers: { type: Type.STRING },
               startDate: { type: Type.STRING },
               time: { type: Type.STRING },
+              schedule: { type: Type.STRING },
               assistant: { type: Type.STRING },
               duration: { type: Type.STRING },
               shift: { type: Type.STRING },

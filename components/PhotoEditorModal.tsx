@@ -79,11 +79,11 @@ export const PhotoEditorModal: React.FC<Props> = ({ student, isOpen, onClose, on
                     <div className="flex-1 space-y-4">
                         <div className="flex items-center gap-2">
                              <span className="text-[9px] font-black text-slate-400 w-8">X Axis</span>
-                             <input type="range" min="-100" max="100" value={adjust.x} onChange={e => setAdjust({...adjust, x: parseInt(e.target.value)})} className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500" />
+                             <input type="range" min="-100" max="100" value={adjust.x} onChange={e => setAdjust({...adjust, x: parseInt(e.target.value)})} className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-500" />
                         </div>
                         <div className="flex items-center gap-2">
                              <span className="text-[9px] font-black text-slate-400 w-8">Y Axis</span>
-                             <input type="range" min="-100" max="100" value={adjust.y} onChange={e => setAdjust({...adjust, y: parseInt(e.target.value)})} className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500" />
+                             <input type="range" min="-100" max="100" value={adjust.y} onChange={e => setAdjust({...adjust, y: parseInt(e.target.value)})} className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-500" />
                         </div>
                     </div>
                 </div>

@@ -96,7 +96,7 @@ export const FinanceTable: React.FC<Props> = ({ students, data, onUpdate, onQuic
 
   const getRowBg = (idx: number): string => {
     const colors = [
-      'bg-sky-400/5',
+      'bg-emerald-400/5',
       'bg-emerald-400/5',
       'bg-amber-400/5',
       'bg-indigo-400/5',
@@ -213,7 +213,7 @@ export const FinanceTable: React.FC<Props> = ({ students, data, onUpdate, onQuic
                  {renderInputCell(s, 'displayId', 'font-black text-slate-900 border-r border-white/5', false, undefined, noWidth)}
                  {renderInputCell(s, 'name', 'font-black text-slate-900 border-r border-white/5', false, undefined, noWidth + idWidth)}
                  {renderInputCell(s, 'schoolFee', 'font-black text-emerald-700 text-center')}
-                 {MONTHS.map(m => renderInputCell(s, `${year}-${m.key}`, `text-center font-black ${s.payments?.[`${year}-${m.key}`]?.toLowerCase() === 'paid' ? 'text-green-800' : 'text-blue-800'}`, true, `${year}-${m.key}`))}
+                 {MONTHS.map(m => renderInputCell(s, `${year}-${m.key}`, `text-center font-black ${s.payments?.[`${year}-${m.key}`]?.toLowerCase() === 'paid' ? 'text-green-800' : 'text-emerald-800'}`, true, `${year}-${m.key}`))}
                  <td className="p-1 text-center sticky right-0 bg-white/[0.02] backdrop-blur-[1px] border-l border-white/5">
                     <button disabled={isLocked} onClick={() => { if (confirm('Permanently delete record?')) handleUpdate(students.filter(st => st.id !== s.id)); }} className="p-2 text-slate-500 hover:text-red-500 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-30"><Trash2 size={16}/></button>
                  </td>

@@ -101,6 +101,7 @@ Name: Sok Chandara
 Teacher: Leang Pichdavina
 Level: 2A
 Behavior: Incomplete Homework
+Mon-Fri or Sat & Sunday: Mon-Fri
 Time: 5:20-6:20
 Duration: 1 Month
 Start: 23-Dec-2025

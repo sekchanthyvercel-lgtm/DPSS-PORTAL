@@ -343,6 +343,8 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                             </button>
                         </th>
                         <th className={`border-r border-white/5 sticky top-0 z-50 bg-white/[0.02] text-center text-[10px] font-black text-slate-900 ${isFrozen ? 'left-[45px] shadow-[1px_0_0_0_rgba(255,255,255,0.05)]' : ''}`} style={{ width: 40, left: isFrozen ? 45 : undefined }}>#</th>
+                        <th className={`px-3 border-r border-white/5 sticky top-0 z-50 bg-white/[0.01] text-slate-900 font-black text-[11px] uppercase tracking-tighter cursor-pointer ${isFrozen ? 'left-[85px] shadow-[1px_0_0_0_rgba(255,255,255,0.05)]' : ''}`} style={{ width: 140, left: isFrozen ? 85 : undefined }}>STUDENT NAME</th>
+                        <th className="px-3 border-r border-white/5 sticky top-0 z-40 bg-white/[0.01] text-slate-900 font-black text-[11px] uppercase tracking-tighter backdrop-blur-[1px]" style={{ width: 140 }}>THUMBPRINT NOTES</th>
                         
                         {columns.map((col, idx) => {
                             let stickyLeft = isFrozen && idx === 0 ? 85 : undefined;
@@ -399,14 +401,19 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                     </button>
                                 </td>
                                 <td className={`text-center text-[10px] font-black border-r border-slate-200/30 ${isFrozen ? 'sticky left-[45px] z-20 shadow-[1px_0_0_0_#cbd5e1]' : ''}`} style={{ left: isFrozen ? 45 : undefined, backgroundColor: rowBg, color: '#94a3b8' }}>{i + 1}</td>
+                                <td className={`px-0 border-r border-slate-200/30 ${isFrozen ? 'sticky left-[85px] z-20 shadow-[1px_0_0_0_#cbd5e1]' : ''}`} style={{ left: isFrozen ? 85 : undefined, backgroundColor: rowBg }}>
+                                    <input type="text" value={s.name} onChange={e => updateField(s.id, 'name', e.target.value)} className="w-full h-11 px-3 bg-transparent outline-none focus:bg-white/40 text-[12px] font-black tracking-tight" style={{ color: textColor }} />
+                                </td>
+                                <td className="px-0 border-r border-slate-200/20">
+                                    <input type="text" value={s.thumbprintNotes || ''} onChange={e => updateField(s.id, 'thumbprintNotes', e.target.value)} className="w-full h-11 px-3 bg-transparent outline-none focus:bg-white/40 text-[12px] font-black tracking-tight" style={{ color: textColor }} />
+                                </td>
                                 
                                 {columns.map((col, idx) => {
-                                    let stickyLeft = isFrozen && idx === 0 ? 85 : undefined;
                                     return (
                                       <td 
                                           key={col.id} 
-                                          className={`p-0 border-r border-slate-200/20 relative ${stickyLeft !== undefined ? 'sticky z-20 shadow-[1px_0_0_0_#cbd5e1]' : ''}`}
-                                          style={{ left: stickyLeft, backgroundColor: rowBg }}
+                                          className={`p-0 border-r border-slate-200/20`}
+                                          style={{ backgroundColor: rowBg }}
                                       >
                                           <input 
                                               type="text" 
@@ -461,7 +468,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
               </div>
               
               <button className="w-full text-left px-3 py-2 text-[11px] font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors">
-                  <MinusCircle size={14} className="text-blue-500" /> Cut <span className="ml-auto text-slate-300">Ctrl+X</span>
+                  <MinusCircle size={14} className="text-emerald-500" /> Cut <span className="ml-auto text-slate-300">Ctrl+X</span>
               </button>
               <button className="w-full text-left px-3 py-2 text-[11px] font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors border-b border-slate-100">
                   <LayoutGrid size={14} className="text-slate-500" /> Copy <span className="ml-auto text-slate-300">Ctrl+C</span>

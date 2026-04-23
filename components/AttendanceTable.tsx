@@ -30,7 +30,7 @@ const ASSISTANT_COLORS: Record<string, string> = {
 
 const getRowBg = (idx: number): string => {
   const colors = [
-    'bg-sky-400/5',
+    'bg-emerald-400/5',
     'bg-emerald-400/5',
     'bg-amber-400/5',
     'bg-indigo-400/5',

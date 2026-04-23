@@ -71,7 +71,7 @@ const ReminderTable: React.FC<ReminderTableProps> = ({
 
   const getRowBg = (idx: number) => {
     const colors = [
-      'bg-sky-400/5',
+      'bg-emerald-400/5',
       'bg-emerald-400/5',
       'bg-amber-400/5',
       'bg-indigo-400/5',
@@ -86,8 +86,8 @@ const ReminderTable: React.FC<ReminderTableProps> = ({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Completed': return 'text-emerald-500';
-      case 'In Progress': return 'text-sky-500';
-      case 'Urgent': return 'text-rose-500';
+      case 'In Progress': return 'text-emerald-500';
+      case 'Urgent': return 'text-orange-500';
       default: return 'text-slate-400';
     }
   };
@@ -128,7 +128,7 @@ const ReminderTable: React.FC<ReminderTableProps> = ({
           {role === 'Admin' && (
             <button 
               onClick={() => onClearCategory(['Reminder'])}
-              className="w-10 h-10 bg-rose-50 text-rose-500 border border-rose-100 rounded-xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm"
+              className="w-10 h-10 bg-orange-50 text-orange-500 border border-orange-100 rounded-xl flex items-center justify-center hover:bg-orange-500 hover:text-white transition-all shadow-sm"
               title="Clear All Reminders"
             >
               <Trash2 size={18} />
@@ -196,7 +196,7 @@ const ReminderTable: React.FC<ReminderTableProps> = ({
                   <td className="text-center px-4">
                     <button 
                       onClick={() => onDeleteStudent(s.id)}
-                      className="p-2 text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
+                      className="p-2 text-slate-300 hover:text-orange-500 transition-colors opacity-0 group-hover:opacity-100"
                     >
                       <Trash2 size={14} />
                     </button>
