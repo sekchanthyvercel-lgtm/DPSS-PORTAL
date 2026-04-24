@@ -102,9 +102,8 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                            (s.assistant || '').toLowerCase().includes(query) ||
                            (s.time || '').toLowerCase().includes(query);
       if (!matchesSearch) return false;
-      if (filters.level && s.level?.toUpperCase() !== filters.level.toUpperCase()) return false;
-      if (filters.time && s.time?.toUpperCase() !== filters.time.toUpperCase()) return false;
-      if (filters.time && s.shift?.toUpperCase() !== filters.time.toUpperCase()) return false; // In daily task "time" corresponds to shift
+      if (filters.level && !s.level?.toUpperCase().includes(filters.level.toUpperCase())) return false;
+      if (filters.time && !s.time?.toUpperCase().includes(filters.time.toUpperCase()) && !s.shift?.toUpperCase().includes(filters.time.toUpperCase())) return false;
       if (filters.teacher && !s.teachers?.toUpperCase().includes(filters.teacher.toUpperCase())) return false;
       if (filters.assistant && !s.assistant?.toUpperCase().includes(filters.assistant.toUpperCase())) return false;
       return true;

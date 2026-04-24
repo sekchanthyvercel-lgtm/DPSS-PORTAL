@@ -14,6 +14,7 @@ import { ContactManager } from './components/ContactManager';
 import { SupermanAnimation } from './components/SupermanAnimation';
 import ReminderTable from './components/ReminderTable';
 import DPSSTable from './components/DPSSTable';
+import { RecycleBin } from './components/RecycleBin';
 import { AppData, Student, CurrentUser, UserRole, ColumnConfig, Tab, ViewMode, AppSettings, StudentCategory } from './types';
 import { subscribeToData, saveData } from './services/firebase';
 import { Menu, MessageSquare, X } from 'lucide-react';
@@ -48,6 +49,9 @@ const App: React.FC = () => {
     },
     attendance: {}
   });
+
+  const [history, setHistory] = useState<AppData[]>([]);
+  const [redoStack, setRedoStack] = useState<AppData[]>([]);
 
   const [activeTab, setActiveTab] = useState<Tab>(Tab.Hall);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -134,10 +138,12 @@ const App: React.FC = () => {
     }
   }, [loading, data.students.length === 0]);
 
+  const activeStudents = useMemo(() => data.students.filter(s => !s.deletedAt), [data.students]);
+
   const uniqueTeachers = useMemo(() => {
     const ts = new Set<string>();
     // From students
-    data.students.forEach(s => {
+    activeStudents.forEach(s => {
       if (s.teachers) String(s.teachers).split('&').forEach(t => ts.add(t.trim()));
     });
     // From staff directory (all can be teachers/assistants)
@@ -150,7 +156,7 @@ const App: React.FC = () => {
   const uniqueAssistants = useMemo(() => {
     const asst = new Set<string>();
     // From students
-    data.students.forEach(s => {
+    activeStudents.forEach(s => {
       if (s.assistant) String(s.assistant).split('&').forEach(a => asst.add(a.trim()));
     });
     // From staff directory
@@ -162,7 +168,7 @@ const App: React.FC = () => {
 
   const uniqueTimes = useMemo(() => {
     const tm = new Set<string>();
-    data.students.forEach(s => {
+    activeStudents.forEach(s => {
       if (s.time) String(s.time).split('&').forEach(t => tm.add(t.trim()));
     });
     return Array.from(tm).filter(Boolean).sort();
@@ -170,7 +176,7 @@ const App: React.FC = () => {
 
   const uniqueLevels = useMemo(() => {
     const lv = new Set<string>();
-    data.students.forEach(s => {
+    activeStudents.forEach(s => {
       if (s.level) String(s.level).split('&').forEach(l => lv.add(l.trim()));
     });
     return Array.from(lv).filter(Boolean).sort();
@@ -178,9 +184,9 @@ const App: React.FC = () => {
 
   const uniqueBehaviors = useMemo(() => {
     const bh = new Set<string>();
-    data.students.forEach(s => s.behavior && bh.add(String(s.behavior).trim()));
+    activeStudents.forEach(s => s.behavior && bh.add(String(s.behavior).trim()));
     return Array.from(bh).filter(Boolean).sort();
-  }, [data.students]);
+  }, [activeStudents]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -215,10 +221,51 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, [currentUser]);
 
-  const handleUpdate = (newData: AppData) => {
+  const handleUpdate = (newData: AppData, skipHistory = false) => {
+      if (!skipHistory) {
+        setHistory(prev => [...prev.slice(-19), data]); // Keep last 20 states
+        setRedoStack([]);
+      }
       setData(newData);
       saveData(newData);
   };
+
+  const undo = () => {
+    if (history.length === 0) return;
+    const previous = history[history.length - 1];
+    setRedoStack(prev => [...prev, data]);
+    setHistory(prev => prev.slice(0, -1));
+    setData(previous);
+    saveData(previous);
+  };
+
+  const redo = () => {
+    if (redoStack.length === 0) return;
+    const next = redoStack[redoStack.length - 1];
+    setHistory(prev => [...prev, data]);
+    setRedoStack(prev => prev.slice(0, -1));
+    setData(next);
+    saveData(next);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          redo();
+        } else {
+          e.preventDefault();
+          undo();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        redo();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [history, redoStack, data]);
 
   const handleAddStudent = (parsedData?: Partial<Student> | Partial<Student>[]) => {
     const incomingData = Array.isArray(parsedData) ? parsedData : (parsedData ? [parsedData] : [{}]);
@@ -263,16 +310,40 @@ const App: React.FC = () => {
   };
 
   const handleClearCategory = (categories: StudentCategory[]) => {
-    if (!window.confirm(`Are you sure you want to delete ALL students in ${categories.join('/')}? This action is irreversible.`)) return;
-    const remaining = data.students.filter(s => !categories.includes(s.category));
-    handleUpdate({ ...data, students: remaining });
+    if (!window.confirm(`Are you sure you want to move ALL students in ${categories.join('/')} to the Recycle Bin?`)) return;
+    const now = new Date().toISOString();
+    const updatedStudents = data.students.map(s => 
+      categories.includes(s.category) ? { ...s, deletedAt: now } : s
+    );
+    handleUpdate({ ...data, students: updatedStudents });
   };
 
   const handleDeleteStudent = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this record?')) {
-      handleUpdate({ ...data, students: data.students.filter(s => s.id !== id) });
+    if (window.confirm('Move to Recycle Bin?')) {
+      const now = new Date().toISOString();
+      const updatedStudents = data.students.map(s => 
+        s.id === id ? { ...s, deletedAt: now } : s
+      );
+      handleUpdate({ ...data, students: updatedStudents });
     }
   };
+
+  // Automatically purge items older than 30 days
+  useEffect(() => {
+    if (!loading && data.students.length > 0) {
+      const now = new Date();
+      const filtered = data.students.filter(s => {
+        if (!s.deletedAt) return true;
+        const deletedDate = new Date(s.deletedAt);
+        const diffDays = (now.getTime() - deletedDate.getTime()) / (1000 * 60 * 60 * 24);
+        return diffDays < 30;
+      });
+      
+      if (filtered.length !== data.students.length) {
+        handleUpdate({ ...data, students: filtered });
+      }
+    }
+  }, [loading, data.students.length]);
 
   if (!currentUser) return <LandingPage onLogin={handleLogin} />;
 
@@ -308,6 +379,12 @@ const App: React.FC = () => {
         setGlobalScale={setGlobalScale}
         settings={data.settings}
         onUpdateSettings={(s) => handleUpdate({...data, settings: s})}
+        data={data}
+        onClearCategory={handleClearCategory}
+        canUndo={history.length > 0}
+        canRedo={redoStack.length > 0}
+        onUndo={undo}
+        onRedo={redo}
       />
       
       <AIModal 
@@ -355,9 +432,9 @@ const App: React.FC = () => {
           <>
             {activeTab === Tab.Hall && (
               <StudentTable 
-                students={data.students} 
+                students={activeStudents} 
                 columns={data.settings?.columns || DEFAULT_COLUMNS}
-                onUpdate={students => handleUpdate({...data, students})} 
+                onUpdate={students => handleUpdate({...data, students: [...students, ...data.students.filter(s => s.deletedAt)]})} 
                 onUpdateColumns={cols => handleUpdate({...data, settings: { ...data.settings!, columns: cols }})}
                 filters={filters} 
                 setFilters={setFilters}
@@ -374,8 +451,8 @@ const App: React.FC = () => {
             )}
             {activeTab === Tab.Penalty && (
               <PenaltyTable 
-                students={data.students} 
-                onUpdate={students => handleUpdate({...data, students})} 
+                students={activeStudents} 
+                onUpdate={students => handleUpdate({...data, students: [...students, ...data.students.filter(s => s.deletedAt)]})} 
                 filters={filters} 
                 setFilters={setFilters}
                 uniqueTeachers={uniqueTeachers}
@@ -389,7 +466,7 @@ const App: React.FC = () => {
             )}
             {activeTab === Tab.DailyTask && (
               <DailyTaskTable 
-                students={data.students} 
+                students={activeStudents} 
                 data={data}
                 onUpdate={handleUpdate} 
                 filters={filters} 
@@ -401,7 +478,7 @@ const App: React.FC = () => {
             )}
             {activeTab === Tab.Reminder && (
               <ReminderTable 
-                students={data.students} 
+                students={activeStudents} 
                 onAddStudent={handleAddStudent}
                 onUpdateStudent={(id, updates) => handleUpdate({ ...data, students: data.students.map(s => s.id === id ? { ...s, ...updates } : s) })}
                 onDeleteStudent={handleDeleteStudent}
@@ -418,7 +495,7 @@ const App: React.FC = () => {
             )}
             {activeTab === Tab.Attendance && (
               <AttendanceTable 
-                students={data.students} 
+                students={activeStudents} 
                 data={data} 
                 filters={filters} 
                 setFilters={setFilters}
@@ -432,7 +509,7 @@ const App: React.FC = () => {
             )}
             {activeTab === Tab.Finance && (
               <FinanceTable 
-                students={data.students} 
+                students={activeStudents} 
                 data={data} 
                 onUpdate={handleUpdate} 
                 onQuickAdd={() => setIsAiOpen(true)}
@@ -442,7 +519,7 @@ const App: React.FC = () => {
             )}
             {activeTab === Tab.StudentCard && (
               <CardGenerator 
-                students={data.students} 
+                students={activeStudents} 
                 data={data} 
                 onUpdate={handleUpdate} 
                 onQuickAdd={() => setIsAiOpen(true)}
@@ -451,6 +528,9 @@ const App: React.FC = () => {
             )}
             {activeTab === Tab.Maintenance && (
               <MaintenancePanel data={data} onUpdate={handleUpdate} />
+            )}
+            {activeTab === Tab.RecycleBin && (
+              <RecycleBin data={data} onUpdate={handleUpdate} />
             )}
           </>
         )}

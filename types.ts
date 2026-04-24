@@ -33,6 +33,7 @@ export interface Student {
   category: StudentCategory;
   order: number;
   isHidden?: boolean;
+  deletedAt?: string;
   parentContact?: boolean;
   headTeacher?: boolean;
   photo?: string;
@@ -132,7 +133,8 @@ export enum Tab {
   Attendance = 'Attendance',
   Finance = 'Finance',
   StudentCard = 'StudentCard',
-  Maintenance = 'Maintenance'
+  Maintenance = 'Maintenance',
+  RecycleBin = 'RecycleBin'
 }
 
 export type ViewMode = 'Default' | 'Minimalist';

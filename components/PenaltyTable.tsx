@@ -98,8 +98,8 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
             String(s.teachers || '').toLowerCase().includes(query);
         
         const matchesTeacher = !filters.teacher || String(s.teachers || '').toUpperCase().includes(filters.teacher.toUpperCase());
-        const matchesAssistant = !filters.assistant || String(s.assistant || '').trim().toUpperCase() === filters.assistant.toUpperCase();
-        const matchesLevel = !filters.level || String(s.level || '').trim().toUpperCase() === filters.level.toUpperCase();
+        const matchesAssistant = !filters.assistant || String(s.assistant || '').toUpperCase().includes(filters.assistant.toUpperCase());
+        const matchesLevel = !filters.level || String(s.level || '').toUpperCase().includes(filters.level.toUpperCase());
         const matchesVisibility = filters.showHidden || !s.isHidden;
         
         return matchesSearch && matchesTeacher && matchesAssistant && matchesLevel && matchesVisibility;

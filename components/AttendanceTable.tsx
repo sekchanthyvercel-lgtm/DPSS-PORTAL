@@ -105,8 +105,8 @@ export const AttendanceTable: React.FC<Props> = ({
         matchesSearch && 
         (!filters.teacher || (s.teachers && s.teachers.toUpperCase().includes(filters.teacher.toUpperCase()))) && 
         (!filters.assistant || (s.assistant && s.assistant.toUpperCase().includes(filters.assistant.toUpperCase()))) && 
-        (!filters.level || (s.level && s.level.toUpperCase() === filters.level.toUpperCase())) &&
-        (!filters.time || (s.time && s.time.toUpperCase() === filters.time.toUpperCase()));
+        (!filters.level || (s.level && s.level.toUpperCase().includes(filters.level.toUpperCase()))) &&
+        (!filters.time || (s.time && s.time.toUpperCase().includes(filters.time.toUpperCase())));
     });
 
     if (sortConfig) {

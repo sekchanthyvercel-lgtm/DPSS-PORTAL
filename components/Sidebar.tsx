@@ -19,9 +19,11 @@ import {
   Bell,
   Image as ImageIcon,
   Trash2,
-  FileText
+  FileText,
+  RotateCcw,
+  RotateCw
 } from 'lucide-react';
-import { Tab, UserRole, AppSettings, ViewMode } from '../types';
+import { Tab, UserRole, AppSettings, ViewMode, StudentCategory, AppData } from '../types';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -44,6 +46,12 @@ interface SidebarProps {
   setGlobalScale: (s: number) => void;
   settings?: AppSettings;
   onUpdateSettings?: (s: AppSettings) => void;
+  data: AppData;
+  onClearCategory: (categories: StudentCategory[]) => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -60,7 +68,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   uniqueAssistants,
   uniqueLevels = [],
   settings,
-  onUpdateSettings
+  onUpdateSettings,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -119,6 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: Tab.Reminder, icon: Bell, label: 'Reminder', roles: ['Admin', 'Teacher', 'Finance'] },
     { id: Tab.Attendance, icon: CalendarCheck, label: 'Attendance', roles: ['Admin', 'Teacher', 'Finance'] },
     { id: Tab.DPSS, icon: FileText, label: 'DPSS', roles: ['Admin', 'Teacher', 'Finance'] },
+    { id: Tab.RecycleBin, icon: Trash2, label: 'Recycle Bin', roles: ['Admin', 'Teacher'] },
   ];
 
   const filterSelectStyle = "w-full bg-white/10 border border-white/20 rounded-xl py-2.5 px-3 text-[11px] text-slate-900 font-black outline-none transition-all cursor-pointer appearance-none hover:bg-white/20 focus:ring-4 focus:ring-primary-500/10 backdrop-blur-md";
@@ -166,6 +179,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <ChevronLeft size={20} />
           </button>
+        </div>
+
+        {/* Undo/Redo Section */}
+        <div className="px-5 py-3 border-b border-white/5 flex gap-2 shrink-0 bg-slate-50/10">
+            <button 
+                onClick={onUndo}
+                disabled={!canUndo}
+                title="Undo (Ctrl+Z)"
+                className={`flex-1 h-9 rounded-xl flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all ${canUndo ? 'bg-white/20 text-slate-900 hover:bg-white/30 border border-slate-200' : 'bg-white/5 text-slate-300 opacity-50 cursor-not-allowed border border-transparent'}`}
+            >
+                <RotateCcw size={14} /> Undo
+            </button>
+            <button 
+                onClick={onRedo}
+                disabled={!canRedo}
+                title="Redo (Ctrl+Y)"
+                className={`flex-1 h-9 rounded-xl flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all ${canRedo ? 'bg-white/20 text-slate-900 hover:bg-white/30 border border-slate-200' : 'bg-white/5 text-slate-300 opacity-50 cursor-not-allowed border border-transparent'}`}
+            >
+                <RotateCw size={14} /> Redo
+            </button>
         </div>
 
         {/* Navigation & Filters */}
