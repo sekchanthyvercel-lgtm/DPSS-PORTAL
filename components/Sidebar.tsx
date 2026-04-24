@@ -18,7 +18,8 @@ import {
   ClipboardList,
   Bell,
   Image as ImageIcon,
-  Trash2
+  Trash2,
+  FileText
 } from 'lucide-react';
 import { Tab, UserRole, AppSettings, ViewMode } from '../types';
 
@@ -117,10 +118,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: Tab.DailyTask, icon: ClipboardList, label: 'Daily Task', roles: ['Admin', 'Teacher', 'Finance'] },
     { id: Tab.Reminder, icon: Bell, label: 'Reminder', roles: ['Admin', 'Teacher', 'Finance'] },
     { id: Tab.Attendance, icon: CalendarCheck, label: 'Attendance', roles: ['Admin', 'Teacher', 'Finance'] },
+    { id: Tab.DPSS, icon: FileText, label: 'DPSS', roles: ['Admin', 'Teacher', 'Finance'] },
   ];
 
-  const filterSelectStyle = "w-full bg-white/10 border border-white/20 rounded-xl py-2.5 px-3 text-[11px] text-slate-900 font-black uppercase outline-none transition-all cursor-pointer appearance-none hover:bg-white/20 focus:ring-4 focus:ring-primary-500/10 backdrop-blur-md";
-  const labelStyle = "text-[10px] font-black text-slate-800 uppercase mb-2 flex items-center gap-2 ml-1 tracking-[3px]";
+  const filterSelectStyle = "w-full bg-white/10 border border-white/20 rounded-xl py-2.5 px-3 text-[11px] text-slate-900 font-black outline-none transition-all cursor-pointer appearance-none hover:bg-white/20 focus:ring-4 focus:ring-primary-500/10 backdrop-blur-md";
+  const labelStyle = "text-[10px] font-black text-slate-800 mb-2 flex items-center gap-2 ml-1 tracking-[3px]";
 
   return (
     <>
@@ -175,19 +177,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onClick={() => handleTabSelect(item.id)}
                     className={`flex items-center gap-4 px-6 py-4 rounded-[20px] transition-all w-full group ${
                       activeTab === item.id 
-                        ? 'bg-orange-500/90 text-white shadow-xl shadow-orange-500/10 backdrop-blur-[4px]' 
+                        ? 'bg-orange-500 text-white shadow-xl shadow-orange-500/20 backdrop-blur-[4px]' 
                         : 'text-slate-600 hover:text-orange-600 hover:bg-white/[0.05]'
                     }`}
                 >
                     <item.icon size={22} strokeWidth={activeTab === item.id ? 3 : 2} />
-                    <span className="text-[11px] font-black uppercase tracking-widest">{item.label}</span>
+                    <span className="text-[11px] font-black tracking-widest">{item.label}</span>
                 </button>
               ))}
           </nav>
 
           <div className="pt-6 border-t border-white/5">
               <div className="flex items-center justify-between mb-6 px-1">
-                  <p className="text-[10px] font-black text-orange-600 uppercase tracking-[3px]">Advanced Filters</p>
+                  <p className="text-[10px] font-black text-orange-600 tracking-[3px]">Advanced Filters</p>
                   <button onClick={resetFilters} className="p-1.5 text-slate-400 hover:text-red-400 transition-colors">
                       <FilterX size={14} />
                   </button>

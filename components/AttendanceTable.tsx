@@ -4,7 +4,8 @@ import { format, addDays, getDaysInMonth, startOfMonth } from 'date-fns';
 import { 
   Plus, UserCheck, 
   ChevronLeft, ChevronRight, ArrowUpDown, Calendar, Maximize2,
-  Trash2, Zap, Check, AlertCircle, LayoutGrid, Search, EyeOff, Eye
+  Trash2, Zap, Check, AlertCircle, LayoutGrid, Search, EyeOff, Eye,
+  CheckSquare, Square
 } from 'lucide-react';
 
 interface Props {
@@ -58,7 +59,7 @@ const getStatusIcon = (status?: number) => {
     </div>
   );
   if (status === 1) return (
-    <div className="w-8 h-6 bg-red-500 rounded-sm flex items-center justify-center text-white shadow-sm mx-auto">
+    <div className="w-8 h-6 bg-orange-500 rounded-sm flex items-center justify-center text-white shadow-sm mx-auto">
        <span className="text-[10px] font-black">A</span>
     </div>
   );
@@ -72,6 +73,7 @@ export const AttendanceTable: React.FC<Props> = ({
 }) => {
   const [viewDate, setViewDate] = useState(new Date());
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const monthKey = format(viewDate, 'yyyy-MM');
   const daysInMonth = getDaysInMonth(viewDate);
@@ -231,6 +233,20 @@ export const AttendanceTable: React.FC<Props> = ({
             </button>
           )}
 
+          {selectedIds.size > 0 && (
+            <button 
+              onClick={() => {
+                if (confirm(`Delete ${selectedIds.size} selected records?`)) {
+                  onUpdate({ ...data, students: students.filter(s => !selectedIds.has(s.id)) });
+                  setSelectedIds(new Set());
+                }
+              }}
+              className="px-4 h-11 bg-red-500 text-white rounded-xl flex items-center gap-2 shadow-xl shadow-red-500/20 hover:bg-red-600 transition-all font-black uppercase text-[10px] tracking-widest"
+            >
+              <Trash2 size={16} /> Delete ({selectedIds.size})
+            </button>
+          )}
+
           <button 
             onClick={() => onAddStudent({ category: 'Class' })}
             className="w-11 h-11 bg-orange-500 text-white rounded-xl flex items-center justify-center shadow-xl shadow-orange-500/30 hover:bg-orange-600 active:scale-95 transition-all"
@@ -295,8 +311,13 @@ export const AttendanceTable: React.FC<Props> = ({
           <table className="w-full border-collapse table-fixed min-w-[1200px]">
             <thead className="sticky top-0 z-40 bg-white/[0.02] backdrop-blur-[2px] border-b border-white/5">
               <tr>
-                <th className="px-4 py-4 text-center text-[10px] font-black uppercase text-slate-900 w-12 border-r border-white/5 sticky left-0 z-50 bg-white/[0.02] backdrop-blur-[2px]">#</th>
-                <Th label="Student Name" colId="name" width={220} stickyLeft={48} />
+                <th className="w-10 h-10 border-r border-white/5 sticky left-0 z-50 bg-white/[0.02] backdrop-blur-[2px] text-center">
+                  <button onClick={() => setSelectedIds(selectedIds.size === filteredStudents.length ? new Set() : new Set(filteredStudents.map(s => s.id)))}>
+                      {selectedIds.size > 0 ? <CheckSquare size={14} className="text-orange-500 mx-auto" /> : <Square size={14} className="text-slate-900/30 mx-auto" />}
+                  </button>
+                </th>
+                <th className="px-4 py-4 text-center text-[10px] font-black uppercase text-slate-900 w-12 border-r border-white/5 sticky left-[40px] z-50 bg-white/[0.02] backdrop-blur-[2px]">#</th>
+                <Th label="Student Name" colId="name" width={220} stickyLeft={88} />
                 <Th label="Teacher" colId="teachers" width={160} />
                 <Th label="Level" colId="level" width={100} />
                 <Th label="Time" colId="time" width={140} />
@@ -324,10 +345,15 @@ export const AttendanceTable: React.FC<Props> = ({
                 return (
                   <tr 
                     key={s.id} 
-                    className={`group transition-all hover:brightness-95 h-12 ${isHidden ? 'bg-slate-50' : rowBgClass}`}
+                    className={`group transition-all hover:brightness-95 h-10 ${isHidden ? 'bg-slate-50' : rowBgClass}`}
                   >
-                    <td className="px-4 text-center text-xs font-black text-slate-400 border-r border-slate-200/10 sticky left-0 z-30 bg-inherit">{idx + 1}</td>
-                    <td className="px-5 border-r border-slate-200/10 sticky left-[48px] z-30 bg-inherit shadow-sm">
+                    <td className="px-0 text-center border-r border-slate-200/10 sticky left-0 z-30 bg-inherit w-10">
+                      <button onClick={() => { const ns = new Set(selectedIds); ns.has(s.id) ? ns.delete(s.id) : ns.add(s.id); setSelectedIds(ns); }}>
+                        {selectedIds.has(s.id) ? <CheckSquare size={14} className="text-orange-600" /> : <Square size={14} className="text-slate-400/30" />}
+                      </button>
+                    </td>
+                    <td className="px-4 text-center text-xs font-black text-slate-400 border-r border-slate-200/10 sticky left-[40px] z-30 bg-inherit">{idx + 1}</td>
+                    <td className="px-5 border-r border-slate-200/10 sticky left-[88px] z-30 bg-inherit shadow-sm">
                       <div className={`text-[12px] font-black text-[#1B254B] uppercase tracking-tight truncate ${isHidden ? 'opacity-30' : ''}`}>{s.name}</div>
                     </td>
                     <td className="px-4 border-r border-slate-200/10">

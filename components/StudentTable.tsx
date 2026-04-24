@@ -8,6 +8,41 @@ import {
 import { isBefore, isToday, isValid } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 
+const MultilineInput: React.FC<{
+  value: string;
+  onChange: (val: string) => void;
+  className?: string;
+  style?: React.CSSProperties;
+  placeholder?: string;
+}> = ({ value, onChange, className, style, placeholder }) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '0px';
+      const scrollHeight = textareaRef.current.scrollHeight;
+      textareaRef.current.style.height = Math.max(44, scrollHeight) + 'px';
+    }
+  }, [value]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          (e.target as HTMLTextAreaElement).blur();
+        }
+      }}
+      className={className}
+      style={{ ...style, resize: 'none', overflow: 'hidden', display: 'block' }}
+    />
+  );
+};
+
 /**
  * Interface for StudentTable component props.
  * Fixes: Error in file components/StudentTable.tsx on line 58: Cannot find name 'StudentTableProps'.
@@ -62,20 +97,25 @@ const isDeadlineDue = (deadline: string) => {
 };
 
 const ASSISTANT_PALETTE = [
-  'rgba(224, 242, 254, 0.1)', // Sky
-  'rgba(240, 253, 244, 0.1)', // Emerald
-  'rgba(254, 252, 232, 0.1)', // Amber
-  'rgba(250, 245, 255, 0.1)', // Purple
-  'rgba(255, 247, 237, 0.1)', // Orange
-  'rgba(253, 242, 248, 0.1)', // Pink
-  'rgba(240, 253, 250, 0.1)', // Teal
-  'rgba(245, 243, 255, 0.1)', // Indigo
-  'rgba(236, 253, 245, 0.1)', // Mint
-  'rgba(255, 241, 242, 0.1)'  // Rose
+  'rgba(224, 242, 254, 0.4)', // Sky
+  'rgba(240, 253, 244, 0.4)', // Emerald
+  'rgba(254, 252, 232, 0.4)', // Amber
+  'rgba(250, 245, 255, 0.4)', // Purple
+  'rgba(255, 247, 237, 0.4)', // Orange
+  'rgba(253, 242, 248, 0.4)', // Pink
+  'rgba(240, 253, 250, 0.4)', // Teal
+  'rgba(245, 243, 255, 0.4)', // Indigo
+  'rgba(236, 253, 245, 0.4)', // Mint
+  'rgba(255, 241, 242, 0.4)'  // Rose
 ];
 
-const getRowBgColor = (idx: number): string => {
-  return ASSISTANT_PALETTE[idx % ASSISTANT_PALETTE.length];
+const getAssistantBgColor = (assistant: string): string => {
+  if (!assistant) return 'rgba(248, 250, 252, 0.4)';
+  let hash = 0;
+  for (let i = 0; i < assistant.length; i++) {
+    hash = assistant.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return ASSISTANT_PALETTE[Math.abs(hash) % ASSISTANT_PALETTE.length];
 };
 
 export const StudentTable: React.FC<StudentTableProps> = ({ 
@@ -107,9 +147,9 @@ export const StudentTable: React.FC<StudentTableProps> = ({
         const matchesAssistant = !filters.assistant || 
             String(s.assistant || '').toUpperCase().includes(filters.assistant.toUpperCase());
             
-        const matchesTime = !filters.time || String(s.time || '').toUpperCase() === filters.time.toUpperCase();
-        const matchesLevel = !filters.level || String(s.level || '').toUpperCase() === filters.level.toUpperCase();
-        const matchesBehavior = !filters.behavior || String(s.behavior || '').toUpperCase() === filters.behavior.toUpperCase();
+        const matchesTime = !filters.time || String(s.time || '').toUpperCase().includes(filters.time.toUpperCase());
+        const matchesLevel = !filters.level || String(s.level || '').toUpperCase().includes(filters.level.toUpperCase());
+        const matchesBehavior = !filters.behavior || String(s.behavior || '').toUpperCase().includes(filters.behavior.toUpperCase());
         const matchesVisibility = filters.showHidden || !s.isHidden;
         const matchesCategory = s.category === 'Hall';
         
@@ -343,11 +383,10 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                             </button>
                         </th>
                         <th className={`border-r border-white/5 sticky top-0 z-50 bg-white/[0.02] text-center text-[10px] font-black text-slate-900 ${isFrozen ? 'left-[45px] shadow-[1px_0_0_0_rgba(255,255,255,0.05)]' : ''}`} style={{ width: 40, left: isFrozen ? 45 : undefined }}>#</th>
-                        <th className={`px-3 border-r border-white/5 sticky top-0 z-50 bg-white/[0.01] text-slate-900 font-black text-[11px] uppercase tracking-tighter cursor-pointer ${isFrozen ? 'left-[85px] shadow-[1px_0_0_0_rgba(255,255,255,0.05)]' : ''}`} style={{ width: 140, left: isFrozen ? 85 : undefined }}>STUDENT NAME</th>
-                        <th className="px-3 border-r border-white/5 sticky top-0 z-40 bg-white/[0.01] text-slate-900 font-black text-[11px] uppercase tracking-tighter backdrop-blur-[1px]" style={{ width: 140 }}>THUMBPRINT NOTES</th>
+                        <th className={`px-3 border-r border-white/5 sticky top-0 z-50 bg-white/[0.01] text-slate-900 font-black text-[11px] uppercase tracking-tighter cursor-pointer ${isFrozen ? 'left-[85px] shadow-[1px_0_0_0_rgba(255,255,255,0.05)]' : ''}`} style={{ width: 220, left: isFrozen ? 85 : undefined }}>STUDENT NAME</th>
                         
                         {columns.map((col, idx) => {
-                            let stickyLeft = isFrozen && idx === 0 ? 85 : undefined;
+                            let stickyLeft = isFrozen && idx === 0 ? 85 + 220 : undefined;
                             const isSorted = sortConfig?.key === col.key;
                             return (
                                 <th 
@@ -374,38 +413,35 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                       {filteredStudents.map((s, i) => {
                           const deadlineDue = isDeadlineDue(String(s.deadline || ''));
                           
-                          // Priorities: Head Teacher (Soft Red) > Deadline (Soft Orange) > Index Palette
-                          let rowBg = getRowBgColor(i);
+                          // Priorities: Head Teacher (Soft Red) > Deadline (Soft Orange) > Assistant Palette
+                          let rowBg = getAssistantBgColor(s.assistant || '');
                           let textColor = '#0f172a';
                           
                           if (deadlineDue) {
-                              rowBg = 'rgba(255, 237, 213, 0.05)'; // Much softer Orange (Orange 100)
+                              rowBg = 'rgba(255, 237, 213, 0.4)'; // Orange (Orange 100)
                               textColor = '#c2410c'; // High contrast dark orange text
                           }
                           
                           if (s.headTeacher) {
-                              rowBg = 'rgba(254, 226, 226, 0.05)'; // Much softer Red (Red 100)
+                              rowBg = 'rgba(254, 226, 226, 0.4)'; // Red (Red 100)
                               textColor = '#b91c1c'; // High contrast dark red text
                           }
 
                           if (s.isHidden) {
-                              rowBg = 'rgba(248, 250, 252, 0.02)';
+                              rowBg = 'rgba(248, 250, 252, 0.4)';
                               textColor = '#475569';
                           }
 
                           return (
-                            <tr key={s.id} className={`h-11 transition-all hover:brightness-95`} style={{ backgroundColor: rowBg, color: textColor }}>
+                            <tr key={s.id} className={`h-9 transition-all hover:brightness-95`} style={{ backgroundColor: rowBg, color: textColor }}>
                                 <td className={`text-center border-r border-white/5 ${isFrozen ? 'sticky left-0 z-20 shadow-[1px_0_0_0_rgba(255,255,255,0.05)]' : ''}`} style={{ left: isFrozen ? 0 : undefined, backgroundColor: rowBg }}>
                                     <button onClick={() => { const ns = new Set(selectedIds); ns.has(s.id) ? ns.delete(s.id) : ns.add(s.id); setSelectedIds(ns); }}>
-                                      {selectedIds.has(s.id) ? <CheckSquare size={16} className="text-primary-600" /> : <Square size={16} className="text-slate-400/30" />}
+                                      {selectedIds.has(s.id) ? <CheckSquare size={14} className="text-primary-600" /> : <Square size={14} className="text-slate-400/30" />}
                                     </button>
                                 </td>
                                 <td className={`text-center text-[10px] font-black border-r border-slate-200/30 ${isFrozen ? 'sticky left-[45px] z-20 shadow-[1px_0_0_0_#cbd5e1]' : ''}`} style={{ left: isFrozen ? 45 : undefined, backgroundColor: rowBg, color: '#94a3b8' }}>{i + 1}</td>
                                 <td className={`px-0 border-r border-slate-200/30 ${isFrozen ? 'sticky left-[85px] z-20 shadow-[1px_0_0_0_#cbd5e1]' : ''}`} style={{ left: isFrozen ? 85 : undefined, backgroundColor: rowBg }}>
-                                    <input type="text" value={s.name} onChange={e => updateField(s.id, 'name', e.target.value)} className="w-full h-11 px-3 bg-transparent outline-none focus:bg-white/40 text-[12px] font-black tracking-tight" style={{ color: textColor }} />
-                                </td>
-                                <td className="px-0 border-r border-slate-200/20">
-                                    <input type="text" value={s.thumbprintNotes || ''} onChange={e => updateField(s.id, 'thumbprintNotes', e.target.value)} className="w-full h-11 px-3 bg-transparent outline-none focus:bg-white/40 text-[12px] font-black tracking-tight" style={{ color: textColor }} />
+                                    <MultilineInput value={s.name} onChange={val => updateField(s.id, 'name', val)} className="w-full bg-transparent outline-none focus:bg-white/40 text-[11px] font-black tracking-tight px-3 py-1 scrollbar-none" style={{ color: textColor }} />
                                 </td>
                                 
                                 {columns.map((col, idx) => {
@@ -415,11 +451,10 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                           className={`p-0 border-r border-slate-200/20`}
                                           style={{ backgroundColor: rowBg }}
                                       >
-                                          <input 
-                                              type="text" 
+                                          <MultilineInput 
                                               value={String(s[col.key] || '')} 
-                                              onChange={e => updateField(s.id, col.key, e.target.value)} 
-                                              className={`w-full h-11 px-3 bg-transparent outline-none focus:bg-white/40 text-[12px] font-black tracking-tight transition-colors`}
+                                              onChange={val => updateField(s.id, col.key, val)} 
+                                              className="w-full bg-transparent outline-none focus:bg-white/40 text-[11px] font-black tracking-tight transition-colors px-3 py-1 scrollbar-none"
                                               style={{ color: textColor }}
                                           />
                                       </td>

@@ -1,9 +1,44 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Student, FilterState, UserRole, StudentCategory } from '../types';
 import { 
     LayoutGrid, Search, Trash2, Zap, Plus, AlertCircle
 } from 'lucide-react';
+
+const MultilineInput: React.FC<{
+  value: string;
+  onChange: (val: string) => void;
+  className?: string;
+  style?: React.CSSProperties;
+  placeholder?: string;
+}> = ({ value, onChange, className, style, placeholder }) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '0px';
+      const scrollHeight = textareaRef.current.scrollHeight;
+      textareaRef.current.style.height = Math.max(40, scrollHeight) + 'px';
+    }
+  }, [value]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          (e.target as HTMLTextAreaElement).blur();
+        }
+      }}
+      className={className}
+      style={{ ...style, resize: 'none', overflow: 'hidden', display: 'block' }}
+    />
+  );
+};
 
 interface PenaltyTableProps {
   students: Student[];
@@ -124,7 +159,7 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
     });
   };
 
-  const filterSelectStyle = "bg-white border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-[10px] font-black uppercase text-[#1B254B] border-slate-200 outline-none shadow-sm focus:ring-2 focus:ring-primary-500/10 focus:border-primary-500 transition-all cursor-pointer h-9 appearance-none";
+  const filterSelectStyle = "bg-white border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-[10px] font-black text-[#1B254B] border-slate-200 outline-none shadow-sm focus:ring-2 focus:ring-primary-500/10 focus:border-primary-500 transition-all cursor-pointer h-9 appearance-none";
 
   return (
     <div className="flex-1 flex flex-col bg-transparent overflow-hidden relative">
@@ -137,17 +172,17 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                           <Zap size={20} className="fill-white" />
                       </div>
                       <div>
-                          <h2 className="text-sm font-black text-[#1B254B] uppercase leading-none tracking-tight">Late / Absence Log</h2>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-widest">{filteredStudents.length} Students Listed</p>
+                          <h2 className="text-sm font-black text-[#1B254B] leading-none tracking-tight">Late / Absence Log</h2>
+                          <p className="text-[10px] font-bold text-slate-400 mt-1 tracking-widest">{filteredStudents.length} Students Listed</p>
                       </div>
                   </div>
                   
                   {/* Buttons moved to the left under the title */}
                   <div className="flex items-center gap-2">
-                      <button onClick={onQuickAdd} className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg hover:scale-105 active:scale-95 transition-all">
+                      <button onClick={onQuickAdd} className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-xl text-[10px] font-black shadow-lg hover:scale-105 active:scale-95 transition-all">
                           <Zap size={14} className="fill-yellow-400 text-yellow-400 shrink-0" /> AI AUTO
                       </button>
-                      <button onClick={() => onAddStudent?.({ category: 'Penalty' })} className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl text-[10px] font-black uppercase shadow-lg hover:bg-orange-600 active:scale-95 transition-all">
+                      <button onClick={() => onAddStudent?.({ category: 'Penalty' })} className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl text-[10px] font-black shadow-lg hover:bg-orange-600 active:scale-95 transition-all">
                           <Plus size={16} strokeWidth={3} className="shrink-0"/> ADD ENTRY
                       </button>
                   </div>
@@ -212,21 +247,21 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
               <table className="w-full border-collapse table-fixed min-w-[1400px]">
                   <thead className="sticky top-0 z-40 bg-white/[0.02] backdrop-blur-[2px] border-b border-white/5">
                       <tr>
-                        <th className="w-10 border-r border-white/5 text-[10px] font-black text-slate-900 sticky top-0 bg-white/[0.03] backdrop-blur-[2px]">#</th>
-                        <th className="w-48 border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 left-0 z-40 bg-white/[0.03] backdrop-blur-[2px]">STUDENT NAME</th>
-                        <th className="w-24 border-r border-white/5 text-[10px] font-black text-orange-600 text-center px-3 sticky top-0 left-48 z-40 bg-white/[0.03] backdrop-blur-[2px]">THUMBPRINT</th>
-                        <th className="w-40 border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 bg-white/[0.03] backdrop-blur-[2px]">TEACHERS</th>
-                        <th className="w-36 border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 bg-white/[0.03] backdrop-blur-[2px]">ASSISTANT</th>
-                        <th className="w-24 border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 bg-white/[0.03] backdrop-blur-[2px]">LEVEL</th>
+                        <th className="w-10 border-r border-white/5 text-[10px] font-black text-slate-900 sticky top-0 left-0 z-50 bg-white shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">#</th>
+                        <th className="w-48 border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 left-[40px] z-50 bg-white shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">Student Name</th>
+                        <th className="w-24 border-r border-white/5 text-[10px] font-black text-orange-600 text-center px-3 sticky top-0 z-40 bg-white/[0.03] backdrop-blur-[2px]">Thumbprint</th>
+                        <th className="w-40 border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 bg-white/[0.03] backdrop-blur-[2px]">Teachers</th>
+                        <th className="w-36 border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 bg-white/[0.03] backdrop-blur-[2px]">Assistant</th>
+                        <th className="w-24 border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 bg-white/[0.03] backdrop-blur-[2px]">Level</th>
                         
                         {[1, 2, 3, 4, 5, 6, 7].map(num => (
                           <React.Fragment key={num}>
-                            <th className="w-40 border-r border-slate-200 text-[10px] font-black text-red-500 text-center px-3">LOG {num} (LAT/ABS)</th>
-                            <th className="w-32 border-r border-slate-200 text-[10px] font-black text-red-500 text-center px-3">DATE {num}</th>
+                            <th className="w-40 border-r border-slate-200 text-[10px] font-black text-red-500 text-center px-3">Log {num} (Lat/Abs)</th>
+                            <th className="w-32 border-r border-slate-200 text-[10px] font-black text-red-500 text-center px-3">Date {num}</th>
                           </React.Fragment>
                         ))}
 
-                        <th className="w-60 border-r border-slate-200 text-[10px] font-black text-slate-400 text-left px-3">GENERAL COMMENTS / NOTES</th>
+                        <th className="w-60 border-r border-slate-200 text-[10px] font-black text-slate-400 text-left px-3">General Comments / Notes</th>
                         
                         <th className="w-16 text-[10px] font-black text-slate-400 text-center">X</th>
                     </tr>
@@ -234,11 +269,11 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                   <tbody className="divide-y divide-slate-100">
                     {filteredStudents.map((s, idx) => (
                       <tr key={s.id} className={`h-10 hover:bg-white/20 transition-colors group ${getRowBg(idx)}`}>
-                        <td className="border-r border-slate-100 text-center text-[10px] font-bold text-slate-400 bg-slate-50/40">{idx + 1}</td>
-                        <td className="border-r border-slate-100 sticky left-0 z-20 bg-white/60">
-                            <input value={s.name} onChange={e => updateField(s.id, 'name', e.target.value)} className="w-full h-full px-3 text-[11px] font-black text-[#1B254B] bg-transparent outline-none" />
+                        <td className="border-r border-slate-100 text-center text-[10px] font-bold text-slate-400 bg-slate-50/40 sticky left-0 z-20 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">{idx + 1}</td>
+                        <td className="border-r border-slate-100 sticky left-[40px] z-20 shadow-[1px_0_0_0_rgba(0,0,0,0.05)] bg-white/60">
+                            <MultilineInput value={s.name} onChange={val => updateField(s.id, 'name', val)} className="w-full bg-transparent outline-none px-3 py-2 text-[11px] font-black text-[#1B254B]" />
                         </td>
-                        <td className="border-r border-slate-100 sticky left-48 z-20 bg-orange-50/60">
+                        <td className="border-r border-slate-100 bg-orange-50/60 text-center">
                             <select 
                               value={s.thumbprint || ''} 
                               onChange={e => updateField(s.id, 'thumbprint', e.target.value)}
@@ -249,27 +284,27 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                             </select>
                         </td>
                         <td className="border-r border-slate-100">
-                            <input value={s.teachers || ''} onChange={e => updateField(s.id, 'teachers', e.target.value)} className="w-full h-full px-3 text-[10px] font-bold text-slate-500 bg-transparent outline-none uppercase" />
+                            <MultilineInput value={s.teachers || ''} onChange={val => updateField(s.id, 'teachers', val)} className="w-full bg-transparent outline-none px-3 py-2 text-[10px] font-bold text-slate-500 uppercase" />
                         </td>
                         <td className="border-r border-slate-100">
-                            <input value={s.assistant || ''} onChange={e => updateField(s.id, 'assistant', e.target.value)} className="w-full h-full px-3 text-[10px] font-black text-orange-600 bg-transparent outline-none uppercase" />
+                            <MultilineInput value={s.assistant || ''} onChange={val => updateField(s.id, 'assistant', val)} className="w-full bg-transparent outline-none px-3 py-2 text-[10px] font-black text-orange-600 uppercase" />
                         </td>
                         <td className="border-r border-slate-100">
-                            <input value={s.level || ''} onChange={e => updateField(s.id, 'level', e.target.value)} className="w-full h-full px-3 text-[10px] font-black text-slate-600 bg-transparent outline-none text-center" />
+                            <MultilineInput value={s.level || ''} onChange={val => updateField(s.id, 'level', val)} className="w-full bg-transparent outline-none px-3 py-2 text-[10px] font-black text-slate-600 text-center" />
                         </td>
 
                         {[1, 2, 3, 4, 5, 6, 7].map(num => (
                           <React.Fragment key={num}>
-                            <td className={`border-r border-slate-100 bg-red-50/10`}>
+                            <td className={`border-r border-slate-100 bg-orange-50/20`}>
                                 <select 
                                   value={s[`penaltyType${num}`] || ''} 
                                   onChange={e => updateField(s.id, `penaltyType${num}`, e.target.value)}
                                   className="w-full h-full px-3 text-[10px] font-black text-[#1B254B] bg-transparent outline-none appearance-none text-center"
                                 >
                                     <option value="">-</option>
-                                    <option value="Lateness">LATENESS</option>
-                                    <option value="Absence">ABSENCE</option>
-                                    <option value="Normal">NORMAL</option>
+                                    <option value="Lateness">Lateness</option>
+                                    <option value="Absence">Absence</option>
+                                    <option value="Normal">Normal</option>
                                 </select>
                             </td>
                             <td className="border-r border-slate-100">
@@ -284,12 +319,11 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                         ))}
 
                         <td className="border-r border-slate-100">
-                            <input 
-                              type="text"
+                            <MultilineInput 
                               placeholder="Enter notes..."
                               value={s.penaltyComments || ''} 
-                              onChange={e => updateField(s.id, 'penaltyComments', e.target.value)}
-                              className="w-full h-full px-3 text-[10px] font-bold text-slate-500 bg-transparent outline-none" 
+                              onChange={val => updateField(s.id, 'penaltyComments', val)}
+                              className="w-full bg-transparent outline-none px-3 py-2 text-[10px] font-bold text-slate-500" 
                             />
                         </td>
 

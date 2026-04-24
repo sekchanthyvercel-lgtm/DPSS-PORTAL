@@ -11,10 +11,47 @@ import {
   ChevronLeft,
   ChevronRight,
   FilterX,
-  LayoutGrid
+  LayoutGrid,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { Student, FilterState, UserRole } from '../types';
 import { format } from 'date-fns';
+
+const MultilineInput: React.FC<{
+  value: string;
+  onChange: (val: string) => void;
+  className?: string;
+  style?: React.CSSProperties;
+  placeholder?: string;
+}> = ({ value, onChange, className, style, placeholder }) => {
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  React.useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '0px';
+      const scrollHeight = textareaRef.current.scrollHeight;
+      textareaRef.current.style.height = Math.max(36, scrollHeight) + 'px';
+    }
+  }, [value]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          (e.target as HTMLTextAreaElement).blur();
+        }
+      }}
+      className={className}
+      style={{ ...style, resize: 'none', overflow: 'hidden', display: 'block' }}
+    />
+  );
+};
 
 interface ReminderTableProps {
   students: Student[];
@@ -25,6 +62,8 @@ interface ReminderTableProps {
   filters: FilterState;
   setFilters: (filters: FilterState) => void;
   role: UserRole;
+  settings?: any;
+  onUpdateSettings?: (settings: any) => void;
 }
 
 const ReminderTable: React.FC<ReminderTableProps> = ({
@@ -35,7 +74,9 @@ const ReminderTable: React.FC<ReminderTableProps> = ({
   onClearCategory,
   filters,
   setFilters,
-  role
+  role,
+  settings,
+  onUpdateSettings
 }) => {
   const filteredReminders = students
     .filter(s => s.category === 'Reminder')
@@ -92,6 +133,14 @@ const ReminderTable: React.FC<ReminderTableProps> = ({
     }
   };
 
+  const fontFamilies = [
+    { name: 'Modern (Hall Study)', value: "Inter, sans-serif" },
+    { name: 'Display (DPSS)', value: "Space Grotesk, sans-serif" },
+    { name: 'Elegant', value: "Playfair Display, serif" },
+    { name: 'Technical', value: "JetBrains Mono, monospace" },
+    { name: 'Handwritten', value: "cursive" }
+  ];
+
   return (
     <div className="flex-1 flex flex-col bg-transparent overflow-hidden p-4 md:p-6 lg:p-8">
       {/* Header Bar */}
@@ -103,6 +152,34 @@ const ReminderTable: React.FC<ReminderTableProps> = ({
           <div>
             <h1 className="text-xl font-black text-[#1B254B] uppercase tracking-tight leading-none">Reminder Hub</h1>
             <p className="text-[10px] font-bold text-slate-800 uppercase tracking-widest mt-1">Staff Tasks & Notifications</p>
+          </div>
+        </div>
+
+        {/* Global Font Settings */}
+        <div className="flex-1 max-w-md flex items-center gap-4 bg-white/30 px-6 py-3 rounded-2xl border border-white/40 shadow-sm mx-4">
+          <div className="flex flex-col gap-1 min-w-[140px]">
+             <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Font Family</label>
+             <select 
+                value={settings?.fontFamily || "Inter, sans-serif"}
+                onChange={(e) => onUpdateSettings?.({ ...settings, fontFamily: e.target.value })}
+                className="bg-transparent text-[11px] font-bold text-slate-800 outline-none cursor-pointer"
+             >
+                {fontFamilies.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
+             </select>
+          </div>
+          
+          <div className="h-8 w-px bg-slate-200" />
+          
+          <div className="flex flex-col gap-1 flex-1">
+             <div className="flex justify-between items-center px-1">
+                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Size ({settings?.fontSize || 12}px)</label>
+             </div>
+             <input 
+                type="range" min="10" max="24" 
+                value={settings?.fontSize || 12}
+                onChange={(e) => onUpdateSettings?.({ ...settings, fontSize: parseInt(e.target.value) })}
+                className="w-full accent-orange-500 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+             />
           </div>
         </div>
 
@@ -123,6 +200,14 @@ const ReminderTable: React.FC<ReminderTableProps> = ({
             className="flex items-center gap-2 h-10 px-5 bg-orange-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all active:scale-95"
           >
             <Plus size={16} strokeWidth={3} /> New Reminder
+          </button>
+
+          <button 
+            onClick={() => setFilters({ ...filters, showHidden: !filters.showHidden })}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-sm ${filters.showHidden ? 'bg-indigo-600 text-white' : 'bg-white text-slate-400 border border-slate-100 hover:bg-slate-50'}`}
+            title={filters.showHidden ? "Hide Hidden Tasks" : "Show Hidden Tasks"}
+          >
+            {filters.showHidden ? <Eye size={18} /> : <EyeOff size={18} />}
           </button>
           
           {role === 'Admin' && (
@@ -151,15 +236,21 @@ const ReminderTable: React.FC<ReminderTableProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10">
-              {filteredReminders.map((s, idx) => (
-                <tr key={s.id} className={`group hover:bg-white/30 transition-all h-14 ${getRowBg(idx)}`}>
+              {filteredReminders
+                .filter(s => filters.showHidden || !s.isHidden)
+                .map((s, idx) => (
+                <tr key={s.id} className={`group hover:bg-white/30 transition-all h-11 ${getRowBg(idx)} ${s.isHidden ? 'opacity-50' : ''}`}>
                   <td className="text-center text-[10px] font-bold text-slate-400">{idx + 1}</td>
                   <td className="px-4">
-                    <input 
+                    <MultilineInput 
                       value={s.name} 
-                      onChange={e => updateField(s.id, 'name', e.target.value)}
+                      onChange={val => updateField(s.id, 'name', val)}
                       placeholder="Enter task name..."
-                      className="w-full bg-transparent text-[12px] font-black text-slate-900 uppercase outline-none placeholder:text-slate-500"
+                      style={{ 
+                        fontFamily: settings?.fontFamily || "Inter, sans-serif",
+                        fontSize: `${settings?.fontSize || 12}px`
+                      }}
+                      className="w-full bg-transparent font-black text-slate-900 outline-none placeholder:text-slate-500"
                     />
                   </td>
                   <td className="px-4">
@@ -169,7 +260,11 @@ const ReminderTable: React.FC<ReminderTableProps> = ({
                           type="date"
                           value={displayToIso(s.deadline || '')} 
                           onChange={e => updateField(s.id, 'deadline', isoToDisplay(e.target.value))}
-                          className="w-full bg-transparent text-[10px] font-black text-slate-600 outline-none text-center cursor-pointer"
+                          style={{ 
+                            fontFamily: settings?.fontFamily || "Inter, sans-serif",
+                            fontSize: `${settings?.fontSize || 10}px`
+                          }}
+                          className="w-full bg-transparent font-black text-slate-600 outline-none text-center cursor-pointer"
                         />
                     </div>
                   </td>
@@ -177,7 +272,11 @@ const ReminderTable: React.FC<ReminderTableProps> = ({
                     <select 
                       value={s.status || 'Pending'} 
                       onChange={e => updateField(s.id, 'status', e.target.value)}
-                      className={`bg-transparent text-[10px] font-black uppercase outline-none appearance-none cursor-pointer ${getStatusColor(s.status)}`}
+                      style={{ 
+                        fontFamily: settings?.fontFamily || "Inter, sans-serif",
+                        fontSize: `${settings?.fontSize || 10}px`
+                      }}
+                      className={`bg-transparent font-black outline-none appearance-none cursor-pointer ${getStatusColor(s.status)}`}
                     >
                       <option value="Pending">Pending</option>
                       <option value="In Progress">In Progress</option>
@@ -186,20 +285,34 @@ const ReminderTable: React.FC<ReminderTableProps> = ({
                     </select>
                   </td>
                   <td className="px-4">
-                    <input 
+                    <MultilineInput 
                       value={s.note || ''} 
-                      onChange={e => updateField(s.id, 'note', e.target.value)}
+                      onChange={val => updateField(s.id, 'note', val)}
                       placeholder="Add details..."
-                      className="w-full bg-transparent text-[11px] font-bold text-slate-500 outline-none placeholder:text-slate-200"
+                      style={{ 
+                        fontFamily: settings?.fontFamily || "Inter, sans-serif",
+                        fontSize: `${Math.max(10, (settings?.fontSize || 11) - 1)}px`
+                      }}
+                      className="w-full bg-transparent font-bold text-slate-500 outline-none placeholder:text-slate-200"
                     />
                   </td>
                   <td className="text-center px-4">
-                    <button 
-                      onClick={() => onDeleteStudent(s.id)}
-                      className="p-2 text-slate-300 hover:text-orange-500 transition-colors opacity-0 group-hover:opacity-100"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={() => updateField(s.id, 'isHidden', !s.isHidden)}
+                        className={`p-1.5 rounded-lg transition-all ${s.isHidden ? 'text-indigo-600' : 'text-slate-300 hover:text-indigo-600'}`}
+                        title={s.isHidden ? "Unhide" : "Hide"}
+                      >
+                        {s.isHidden ? <Eye size={14} /> : <EyeOff size={14} />}
+                      </button>
+                      <button 
+                        onClick={() => onDeleteStudent(s.id)}
+                        className="p-1.5 text-slate-300 hover:text-orange-500 transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

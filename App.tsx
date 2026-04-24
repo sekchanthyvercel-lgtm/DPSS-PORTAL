@@ -13,6 +13,7 @@ import { Sidebar } from './components/Sidebar';
 import { ContactManager } from './components/ContactManager';
 import { SupermanAnimation } from './components/SupermanAnimation';
 import ReminderTable from './components/ReminderTable';
+import DPSSTable from './components/DPSSTable';
 import { AppData, Student, CurrentUser, UserRole, ColumnConfig, Tab, ViewMode, AppSettings, StudentCategory } from './types';
 import { subscribeToData, saveData } from './services/firebase';
 import { Menu, MessageSquare, X } from 'lucide-react';
@@ -20,7 +21,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { addMonths, format } from 'date-fns';
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
-  { id: 'c1', key: 'name', label: 'FULL NAME', width: 220, visible: true, type: 'text' },
   { id: 'c2', key: 'teachers', label: 'TEACHERS', width: 180, visible: true, type: 'text' },
   { id: 'c3', key: 'level', label: 'LEVEL', width: 85, visible: true, type: 'text' },
   { id: 'c5', key: 'behavior', label: 'BEHAVIOR', width: 180, visible: true, type: 'text' },
@@ -151,7 +151,7 @@ const App: React.FC = () => {
     const asst = new Set<string>();
     // From students
     data.students.forEach(s => {
-      if (s.assistant) asst.add(String(s.assistant).trim());
+      if (s.assistant) String(s.assistant).split('&').forEach(a => asst.add(a.trim()));
     });
     // From staff directory
     if (data.staffDirectory) {
@@ -162,13 +162,17 @@ const App: React.FC = () => {
 
   const uniqueTimes = useMemo(() => {
     const tm = new Set<string>();
-    data.students.forEach(s => s.time && tm.add(String(s.time).trim()));
+    data.students.forEach(s => {
+      if (s.time) String(s.time).split('&').forEach(t => tm.add(t.trim()));
+    });
     return Array.from(tm).filter(Boolean).sort();
   }, [data.students]);
 
   const uniqueLevels = useMemo(() => {
     const lv = new Set<string>();
-    data.students.forEach(s => s.level && lv.add(String(s.level).trim()));
+    data.students.forEach(s => {
+      if (s.level) String(s.level).split('&').forEach(l => lv.add(l.trim()));
+    });
     return Array.from(lv).filter(Boolean).sort();
   }, [data.students]);
 
@@ -181,8 +185,29 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!currentUser) return;
     const unsubscribe = subscribeToData((newData) => {
+      // Ensure DEFAULT_COLUMNS are initialized
       if (!newData.settings?.columns) {
           newData.settings = { ...(newData.settings || { fontSize: 12, fontFamily: "'Inter', sans-serif" }), columns: DEFAULT_COLUMNS };
+      } else {
+        // Migration: Remove redundant 'name' column if it exists in settings
+        const hasNameCol = newData.settings.columns.some((c: any) => c.key === 'name');
+        if (hasNameCol) {
+          newData.settings.columns = newData.settings.columns.filter((c: any) => c.key !== 'name');
+        }
+
+        // Migration: Ensure 'schedule' column exists if missing
+        const hasSchedule = newData.settings.columns.some((c: any) => c.key === 'schedule');
+        if (!hasSchedule) {
+          const newCols = [...newData.settings.columns];
+          // Try to insert after behavior or before time
+          const behaviorIdx = newCols.findIndex((c: any) => c.key === 'behavior');
+          if (behaviorIdx !== -1) {
+            newCols.splice(behaviorIdx + 1, 0, DEFAULT_COLUMNS.find(c => c.key === 'schedule')!);
+          } else {
+            newCols.push(DEFAULT_COLUMNS.find(c => c.key === 'schedule')!);
+          }
+          newData.settings.columns = newCols;
+        }
       }
       setData(newData);
       setLoading(false);
@@ -384,7 +409,12 @@ const App: React.FC = () => {
                 filters={filters}
                 setFilters={setFilters}
                 role={currentUser.role}
+                settings={data.settings}
+                onUpdateSettings={(s) => handleUpdate({ ...data, settings: s })}
               />
+            )}
+            {activeTab === Tab.DPSS && (
+                <DPSSTable data={data} onUpdate={handleUpdate} />
             )}
             {activeTab === Tab.Attendance && (
               <AttendanceTable 
@@ -430,7 +460,7 @@ const App: React.FC = () => {
           <button onClick={() => setIsAiStudioOpen(true)} className="w-14 h-14 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-2 border-white">
             <MessageSquare size={24} />
           </button>
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="w-14 h-14 bg-white text-slate-400 rounded-full shadow-2xl flex items-center justify-center hover:text-primary-500 hover:scale-110 active:scale-95 transition-all border-2 border-slate-100 md:hidden">
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="w-14 h-14 bg-white text-slate-400 rounded-full shadow-2xl flex items-center justify-center hover:text-primary-500 hover:scale-110 active:scale-95 transition-all border-2 border-slate-100">
             <Menu size={24} />
           </button>
       </div>

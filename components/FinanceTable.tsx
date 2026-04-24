@@ -3,6 +3,43 @@ import { Student, AppData, StudyType } from '../types';
 import { Search, ChevronLeft, ChevronRight, AlertCircle, Trash2, Lock } from 'lucide-react';
 import { format } from 'date-fns';
 
+const MultilineInput: React.FC<{
+  value: string;
+  onChange: (val: string) => void;
+  className?: string;
+  style?: React.CSSProperties;
+  placeholder?: string;
+  readOnly?: boolean;
+}> = ({ value, onChange, className, style, placeholder, readOnly }) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '0px';
+      const scrollHeight = textareaRef.current.scrollHeight;
+      textareaRef.current.style.height = Math.max(36, scrollHeight) + 'px';
+    }
+  }, [value]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      readOnly={readOnly}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          (e.target as HTMLTextAreaElement).blur();
+        }
+      }}
+      className={className}
+      style={{ ...style, resize: 'none', overflow: 'hidden', display: 'block' }}
+    />
+  );
+};
+
 interface Props {
   students: Student[];
   data: AppData; 
@@ -123,19 +160,17 @@ export const FinanceTable: React.FC<Props> = ({ students, data, onUpdate, onQuic
             className={`p-0 border-r border-white/5 relative group/cell ${stickyLeft !== undefined ? 'sticky z-30' : ''}`} 
             style={{ left: stickyLeft }}
         >
-            <input 
-                className={`w-full h-full px-3 py-2 bg-transparent outline-none focus:bg-white/20 text-xs text-slate-900 ${isLocked ? 'cursor-not-allowed opacity-80' : ''} ${className}`} 
+            <MultilineInput 
+                className={`w-full px-3 py-2 bg-transparent outline-none focus:bg-white/20 text-xs text-slate-900 ${isLocked ? 'cursor-not-allowed opacity-80' : ''} ${className}`} 
                 value={val} 
                 readOnly={isLocked}
                 style={{ fontWeight: fmt?.bold ? '900' : 'inherit', fontStyle: fmt?.italic ? 'italic' : 'normal' }}
-                onFocus={() => !isLocked && setFocusedCell({ id: s.id, field })}
-                onBlur={() => setTimeout(() => setFocusedCell(null), 250)}
-                onChange={e => {
+                onChange={val => {
                     if (isPayment) {
-                        const pmts = { ...(s.payments || {}), [paymentKey!]: e.target.value };
+                        const pmts = { ...(s.payments || {}), [paymentKey!]: val };
                         handleUpdate(students.map(st => st.id === s.id ? { ...st, payments: pmts } : st));
                     } else {
-                        handleUpdate(students.map(st => st.id === s.id ? { ...st, [field]: e.target.value } : st));
+                        handleUpdate(students.map(st => st.id === s.id ? { ...st, [field]: val } : st));
                     }
                 }}
             />

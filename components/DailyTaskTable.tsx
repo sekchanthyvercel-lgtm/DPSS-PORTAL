@@ -27,6 +27,41 @@ import {
 } from 'date-fns';
 import { Student, AppData, FilterState, Tab, UserRole } from '../types';
 
+const MultilineInput: React.FC<{
+  value: string;
+  onChange: (val: string) => void;
+  className?: string;
+  style?: React.CSSProperties;
+  placeholder?: string;
+}> = ({ value, onChange, className, style, placeholder }) => {
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  React.useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '0px';
+      const scrollHeight = textareaRef.current.scrollHeight;
+      textareaRef.current.style.height = Math.max(36, scrollHeight) + 'px';
+    }
+  }, [value]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          (e.target as HTMLTextAreaElement).blur();
+        }
+      }}
+      className={className}
+      style={{ ...style, resize: 'none', overflow: 'hidden', display: 'block' }}
+    />
+  );
+};
+
 interface DailyTaskTableProps {
   students: Student[];
   data: AppData;
@@ -319,20 +354,20 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
               ) : filteredStudents.map((s, idx) => (
                 <tr key={s.id} className={`transition-colors group h-12 ${getRowBg(idx)} hover:brightness-95`}>
                   <td className="text-center text-[9px] font-black text-slate-500 border-r border-slate-100 sticky left-0 z-30 bg-inherit">{idx + 1}</td>
-                  <td className={`px-4 border-r border-slate-100 sticky left-10 z-30 group-hover:opacity-90 transition-opacity border-l-[4px] ${getLevelBorderColor(s.level)} bg-inherit`}>
-                    <input 
+                  <td className={`px-2 border-r border-slate-100 sticky left-10 z-30 group-hover:opacity-90 transition-opacity border-l-[4px] ${getLevelBorderColor(s.level)} bg-inherit`}>
+                    <MultilineInput 
                       value={s.name} 
-                      onChange={e => updateField(s.id, 'name', e.target.value)}
+                      onChange={val => updateField(s.id, 'name', val)}
                       placeholder="Task Name"
-                      className="w-full bg-transparent text-slate-900 text-[11px] font-black outline-none placeholder:text-slate-400"
+                      className="w-full h-full px-2 py-2 bg-transparent text-slate-900 text-[11px] font-black outline-none placeholder:text-slate-400"
                     />
                   </td>
                   <td className="border-r border-slate-100">
-                    <input 
+                    <MultilineInput 
                       value={s.level || ''} 
-                      onChange={e => updateField(s.id, 'level', e.target.value)}
+                      onChange={val => updateField(s.id, 'level', val)}
                       placeholder="Level"
-                      className="w-full h-full px-2 bg-transparent text-slate-900 text-[10px] font-black outline-none text-center placeholder:text-slate-400"
+                      className="w-full h-full px-2 py-2 bg-transparent text-slate-900 text-[10px] font-black outline-none text-center placeholder:text-slate-400"
                     />
                   </td>
                   <td className="border-r border-slate-100">
@@ -347,19 +382,19 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                     </select>
                   </td>
                   <td className="border-r border-slate-100">
-                    <input 
+                    <MultilineInput 
                       value={s.teachers || ''} 
-                      onChange={e => updateField(s.id, 'teachers', e.target.value)}
+                      onChange={val => updateField(s.id, 'teachers', val)}
                       placeholder="Teacher"
-                      className="w-full h-full px-2 bg-transparent text-slate-900 text-[10px] font-black outline-none text-center placeholder:text-slate-400"
+                      className="w-full h-full px-2 py-2 bg-transparent text-slate-900 text-[10px] font-black outline-none text-center placeholder:text-slate-400"
                     />
                   </td>
                   <td className="border-r border-slate-100">
-                    <input 
+                    <MultilineInput 
                       value={s.assistant || ''} 
-                      onChange={e => updateField(s.id, 'assistant', e.target.value)}
+                      onChange={val => updateField(s.id, 'assistant', val)}
                       placeholder="Assistant"
-                      className="w-full h-full px-2 bg-transparent text-slate-900 text-[10px] font-black outline-none text-center placeholder:text-slate-400"
+                      className="w-full h-full px-2 py-2 bg-transparent text-slate-900 text-[10px] font-black outline-none text-center placeholder:text-slate-400"
                     />
                   </td>
                   <td className="border-r border-slate-100 px-2">
