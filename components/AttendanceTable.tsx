@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Student, AppData, UserRole, StudentCategory } from '../types';
+import { Student, AppData, UserRole, AppSettings, StudentCategory } from '../types';
 import { format, addDays, getDaysInMonth, startOfMonth } from 'date-fns';
 import { 
   Plus, UserCheck, 
@@ -15,10 +15,12 @@ interface Props {
   setFilters?: (f: any) => void;
   onUpdate: (newData: AppData) => void;
   onAddStudent: (defaults: Partial<Student>) => void;
+  onDeleteStudent?: (id: string) => void;
   onQuickAdd: () => void;
   isLocked?: boolean;
   role?: UserRole;
   onClearCategory?: (cats: StudentCategory[]) => void;
+  settings?: AppSettings;
 }
 
 // Fixed color mapping based on provided screenshot
@@ -69,7 +71,7 @@ const getStatusIcon = (status?: number) => {
 };
 
 export const AttendanceTable: React.FC<Props> = ({ 
-  students, data, filters, setFilters, onUpdate, onAddStudent, isLocked = false, role, onClearCategory
+  students, data, filters, setFilters, onUpdate, onAddStudent, onDeleteStudent, isLocked = false, role, onClearCategory, settings
 }) => {
   const [viewDate, setViewDate] = useState(new Date());
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
@@ -237,7 +239,7 @@ export const AttendanceTable: React.FC<Props> = ({
             <button 
               onClick={() => {
                 if (confirm(`Delete ${selectedIds.size} selected records?`)) {
-                  onUpdate({ ...data, students: students.filter(s => !selectedIds.has(s.id)) });
+                  selectedIds.forEach(id => onDeleteStudent?.(id));
                   setSelectedIds(new Set());
                 }
               }}
@@ -345,16 +347,27 @@ export const AttendanceTable: React.FC<Props> = ({
                 return (
                   <tr 
                     key={s.id} 
-                    className={`group transition-all hover:brightness-95 h-10 ${isHidden ? 'bg-slate-50' : rowBgClass}`}
+                    className={`group transition-all hover:brightness-95 h-8 ${isHidden ? 'bg-slate-50' : rowBgClass}`}
                   >
                     <td className="px-0 text-center border-r border-slate-200/10 sticky left-0 z-30 bg-inherit w-10">
-                      <button onClick={() => { const ns = new Set(selectedIds); ns.has(s.id) ? ns.delete(s.id) : ns.add(s.id); setSelectedIds(ns); }}>
-                        {selectedIds.has(s.id) ? <CheckSquare size={14} className="text-orange-600" /> : <Square size={14} className="text-slate-400/30" />}
-                      </button>
+                      <div className="flex items-center justify-center min-h-[32px]">
+                        <button onClick={() => { const ns = new Set(selectedIds); ns.has(s.id) ? ns.delete(s.id) : ns.add(s.id); setSelectedIds(ns); }}>
+                          {selectedIds.has(s.id) ? <CheckSquare size={14} className="text-orange-600" /> : <Square size={14} className="text-slate-400/30" />}
+                        </button>
+                      </div>
                     </td>
-                    <td className="px-4 text-center text-xs font-black text-slate-400 border-r border-slate-200/10 sticky left-[40px] z-30 bg-inherit">{idx + 1}</td>
+                    <td className="px-4 text-center text-xs font-black text-slate-400 border-r border-slate-200/10 sticky left-[40px] z-30 bg-inherit">
+                      <div className="flex items-center justify-center min-h-[32px]">
+                        {idx + 1}
+                      </div>
+                    </td>
                     <td className="px-5 border-r border-slate-200/10 sticky left-[88px] z-30 bg-inherit shadow-sm">
-                      <div className={`text-[12px] font-black text-[#1B254B] uppercase tracking-tight truncate ${isHidden ? 'opacity-30' : ''}`}>{s.name}</div>
+                      <div 
+                        className={`font-black text-[#1B254B] uppercase tracking-tight truncate flex items-center min-h-[32px] ${isHidden ? 'opacity-30' : ''}`}
+                        style={{ fontSize: settings?.fontSize ? `${settings.fontSize}px` : '12px' }}
+                      >
+                        {s.name}
+                      </div>
                     </td>
                     <td className="px-4 border-r border-slate-200/10">
                       <div className={`text-[11px] font-bold text-slate-500 uppercase truncate ${isHidden ? 'opacity-30' : ''}`}>{s.teachers || 'N/A'}</div>
@@ -398,7 +411,7 @@ export const AttendanceTable: React.FC<Props> = ({
                           {isHidden ? <Eye size={16}/> : <EyeOff size={16}/>}
                         </button>
                         <button 
-                          onClick={() => confirm('Delete record?') && onUpdate({ ...data, students: students.filter(st => st.id !== s.id) })}
+                          onClick={() => onDeleteStudent?.(s.id)}
                           className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-white rounded-lg transition-all"
                         >
                           <Trash2 size={16} />

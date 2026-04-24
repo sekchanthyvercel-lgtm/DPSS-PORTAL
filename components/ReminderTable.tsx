@@ -31,7 +31,7 @@ const MultilineInput: React.FC<{
     if (textareaRef.current) {
       textareaRef.current.style.height = '0px';
       const scrollHeight = textareaRef.current.scrollHeight;
-      textareaRef.current.style.height = Math.max(36, scrollHeight) + 'px';
+      textareaRef.current.style.height = Math.max(32, scrollHeight) + 'px';
     }
   }, [value]);
 
@@ -155,34 +155,6 @@ const ReminderTable: React.FC<ReminderTableProps> = ({
           </div>
         </div>
 
-        {/* Global Font Settings */}
-        <div className="flex-1 max-w-md flex items-center gap-4 bg-white/30 px-6 py-3 rounded-2xl border border-white/40 shadow-sm mx-4">
-          <div className="flex flex-col gap-1 min-w-[140px]">
-             <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Font Family</label>
-             <select 
-                value={settings?.fontFamily || "Inter, sans-serif"}
-                onChange={(e) => onUpdateSettings?.({ ...settings, fontFamily: e.target.value })}
-                className="bg-transparent text-[11px] font-bold text-slate-800 outline-none cursor-pointer"
-             >
-                {fontFamilies.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
-             </select>
-          </div>
-          
-          <div className="h-8 w-px bg-slate-200" />
-          
-          <div className="flex flex-col gap-1 flex-1">
-             <div className="flex justify-between items-center px-1">
-                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Size ({settings?.fontSize || 12}px)</label>
-             </div>
-             <input 
-                type="range" min="10" max="24" 
-                value={settings?.fontSize || 12}
-                onChange={(e) => onUpdateSettings?.({ ...settings, fontSize: parseInt(e.target.value) })}
-                className="w-full accent-orange-500 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer"
-             />
-          </div>
-        </div>
-
         <div className="flex items-center gap-3">
           <div className="relative w-64">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -239,8 +211,12 @@ const ReminderTable: React.FC<ReminderTableProps> = ({
               {filteredReminders
                 .filter(s => filters.showHidden || !s.isHidden)
                 .map((s, idx) => (
-                <tr key={s.id} className={`group hover:bg-white/30 transition-all h-11 ${getRowBg(idx)} ${s.isHidden ? 'opacity-50' : ''}`}>
-                  <td className="text-center text-[10px] font-bold text-slate-400">{idx + 1}</td>
+                <tr key={s.id} className={`group hover:bg-white/30 transition-all h-8 ${getRowBg(idx)} ${s.isHidden ? 'opacity-50' : ''}`}>
+                  <td className="text-center text-[10px] font-bold text-slate-400">
+                    <div className="flex items-center justify-center h-full">
+                      {idx + 1}
+                    </div>
+                  </td>
                   <td className="px-4">
                     <MultilineInput 
                       value={s.name} 

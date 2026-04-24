@@ -1,8 +1,8 @@
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { Student, FilterState, UserRole, StudentCategory } from '../types';
+import { Student, FilterState, UserRole, AppSettings, StudentCategory } from '../types';
 import { 
-    LayoutGrid, Search, Trash2, Zap, Plus, AlertCircle
+    LayoutGrid, Search, Trash2, Zap, Plus, AlertCircle, Eye, EyeOff, CheckSquare, Square
 } from 'lucide-react';
 
 const MultilineInput: React.FC<{
@@ -18,7 +18,7 @@ const MultilineInput: React.FC<{
     if (textareaRef.current) {
       textareaRef.current.style.height = '0px';
       const scrollHeight = textareaRef.current.scrollHeight;
-      textareaRef.current.style.height = Math.max(40, scrollHeight) + 'px';
+      textareaRef.current.style.height = scrollHeight + 'px';
     }
   }, [value]);
 
@@ -50,18 +50,21 @@ interface PenaltyTableProps {
   uniqueLevels?: string[];
   onQuickAdd?: () => void;
   onAddStudent?: (defaults: Partial<Student>) => void;
+  onDeleteStudent?: (id: string) => void;
   role?: UserRole;
   onClearCategory?: (cats: StudentCategory[]) => void;
+  settings?: AppSettings;
 }
 
 export const PenaltyTable: React.FC<PenaltyTableProps> = ({ 
-  students, onUpdate, filters, setFilters, 
+  students, onUpdate, onDeleteStudent, filters, setFilters, 
   uniqueTeachers: globalTeachers = [], 
   uniqueAssistants: globalAssistants = [], 
   uniqueLevels: globalLevels = [], 
   onQuickAdd, onAddStudent,
-  role, onClearCategory
+  role, onClearCategory, settings
 }) => {
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   // Independence: Derive filter options only from Penalty category students
   const penaltyStudents = useMemo(() => students.filter(s => s.category === 'Penalty'), [students]);
 
@@ -103,7 +106,7 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
         const matchesVisibility = filters.showHidden || !s.isHidden;
         
         return matchesSearch && matchesTeacher && matchesAssistant && matchesLevel && matchesVisibility;
-    }).sort((a, b) => a.order - b.order);
+    }).sort((a, b) => (a.order || 0) - (b.order || 0));
   }, [penaltyStudents, filters]);
 
   const isoToDisplay = (iso: string) => {
@@ -177,7 +180,7 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                       </div>
                   </div>
                   
-                  {/* Buttons moved to the left under the title */}
+                   {/* Buttons moved to the left under the title */}
                   <div className="flex items-center gap-2">
                       <button onClick={onQuickAdd} className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-xl text-[10px] font-black shadow-lg hover:scale-105 active:scale-95 transition-all">
                           <Zap size={14} className="fill-yellow-400 text-yellow-400 shrink-0" /> AI AUTO
@@ -185,19 +188,41 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                       <button onClick={() => onAddStudent?.({ category: 'Penalty' })} className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl text-[10px] font-black shadow-lg hover:bg-orange-600 active:scale-95 transition-all">
                           <Plus size={16} strokeWidth={3} className="shrink-0"/> ADD ENTRY
                       </button>
+                      {selectedIds.size > 0 && (
+                          <button 
+                            onClick={() => {
+                              if (confirm(`Delete ${selectedIds.size} selected items?`)) {
+                                selectedIds.forEach(id => onDeleteStudent?.(id));
+                                setSelectedIds(new Set());
+                              }
+                            }}
+                            className="bg-red-500 text-white px-3 py-2 rounded-xl text-[10px] font-black shadow-lg hover:bg-red-600 transition-all flex items-center gap-2"
+                          >
+                             <Trash2 size={14} /> DELETE ({selectedIds.size})
+                          </button>
+                      )}
                   </div>
               </div>
 
               {/* Admin Clear Button moved to top right to keep it safe but visible */}
-              {role === 'Admin' && (
+              <div className="flex items-center gap-2">
                 <button 
-                  onClick={() => onClearCategory?.(['Penalty'])} 
-                  title="CLEAR ALL RECORDS"
-                  className="p-3 bg-red-50 border border-red-100 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all shadow-sm"
+                    onClick={() => setFilters?.({...filters, showHidden: !filters.showHidden})}
+                    className={`p-3 rounded-xl transition-all shadow-sm border ${filters.showHidden ? 'bg-[#1B254B] text-white border-[#1B254B]' : 'bg-white text-slate-400 border-slate-100 hover:bg-slate-50'}`}
+                    title={filters.showHidden ? "Hide Tasks" : "Show Tasks"}
                 >
-                    <AlertCircle size={18} />
+                    {filters.showHidden ? <Eye size={18} /> : <EyeOff size={18} />}
                 </button>
-              )}
+                {role === 'Admin' && (
+                  <button 
+                    onClick={() => onClearCategory?.(['Penalty'])} 
+                    title="CLEAR ALL RECORDS"
+                    className="p-3 bg-red-50 border border-red-100 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all shadow-sm"
+                  >
+                      <AlertCircle size={18} />
+                  </button>
+                )}
+              </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
@@ -247,8 +272,15 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
               <table className="w-full border-collapse table-fixed min-w-[1400px]">
                   <thead className="sticky top-0 z-40 bg-white/[0.02] backdrop-blur-[2px] border-b border-white/5">
                       <tr>
-                        <th className="w-10 border-r border-white/5 text-[10px] font-black text-slate-900 sticky top-0 left-0 z-50 bg-white shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">#</th>
-                        <th className="w-48 border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 left-[40px] z-50 bg-white shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">Student Name</th>
+                        <th className="w-10 border-r border-white/5 text-[10px] font-black text-slate-900 sticky top-0 left-0 z-50 bg-white shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+                          <div className="flex items-center justify-center">
+                            <button onClick={() => setSelectedIds(selectedIds.size === filteredStudents.length ? new Set() : new Set(filteredStudents.map(s => s.id)))}>
+                              {selectedIds.size > 0 ? <CheckSquare size={14} className="text-orange-500" /> : <Square size={14} className="text-slate-400/30" />}
+                            </button>
+                          </div>
+                        </th>
+                        <th className="w-10 border-r border-white/5 text-[10px] font-black text-slate-900 sticky top-0 left-[40px] z-50 bg-white shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">#</th>
+                        <th className="w-48 border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 left-[80px] z-50 bg-white shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">Student Name</th>
                         <th className="w-24 border-r border-white/5 text-[10px] font-black text-orange-600 text-center px-3 sticky top-0 z-40 bg-white/[0.03] backdrop-blur-[2px]">Thumbprint</th>
                         <th className="w-40 border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 bg-white/[0.03] backdrop-blur-[2px]">Teachers</th>
                         <th className="w-36 border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 bg-white/[0.03] backdrop-blur-[2px]">Assistant</th>
@@ -268,10 +300,28 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {filteredStudents.map((s, idx) => (
-                      <tr key={s.id} className={`h-10 hover:bg-white/20 transition-colors group ${getRowBg(idx)}`}>
-                        <td className="border-r border-slate-100 text-center text-[10px] font-bold text-slate-400 bg-slate-50/40 sticky left-0 z-20 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">{idx + 1}</td>
-                        <td className="border-r border-slate-100 sticky left-[40px] z-20 shadow-[1px_0_0_0_rgba(0,0,0,0.05)] bg-white/60">
-                            <MultilineInput value={s.name} onChange={val => updateField(s.id, 'name', val)} className="w-full bg-transparent outline-none px-3 py-2 text-[11px] font-black text-[#1B254B]" />
+                      <tr key={s.id} className={`h-8 hover:bg-white/20 transition-colors group ${getRowBg(idx)} ${s.isHidden ? 'opacity-30' : ''}`}>
+                        <td className="border-r border-slate-100 text-center sticky left-0 z-20 bg-white/60 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+                          <div className="flex items-center justify-center min-h-[32px]">
+                             <button onClick={() => { const ns = new Set(selectedIds); ns.has(s.id) ? ns.delete(s.id) : ns.add(s.id); setSelectedIds(ns); }}>
+                                {selectedIds.has(s.id) ? <CheckSquare size={14} className="text-orange-500" /> : <Square size={14} className="text-slate-400/30" />}
+                             </button>
+                          </div>
+                        </td>
+                        <td className="border-r border-slate-100 text-center text-[10px] font-bold text-slate-400 bg-slate-50/40 sticky left-[40px] z-20 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+                          <div className="flex items-center justify-center min-h-[32px]">
+                            {idx + 1}
+                          </div>
+                        </td>
+                        <td className="border-r border-slate-100 sticky left-[80px] z-20 shadow-[1px_0_0_0_rgba(0,0,0,0.05)] bg-white/60">
+                            <div className="flex items-center min-h-[32px] w-full">
+                                <MultilineInput 
+                                    value={s.name} 
+                                    onChange={val => updateField(s.id, 'name', val)} 
+                                    className="w-full bg-transparent outline-none px-3 py-1 font-black text-[#1B254B] leading-tight" 
+                                    style={{ fontSize: settings?.fontSize ? `${settings.fontSize}px` : '11px' }}
+                                />
+                            </div>
                         </td>
                         <td className="border-r border-slate-100 bg-orange-50/60 text-center">
                             <select 
@@ -284,13 +334,13 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                             </select>
                         </td>
                         <td className="border-r border-slate-100">
-                            <MultilineInput value={s.teachers || ''} onChange={val => updateField(s.id, 'teachers', val)} className="w-full bg-transparent outline-none px-3 py-2 text-[10px] font-bold text-slate-500 uppercase" />
+                            <MultilineInput value={s.teachers || ''} onChange={val => updateField(s.id, 'teachers', val)} className="w-full bg-transparent outline-none px-3 py-1 text-[10px] font-bold text-slate-500 uppercase" />
                         </td>
                         <td className="border-r border-slate-100">
-                            <MultilineInput value={s.assistant || ''} onChange={val => updateField(s.id, 'assistant', val)} className="w-full bg-transparent outline-none px-3 py-2 text-[10px] font-black text-orange-600 uppercase" />
+                            <MultilineInput value={s.assistant || ''} onChange={val => updateField(s.id, 'assistant', val)} className="w-full bg-transparent outline-none px-3 py-1 text-[10px] font-black text-orange-600 uppercase" />
                         </td>
                         <td className="border-r border-slate-100">
-                            <MultilineInput value={s.level || ''} onChange={val => updateField(s.id, 'level', val)} className="w-full bg-transparent outline-none px-3 py-2 text-[10px] font-black text-slate-600 text-center" />
+                            <MultilineInput value={s.level || ''} onChange={val => updateField(s.id, 'level', val)} className="w-full bg-transparent outline-none px-3 py-1 text-[10px] font-black text-slate-600 text-center" />
                         </td>
 
                         {[1, 2, 3, 4, 5, 6, 7].map(num => (
@@ -323,14 +373,19 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                               placeholder="Enter notes..."
                               value={s.penaltyComments || ''} 
                               onChange={val => updateField(s.id, 'penaltyComments', val)}
-                              className="w-full bg-transparent outline-none px-3 py-2 text-[10px] font-bold text-slate-500" 
+                              className="w-full bg-transparent outline-none px-3 py-1 text-[10px] font-bold text-slate-500" 
                             />
                         </td>
 
                         <td className="text-center">
-                            <button onClick={() => { if(confirm('Delete record?')) onUpdate(students.filter(st => st.id !== s.id)); }} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Trash2 size={14} />
-                            </button>
+                            <div className="flex items-center justify-center gap-1">
+                                <button onClick={() => updateField(s.id, 'isHidden', !s.isHidden)} className={`p-1 text-slate-300 hover:text-indigo-600 transition-colors ${s.isHidden ? 'text-indigo-600' : ''}`}>
+                                    {s.isHidden ? <Eye size={12} /> : <EyeOff size={12} />}
+                                </button>
+                                <button onClick={() => onDeleteStudent?.(s.id)} className="p-1 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Trash2 size={12} />
+                                </button>
+                            </div>
                         </td>
                       </tr>
                     ))}

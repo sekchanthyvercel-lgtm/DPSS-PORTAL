@@ -195,10 +195,12 @@ const App: React.FC = () => {
       if (!newData.settings?.columns) {
           newData.settings = { ...(newData.settings || { fontSize: 12, fontFamily: "'Inter', sans-serif" }), columns: DEFAULT_COLUMNS };
       } else {
-        // Migration: Remove redundant 'name' column if it exists in settings
-        const hasNameCol = newData.settings.columns.some((c: any) => c.key === 'name');
-        if (hasNameCol) {
-          newData.settings.columns = newData.settings.columns.filter((c: any) => c.key !== 'name');
+        // Migration: Remove redundant 'name' or 'Full Name' column if it exists in settings
+        const filteredCols = newData.settings.columns.filter((c: any) => 
+          c.key !== 'name' && c.label?.toUpperCase() !== 'FULL NAME'
+        );
+        if (filteredCols.length !== newData.settings.columns.length) {
+          newData.settings.columns = filteredCols;
         }
 
         // Migration: Ensure 'schedule' column exists if missing
@@ -436,6 +438,7 @@ const App: React.FC = () => {
                 columns={data.settings?.columns || DEFAULT_COLUMNS}
                 onUpdate={students => handleUpdate({...data, students: [...students, ...data.students.filter(s => s.deletedAt)]})} 
                 onUpdateColumns={cols => handleUpdate({...data, settings: { ...data.settings!, columns: cols }})}
+                onDeleteStudent={handleDeleteStudent}
                 filters={filters} 
                 setFilters={setFilters}
                 uniqueTeachers={uniqueTeachers}
@@ -447,12 +450,14 @@ const App: React.FC = () => {
                 onAddStudent={(defaults) => handleAddStudent(defaults)} 
                 role={currentUser.role}
                 onClearCategory={handleClearCategory}
+                settings={data.settings}
               />
             )}
             {activeTab === Tab.Penalty && (
               <PenaltyTable 
                 students={activeStudents} 
                 onUpdate={students => handleUpdate({...data, students: [...students, ...data.students.filter(s => s.deletedAt)]})} 
+                onDeleteStudent={handleDeleteStudent}
                 filters={filters} 
                 setFilters={setFilters}
                 uniqueTeachers={uniqueTeachers}
@@ -462,6 +467,7 @@ const App: React.FC = () => {
                 onAddStudent={(defaults) => handleAddStudent(defaults)} 
                 role={currentUser.role}
                 onClearCategory={handleClearCategory}
+                settings={data.settings}
               />
             )}
             {activeTab === Tab.DailyTask && (
@@ -469,11 +475,13 @@ const App: React.FC = () => {
                 students={activeStudents} 
                 data={data}
                 onUpdate={handleUpdate} 
+                onDeleteStudent={handleDeleteStudent}
                 filters={filters} 
                 setFilters={setFilters}
                 onAddStudent={(defaults) => handleAddStudent(defaults)} 
                 role={currentUser.role}
                 onClearCategory={handleClearCategory}
+                settings={data.settings}
               />
             )}
             {activeTab === Tab.Reminder && (
@@ -497,6 +505,7 @@ const App: React.FC = () => {
               <AttendanceTable 
                 students={activeStudents} 
                 data={data} 
+                onDeleteStudent={handleDeleteStudent}
                 filters={filters} 
                 setFilters={setFilters}
                 onUpdate={handleUpdate} 
@@ -505,6 +514,7 @@ const App: React.FC = () => {
                 isLocked={isModuleLocked('Attendance')}
                 role={currentUser.role}
                 onClearCategory={handleClearCategory}
+                settings={data.settings}
               />
             )}
             {activeTab === Tab.Finance && (

@@ -182,38 +182,7 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
           <span className="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold uppercase">Hall Study</span>
         </div>
 
-        {/* Font Settings Panel */}
-        <div className="bg-white/20 p-4 rounded-2xl border border-white/30 space-y-3">
-          <div className="flex items-center gap-2 text-slate-700 mb-1">
-            <Settings2 size={14} />
-            <span className="text-xs font-black uppercase tracking-wider">Font Styling</span>
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-slate-500 ml-1">FAMILY</label>
-              <select 
-                value={dpssSettings.fontFamily}
-                onChange={(e) => updateGlobalSettings({ fontFamily: e.target.value })}
-                className="w-full bg-white/50 border border-white/40 rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-orange-200"
-              >
-                {fontFamilies.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}
-              </select>
-            </div>
-            
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-slate-500 ml-1">SIZE ({dpssSettings.fontSize}px)</label>
-              <input 
-                type="range" min="12" max="32" 
-                value={dpssSettings.fontSize} 
-                onChange={(e) => updateGlobalSettings({ fontSize: parseInt(e.target.value) })}
-                className="w-full accent-orange-500 cursor-pointer"
-              />
-            </div>
-          </div>
-        </div>
-
-        <button onClick={() => addTopic()} className="w-full py-3 bg-orange-500 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 hover:bg-orange-600 shadow-lg shadow-orange-200 transition-all">
+        <button onClick={() => addTopic()} className="w-full py-3 bg-orange-500 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 hover:bg-orange-600 shadow-lg shadow-orange-200 transition-all mt-4">
           <Plus size={16} /> Add New Topic
         </button>
 

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Student, FilterState, ColumnConfig, UserRole, StudentCategory } from '../types';
+import { Student, FilterState, ColumnConfig, UserRole, AppSettings, StudentCategory } from '../types';
 import { 
     Trash2, Eye, EyeOff, CheckSquare, Square, ArrowUpDown, Zap, Plus, 
     LayoutGrid, Search, Lock, Unlock,
@@ -21,7 +21,7 @@ const MultilineInput: React.FC<{
     if (textareaRef.current) {
       textareaRef.current.style.height = '0px';
       const scrollHeight = textareaRef.current.scrollHeight;
-      textareaRef.current.style.height = Math.max(44, scrollHeight) + 'px';
+      textareaRef.current.style.height = scrollHeight + 'px';
     }
   }, [value]);
 
@@ -61,8 +61,10 @@ interface StudentTableProps {
   uniqueBehaviors?: string[];
   onQuickAdd?: () => void;
   onAddStudent?: (defaults: Partial<Student>) => void;
+  onDeleteStudent?: (id: string) => void;
   role?: UserRole;
   onClearCategory?: (cats: StudentCategory[]) => void;
+  settings?: AppSettings;
 }
 
 const robustParseDate = (dateStr: string): Date | null => {
@@ -120,8 +122,8 @@ const getAssistantBgColor = (assistant: string): string => {
 
 export const StudentTable: React.FC<StudentTableProps> = ({ 
   students, columns, onUpdate, onUpdateColumns, filters, setFilters, 
-  uniqueTeachers = [], uniqueAssistants = [], uniqueTimes = [], uniqueLevels = [], onQuickAdd, onAddStudent,
-  role, onClearCategory
+  uniqueTeachers = [], uniqueAssistants = [], uniqueTimes = [], uniqueLevels = [], onQuickAdd, onAddStudent, onDeleteStudent,
+  role, onClearCategory, settings
 }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isFrozen, setIsFrozen] = useState(false); 
@@ -433,15 +435,28 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                           }
 
                           return (
-                            <tr key={s.id} className={`h-9 transition-all hover:brightness-95`} style={{ backgroundColor: rowBg, color: textColor }}>
+                            <tr key={s.id} className={`h-8 transition-all hover:brightness-95`} style={{ backgroundColor: rowBg, color: textColor }}>
                                 <td className={`text-center border-r border-white/5 ${isFrozen ? 'sticky left-0 z-20 shadow-[1px_0_0_0_rgba(255,255,255,0.05)]' : ''}`} style={{ left: isFrozen ? 0 : undefined, backgroundColor: rowBg }}>
-                                    <button onClick={() => { const ns = new Set(selectedIds); ns.has(s.id) ? ns.delete(s.id) : ns.add(s.id); setSelectedIds(ns); }}>
-                                      {selectedIds.has(s.id) ? <CheckSquare size={14} className="text-primary-600" /> : <Square size={14} className="text-slate-400/30" />}
-                                    </button>
+                                    <div className="flex items-center justify-center h-full">
+                                        <button onClick={() => { const ns = new Set(selectedIds); ns.has(s.id) ? ns.delete(s.id) : ns.add(s.id); setSelectedIds(ns); }}>
+                                          {selectedIds.has(s.id) ? <CheckSquare size={14} className="text-primary-600" /> : <Square size={14} className="text-slate-400/30" />}
+                                        </button>
+                                    </div>
                                 </td>
-                                <td className={`text-center text-[10px] font-black border-r border-slate-200/30 ${isFrozen ? 'sticky left-[45px] z-20 shadow-[1px_0_0_0_#cbd5e1]' : ''}`} style={{ left: isFrozen ? 45 : undefined, backgroundColor: rowBg, color: '#94a3b8' }}>{i + 1}</td>
-                                <td className={`px-0 border-r border-slate-200/30 ${isFrozen ? 'sticky left-[85px] z-20 shadow-[1px_0_0_0_#cbd5e1]' : ''}`} style={{ left: isFrozen ? 85 : undefined, backgroundColor: rowBg }}>
-                                    <MultilineInput value={s.name} onChange={val => updateField(s.id, 'name', val)} className="w-full bg-transparent outline-none focus:bg-white/40 text-[11px] font-black tracking-tight px-3 py-1 scrollbar-none" style={{ color: textColor }} />
+                                <td className={`text-center text-[10px] font-black border-r border-slate-200/30 ${isFrozen ? 'sticky left-[45px] z-20 shadow-[1px_0_0_0_#cbd5e1]' : ''}`} style={{ left: isFrozen ? 45 : undefined, backgroundColor: rowBg, color: '#94a3b8' }}>
+                                    <div className="flex items-center justify-center min-h-[32px] leading-tight">
+                                        {i + 1}
+                                    </div>
+                                </td>
+                                 <td className={`px-0 border-r border-slate-200/30 ${isFrozen ? 'sticky left-[85px] z-20 shadow-[1px_0_0_0_#cbd5e1]' : ''}`} style={{ left: isFrozen ? 85 : undefined, backgroundColor: rowBg }}>
+                                    <div className="flex items-center min-h-[32px] w-full">
+                                        <MultilineInput 
+                                          value={s.name} 
+                                          onChange={val => updateField(s.id, 'name', val)} 
+                                          className="w-full bg-transparent outline-none focus:bg-white/40 font-black tracking-tight px-3 py-1 scrollbar-none leading-tight" 
+                                          style={{ color: textColor, fontSize: settings?.fontSize ? `${settings.fontSize}px` : '11px' }} 
+                                        />
+                                    </div>
                                 </td>
                                 
                                 {columns.map((col, idx) => {
@@ -451,12 +466,14 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                           className={`p-0 border-r border-slate-200/20`}
                                           style={{ backgroundColor: rowBg }}
                                       >
-                                          <MultilineInput 
-                                              value={String(s[col.key] || '')} 
-                                              onChange={val => updateField(s.id, col.key, val)} 
-                                              className="w-full bg-transparent outline-none focus:bg-white/40 text-[11px] font-black tracking-tight transition-colors px-3 py-1 scrollbar-none"
-                                              style={{ color: textColor }}
-                                          />
+                                          <div className="flex items-center min-h-[32px] w-full">
+                                              <MultilineInput 
+                                                  value={String(s[col.key] || '')} 
+                                                  onChange={val => updateField(s.id, col.key, val)} 
+                                                  className="w-full bg-transparent outline-none focus:bg-white/40 font-black tracking-tight transition-colors px-3 py-1 scrollbar-none leading-tight"
+                                                  style={{ color: textColor, fontSize: settings?.fontSize ? `${settings.fontSize}px` : '11px' }}
+                                              />
+                                          </div>
                                       </td>
                                     );
                                 })}
@@ -477,7 +494,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                         <button onClick={() => updateField(s.id, 'isHidden', !s.isHidden)} className={`p-1.5 rounded-lg transition-all ${s.isHidden ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-indigo-600'}`}>
                                             {s.isHidden ? <Eye size={16}/> : <EyeOff size={16}/>}
                                         </button>
-                                        <button onClick={() => confirm('Delete record?') && onUpdate(students.filter(st => st.id !== s.id))} className={`p-1.5 transition-all text-red-200 hover:text-red-500`}><Trash2 size={16} /></button>
+                                        <button onClick={() => onDeleteStudent?.(s.id)} className={`p-1.5 transition-all text-red-200 hover:text-red-500`}><Trash2 size={16} /></button>
                                     </div>
                                 </td>
                             </tr>

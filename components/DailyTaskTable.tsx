@@ -14,7 +14,11 @@ import {
   MoreVertical,
   Trash2,
   Trash,
-  LayoutGrid
+  LayoutGrid,
+  Eye,
+  EyeOff,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 import { 
   format, 
@@ -25,7 +29,7 @@ import {
   addWeeks, 
   subWeeks 
 } from 'date-fns';
-import { Student, AppData, FilterState, Tab, UserRole } from '../types';
+import { Student, AppData, FilterState, Tab, UserRole, AppSettings } from '../types';
 
 const MultilineInput: React.FC<{
   value: string;
@@ -40,7 +44,7 @@ const MultilineInput: React.FC<{
     if (textareaRef.current) {
       textareaRef.current.style.height = '0px';
       const scrollHeight = textareaRef.current.scrollHeight;
-      textareaRef.current.style.height = Math.max(36, scrollHeight) + 'px';
+      textareaRef.current.style.height = scrollHeight + 'px';
     }
   }, [value]);
 
@@ -69,8 +73,10 @@ interface DailyTaskTableProps {
   setFilters?: (f: FilterState) => void;
   onUpdate: (data: AppData) => void;
   onAddStudent: (defaults: Partial<Student>) => void;
+  onDeleteStudent?: (id: string) => void;
   role: UserRole;
   onClearCategory?: (categories: string[]) => void;
+  settings?: AppSettings;
 }
 
 export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
@@ -80,10 +86,13 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
   setFilters,
   onUpdate,
   onAddStudent,
+  onDeleteStudent,
   role,
-  onClearCategory
+  onClearCategory,
+  settings
 }) => {
   const [viewDate, setViewDate] = useState(new Date());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Week Interval
   const weekStart = startOfWeek(viewDate, { weekStartsOn: 1 }); // Monday
@@ -106,6 +115,10 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
       if (filters.time && !s.time?.toUpperCase().includes(filters.time.toUpperCase()) && !s.shift?.toUpperCase().includes(filters.time.toUpperCase())) return false;
       if (filters.teacher && !s.teachers?.toUpperCase().includes(filters.teacher.toUpperCase())) return false;
       if (filters.assistant && !s.assistant?.toUpperCase().includes(filters.assistant.toUpperCase())) return false;
+      
+      const matchesHidden = filters.showHidden || !s.isHidden;
+      if (!matchesHidden) return false;
+      
       return true;
     }).sort((a, b) => (a.order || 0) - (b.order || 0));
   }, [students, filters]);
@@ -199,12 +212,7 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
   };
 
   const removeEntry = (id: string) => {
-    if (confirm("Remove this teacher assignment?")) {
-      onUpdate({
-        ...data,
-        students: students.filter(s => s.id !== id)
-      });
-    }
+    onDeleteStudent?.(id);
   };
 
   const filterSelectStyle = "bg-white/80 border border-slate-300/30 rounded-xl pl-8 pr-3 py-1.5 text-[10px] font-black uppercase text-slate-800 outline-none shadow-sm transition-all focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 hover:bg-white cursor-pointer h-9 appearance-none";
@@ -242,6 +250,28 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
         </div>
 
         <div className="flex items-center gap-2 flex-1 justify-end shrink-0">
+          <button 
+            onClick={() => setFilters?.({...filters, showHidden: !filters.showHidden})}
+            className={`p-2.5 rounded-xl flex items-center justify-center transition-all shadow-sm border ${filters.showHidden ? 'bg-[#1B254B] text-white border-[#1B254B]' : 'bg-white text-slate-400 border-slate-100 hover:bg-slate-50'}`}
+            title={filters.showHidden ? "Hide Tasks" : "Show Tasks"}
+          >
+            {filters.showHidden ? <Eye size={18} /> : <EyeOff size={18} />}
+          </button>
+          
+          {selectedIds.size > 0 && (
+            <button 
+              onClick={() => {
+                if (confirm(`Delete ${selectedIds.size} selected tasks?`)) {
+                  selectedIds.forEach(id => onDeleteStudent?.(id));
+                  setSelectedIds(new Set());
+                }
+              }}
+              className="px-4 h-9 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 shadow-lg"
+            >
+               <Trash2 size={14} /> DELETE ({selectedIds.size})
+            </button>
+          )}
+
           {role === 'Admin' && (
             <button 
               onClick={() => onClearCategory?.(['DailyTask'])}
@@ -316,8 +346,13 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
           <table className="w-full border-collapse table-fixed min-w-[1000px]">
             <thead className="sticky top-0 z-40 bg-white/[0.01] backdrop-blur-[1px]">
               <tr className="border-b border-white/5">
-                <th className="w-10 px-2 py-4 text-center text-[9px] font-black uppercase text-slate-900 border-r border-white/5 sticky left-0 z-50 bg-white/[0.01] backdrop-blur-[1px]">#</th>
-                <th className="w-48 px-4 py-4 text-left text-[9px] font-black uppercase text-slate-900 border-r border-white/5 sticky left-10 z-50 bg-white/[0.01] backdrop-blur-[1px]">Task Name</th>
+                <th className="w-10 px-2 py-4 text-center border-r border-white/5 sticky left-0 z-50 bg-white/[0.01] backdrop-blur-[1px]">
+                   <button onClick={() => setSelectedIds(selectedIds.size === filteredStudents.length ? new Set() : new Set(filteredStudents.map(s => s.id)))}>
+                     {selectedIds.size > 0 ? <CheckSquare size={14} className="text-orange-500 mx-auto" /> : <Square size={14} className="text-slate-900/30 mx-auto" />}
+                   </button>
+                </th>
+                <th className="w-10 px-2 py-4 text-center text-[9px] font-black uppercase text-slate-900 border-r border-white/5 sticky left-10 z-50 bg-white/[0.01] backdrop-blur-[1px]">#</th>
+                <th className="w-48 px-4 py-4 text-left text-[9px] font-black uppercase text-slate-900 border-r border-white/5 sticky left-20 z-50 bg-white/[0.01] backdrop-blur-[1px]">Task Name</th>
                 <th className="w-24 px-2 py-4 text-center text-[9px] font-black uppercase text-slate-900 border-r border-white/5 backdrop-blur-[1px]">Level</th>
                 <th className="w-24 px-2 py-4 text-center text-[9px] font-black uppercase text-slate-900 border-r border-white/5 backdrop-blur-[1px]">Shift</th>
                 <th className="w-24 px-2 py-4 text-center text-[9px] font-black uppercase text-slate-900 border-r border-white/5 backdrop-blur-[1px]">Teacher</th>
@@ -351,22 +386,36 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                   </td>
                 </tr>
               ) : filteredStudents.map((s, idx) => (
-                <tr key={s.id} className={`transition-colors group h-12 ${getRowBg(idx)} hover:brightness-95`}>
-                  <td className="text-center text-[9px] font-black text-slate-500 border-r border-slate-100 sticky left-0 z-30 bg-inherit">{idx + 1}</td>
-                  <td className={`px-2 border-r border-slate-100 sticky left-10 z-30 group-hover:opacity-90 transition-opacity border-l-[4px] ${getLevelBorderColor(s.level)} bg-inherit`}>
-                    <MultilineInput 
-                      value={s.name} 
-                      onChange={val => updateField(s.id, 'name', val)}
-                      placeholder="Task Name"
-                      className="w-full h-full px-2 py-2 bg-transparent text-slate-900 text-[11px] font-black outline-none placeholder:text-slate-400"
-                    />
+                <tr key={s.id} className={`transition-colors group h-8 ${getRowBg(idx)} hover:brightness-95 ${s.isHidden ? 'opacity-30' : ''}`}>
+                  <td className="text-center border-r border-slate-100 sticky left-0 z-30 bg-inherit w-10 px-0">
+                    <div className="flex items-center justify-center min-h-[32px]">
+                       <button onClick={() => { const ns = new Set(selectedIds); ns.has(s.id) ? ns.delete(s.id) : ns.add(s.id); setSelectedIds(ns); }}>
+                          {selectedIds.has(s.id) ? <CheckSquare size={14} className="text-orange-600 mx-auto" /> : <Square size={14} className="text-slate-400/30 mx-auto" />}
+                       </button>
+                    </div>
+                  </td>
+                  <td className="text-center text-[9px] font-black text-slate-500 border-r border-slate-100 sticky left-10 z-30 bg-inherit w-10 px-0">
+                    <div className="flex items-center justify-center min-h-[32px]">
+                      {idx + 1}
+                    </div>
+                  </td>
+                  <td className={`px-2 border-r border-slate-100 sticky left-20 z-30 group-hover:opacity-90 transition-opacity border-l-[4px] ${getLevelBorderColor(s.level)} bg-inherit`}>
+                    <div className="flex items-center min-h-[32px] w-full">
+                      <MultilineInput 
+                        value={s.name} 
+                        onChange={val => updateField(s.id, 'name', val)}
+                        placeholder="Task Name"
+                        className="w-full px-2 py-1 bg-transparent text-slate-900 font-black outline-none placeholder:text-slate-400 leading-tight"
+                        style={{ fontSize: settings?.fontSize ? `${settings.fontSize}px` : '11px' }}
+                      />
+                    </div>
                   </td>
                   <td className="border-r border-slate-100">
                     <MultilineInput 
                       value={s.level || ''} 
                       onChange={val => updateField(s.id, 'level', val)}
                       placeholder="Level"
-                      className="w-full h-full px-2 py-2 bg-transparent text-slate-900 text-[10px] font-black outline-none text-center placeholder:text-slate-400"
+                      className="w-full h-full px-2 py-1 bg-transparent text-slate-900 text-[10px] font-black outline-none text-center placeholder:text-slate-400"
                     />
                   </td>
                   <td className="border-r border-slate-100">
@@ -385,7 +434,7 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                       value={s.teachers || ''} 
                       onChange={val => updateField(s.id, 'teachers', val)}
                       placeholder="Teacher"
-                      className="w-full h-full px-2 py-2 bg-transparent text-slate-900 text-[10px] font-black outline-none text-center placeholder:text-slate-400"
+                      className="w-full h-full px-2 py-1 bg-transparent text-slate-900 text-[10px] font-black outline-none text-center placeholder:text-slate-400"
                     />
                   </td>
                   <td className="border-r border-slate-100">
@@ -393,7 +442,7 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                       value={s.assistant || ''} 
                       onChange={val => updateField(s.id, 'assistant', val)}
                       placeholder="Assistant"
-                      className="w-full h-full px-2 py-2 bg-transparent text-slate-900 text-[10px] font-black outline-none text-center placeholder:text-slate-400"
+                      className="w-full h-full px-2 py-1 bg-transparent text-slate-900 text-[10px] font-black outline-none text-center placeholder:text-slate-400"
                     />
                   </td>
                   <td className="border-r border-slate-100 px-2">
@@ -437,9 +486,14 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                   })}
 
                   <td className="text-center">
-                    <button onClick={() => removeEntry(s.id)} className="p-1.5 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
-                      <Trash size={12} />
-                    </button>
+                    <div className="flex items-center justify-center gap-1">
+                      <button onClick={() => updateField(s.id, 'isHidden', !s.isHidden)} className={`p-1.5 transition-all ${s.isHidden ? 'text-indigo-600' : 'text-slate-300 hover:text-indigo-600'}`}>
+                        {s.isHidden ? <Eye size={12} /> : <EyeOff size={12} />}
+                      </button>
+                      <button onClick={() => removeEntry(s.id)} className="p-1.5 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                        <Trash size={12} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -21,7 +21,8 @@ import {
   Trash2,
   FileText,
   RotateCcw,
-  RotateCw
+  RotateCw,
+  Settings2
 } from 'lucide-react';
 import { Tab, UserRole, AppSettings, ViewMode, StudentCategory, AppData } from '../types';
 
@@ -275,8 +276,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Footer Area */}
         <div className="p-4 bg-white/[0.03] border-t border-white/5 space-y-2 no-print shrink-0 backdrop-blur-[2px]">
-          <div className="px-2 pb-2">
-            <p className="text-[9px] font-black text-slate-900 uppercase tracking-widest mb-3">Customization</p>
+          <div className="px-2 pb-2 space-y-4">
+            <p className="text-[9px] font-black text-slate-900 uppercase tracking-widest mb-1">Customization</p>
+            
             <div className="flex gap-2">
               <button 
                 onClick={() => fileInputRef.current?.click()}
@@ -290,6 +292,44 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <Trash2 size={16} />
                 </button>
               )}
+            </div>
+
+            {/* Font Styling in Sidebar */}
+            <div className="bg-slate-50/50 p-3 rounded-2xl border border-slate-200/50 space-y-3">
+              <div className="flex items-center gap-2 text-slate-700 mb-1">
+                <Settings2 size={14} />
+                <span className="text-[10px] font-black uppercase tracking-wider">Font Styling</span>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold text-slate-500 ml-1 uppercase">Font Family</label>
+                  <div className="relative">
+                    <select 
+                      value={settings?.fontFamily || 'Inter'}
+                      onChange={(e) => onUpdateSettings?.({ ...(settings || { fontSize: 12, fontFamily: 'Inter' }), fontFamily: e.target.value })}
+                      className="w-full bg-white border border-slate-200 rounded-lg py-2 px-3 text-[11px] font-bold outline-none focus:ring-2 focus:ring-orange-200 appearance-none pr-8"
+                    >
+                      <option value="Inter">Modern (Hall Study)</option>
+                      <option value="Space Grotesk">Display (DPSS)</option>
+                      <option value="Playfair Display">Elegant</option>
+                      <option value="JetBrains Mono">Technical</option>
+                      <option value="cursive">Handwritten</option>
+                    </select>
+                    <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  </div>
+                </div>
+                
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-bold text-slate-500 ml-1 uppercase leading-none">Font Size for DPSS ({settings?.fontSize || 12}px)</label>
+                  <input 
+                    type="range" min="10" max="32" 
+                    value={settings?.fontSize || 12} 
+                    onChange={(e) => onUpdateSettings?.({ ...(settings || { fontSize: 12, fontFamily: 'Inter' }), fontSize: parseInt(e.target.value) })}
+                    className="w-full accent-orange-500 cursor-pointer h-4"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

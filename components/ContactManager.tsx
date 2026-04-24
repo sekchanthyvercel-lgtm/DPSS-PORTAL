@@ -111,10 +111,10 @@ export const ContactManager: React.FC<Props> = ({ isOpen, onClose, data, onUpdat
                                 <Send className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500" size={14} />
                                 <input 
                                     type="text"
-                                    placeholder="Telegram User (no @)"
+                                    placeholder="Telegram User"
                                     className="w-full pl-8 pr-3 py-1.5 text-sm border border-slate-200 rounded focus:ring-1 focus:ring-emerald-500 outline-none"
                                     value={directory[name]?.telegram || ''}
-                                    onChange={e => handleChange(name, 'telegram', e.target.value.replace('@', ''))}
+                                    onChange={e => handleChange(name, 'telegram', e.target.value)}
                                 />
                             </div>
                         </div>
