@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { StudentTable } from './components/StudentTable';
 import { PenaltyTable } from './components/PenaltyTable';
 import { DailyTaskTable } from './components/DailyTaskTable';
-import { AIStudio } from './components/AIStudio';
 import { LandingPage } from './components/LandingPage';
 import { AIModal } from './components/AIModal';
 import { AttendanceTable } from './components/AttendanceTable';
@@ -17,7 +16,7 @@ import DPSSTable from './components/DPSSTable';
 import { RecycleBin } from './components/RecycleBin';
 import { AppData, Student, CurrentUser, UserRole, ColumnConfig, Tab, ViewMode, AppSettings, StudentCategory } from './types';
 import { subscribeToData, saveData } from './services/firebase';
-import { Menu, MessageSquare, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { addMonths, format } from 'date-fns';
 
@@ -56,7 +55,6 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.Hall);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isAiOpen, setIsAiOpen] = useState(false);
-  const [isAiStudioOpen, setIsAiStudioOpen] = useState(false);
   const [isContactsOpen, setIsContactsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('Default');
@@ -407,18 +405,6 @@ const App: React.FC = () => {
         onUpdate={(dir) => handleUpdate({...data, staffDirectory: dir})} 
       />
 
-      {isAiStudioOpen && (
-        <div className="fixed inset-0 z-[100] flex justify-end">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setIsAiStudioOpen(false)}></div>
-          <div className="relative w-full max-w-4xl h-full bg-white shadow-2xl animate-in slide-in-from-right duration-300">
-             <button onClick={() => setIsAiStudioOpen(false)} className="absolute top-4 right-4 z-10 p-2 hover:bg-slate-100 rounded-full transition-all">
-               <X size={24} className="text-slate-400" />
-             </button>
-             <AIStudio />
-          </div>
-        </div>
-      )}
-
       <SupermanAnimation students={data.students} />
 
       <main 
@@ -547,9 +533,6 @@ const App: React.FC = () => {
       </main>
 
       <div className="fixed bottom-6 right-6 flex flex-col gap-3 no-print z-50">
-          <button onClick={() => setIsAiStudioOpen(true)} className="w-14 h-14 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-2 border-white">
-            <MessageSquare size={24} />
-          </button>
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="w-14 h-14 bg-white text-slate-400 rounded-full shadow-2xl flex items-center justify-center hover:text-primary-500 hover:scale-110 active:scale-95 transition-all border-2 border-slate-100">
             <Menu size={24} />
           </button>

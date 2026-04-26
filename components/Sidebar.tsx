@@ -81,6 +81,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setFilters({ ...filters, [key]: value });
   };
 
+  const [isSettingsExpanded, setIsSettingsExpanded] = React.useState(false);
+
   const handleTabSelect = (tab: Tab) => {
     setActiveTab(tab);
     if (window.innerWidth < 768) {
@@ -275,77 +277,101 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Footer Area */}
-        <div className="p-4 bg-white/[0.03] border-t border-white/5 space-y-2 no-print shrink-0 backdrop-blur-[2px]">
-          <div className="px-2 pb-2 space-y-4">
-            <p className="text-[9px] font-black text-slate-900 uppercase tracking-widest mb-1">Customization</p>
-            
-            <div className="flex gap-2">
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white/10 border border-white/20 rounded-xl text-slate-800 hover:text-orange-600 hover:border-orange-200 transition-all text-[9px] font-black uppercase"
-              >
-                <ImageIcon size={14} /> Background
-              </button>
-              <input type="file" ref={fileInputRef} onChange={handleBackgroundUpload} className="hidden" accept="image/*" />
-              {settings?.backgroundImage && (
-                <button onClick={removeBackground} className="w-10 h-10 flex items-center justify-center bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl hover:bg-red-500 hover:text-white transition-all">
-                  <Trash2 size={16} />
-                </button>
-              )}
-            </div>
-
-            {/* Font Styling in Sidebar */}
-            <div className="bg-slate-50/50 p-3 rounded-2xl border border-slate-200/50 space-y-3">
-              <div className="flex items-center gap-2 text-slate-700 mb-1">
-                <Settings2 size={14} />
-                <span className="text-[10px] font-black uppercase tracking-wider">Font Styling</span>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="flex flex-col gap-1">
-                  <label className="text-[9px] font-bold text-slate-500 ml-1 uppercase">Font Family</label>
-                  <div className="relative">
-                    <select 
-                      value={settings?.fontFamily || 'Inter'}
-                      onChange={(e) => onUpdateSettings?.({ ...(settings || { fontSize: 12, fontFamily: 'Inter' }), fontFamily: e.target.value })}
-                      className="w-full bg-white border border-slate-200 rounded-lg py-2 px-3 text-[11px] font-bold outline-none focus:ring-2 focus:ring-orange-200 appearance-none pr-8"
+        <div className="p-4 bg-white/[0.03] border-t border-white/5 space-y-3 no-print shrink-0 backdrop-blur-[2px]">
+          {isSettingsExpanded && (
+            <div className="px-2 pb-2 space-y-6 animate-in slide-in-from-bottom-4 duration-300">
+              {/* Customization */}
+              <div className="space-y-3">
+                <p className="text-[10px] font-black text-slate-900 uppercase tracking-[3px] ml-1">Customization</p>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-white/40 border border-white/40 rounded-2xl text-slate-800 hover:bg-white/60 transition-all text-[10px] font-black uppercase tracking-wider shadow-sm"
+                  >
+                    <ImageIcon size={16} /> Background
+                  </button>
+                  <input type="file" ref={fileInputRef} onChange={handleBackgroundUpload} className="hidden" accept="image/*" />
+                  {settings?.backgroundImage && (
+                    <button 
+                        onClick={removeBackground} 
+                        className="w-12 h-12 flex items-center justify-center bg-red-500/10 text-red-500 border border-red-500/20 rounded-2xl hover:bg-red-500 hover:text-white transition-all shadow-sm"
                     >
-                      <option value="Inter">Modern (Hall Study)</option>
-                      <option value="Space Grotesk">Display (DPSS)</option>
-                      <option value="Playfair Display">Elegant</option>
-                      <option value="JetBrains Mono">Technical</option>
-                      <option value="cursive">Handwritten</option>
-                    </select>
-                    <ChevronDown size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                  </div>
+                      <Trash2 size={18} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Font Styling Card */}
+              <div className="bg-white/40 p-5 rounded-[28px] border border-white/40 shadow-sm space-y-5">
+                <div className="flex items-center gap-2 text-slate-800">
+                  <Settings2 size={16} />
+                  <span className="text-[11px] font-black uppercase tracking-wider">Font Styling</span>
                 </div>
                 
-                <div className="flex flex-col gap-1">
-                  <label className="text-[9px] font-bold text-slate-500 ml-1 uppercase leading-none">Font Size for DPSS ({settings?.fontSize || 12}px)</label>
-                  <input 
-                    type="range" min="10" max="32" 
-                    value={settings?.fontSize || 12} 
-                    onChange={(e) => onUpdateSettings?.({ ...(settings || { fontSize: 12, fontFamily: 'Inter' }), fontSize: parseInt(e.target.value) })}
-                    className="w-full accent-orange-500 cursor-pointer h-4"
-                  />
+                <div className="space-y-5">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[9px] font-black text-slate-500 ml-1 uppercase tracking-widest">Font Family</label>
+                    <div className="relative">
+                      <select 
+                        value={settings?.fontFamily || 'Inter'}
+                        onChange={(e) => onUpdateSettings?.({ ...(settings || { fontSize: 12, fontFamily: 'Inter' }), fontFamily: e.target.value })}
+                        className="w-full bg-white border border-slate-200 rounded-xl py-3 px-4 text-xs font-black outline-none focus:ring-4 focus:ring-orange-500/10 appearance-none pr-10 shadow-sm"
+                      >
+                        <option value="Inter">Modern (Hall Study)</option>
+                        <option value="Space Grotesk">Display (DPSS)</option>
+                        <option value="Playfair Display">Elegant</option>
+                        <option value="JetBrains Mono">Technical</option>
+                        <option value="cursive">Handwritten</option>
+                      </select>
+                      <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[9px] font-black text-slate-500 ml-1 uppercase tracking-widest leading-none">
+                      Font Size for DPSS ({settings?.fontSize || 12}px)
+                    </label>
+                    <input 
+                      type="range" min="10" max="32" 
+                      value={settings?.fontSize || 12} 
+                      onChange={(e) => onUpdateSettings?.({ ...(settings || { fontSize: 12, fontFamily: 'Inter' }), fontSize: parseInt(e.target.value) })}
+                      className="w-full accent-orange-500 cursor-pointer h-1.5 bg-slate-200 rounded-full"
+                    />
+                  </div>
                 </div>
               </div>
+
+              {/* Staff Contacts & Logout */}
+              <div className="space-y-1">
+                <button 
+                  onClick={onContactsOpen}
+                  className="flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-600 hover:text-slate-900 hover:bg-white/40 transition-all w-full group"
+                >
+                  <Contact size={20} className="group-hover:scale-110 transition-transform" />
+                  <span className="text-[11px] font-black uppercase tracking-widest leading-none">Staff Contacts</span>
+                </button>
+                <button 
+                  onClick={onLogout}
+                  className="flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-600 hover:text-red-500 hover:bg-red-50/20 transition-all w-full group"
+                >
+                  <LogOut size={20} className="group-hover:scale-110 transition-transform" />
+                  <span className="text-[11px] font-black uppercase tracking-widest leading-none">Logout</span>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           <button 
-            onClick={onContactsOpen}
-            className="flex items-center gap-3 px-5 py-3 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-white/10 transition-all w-full"
+            onClick={() => setIsSettingsExpanded(!isSettingsExpanded)}
+            className={`w-full py-5 rounded-[24px] flex items-center justify-center gap-4 transition-all border shadow-sm ${
+              isSettingsExpanded 
+                ? 'bg-[#1B254B] text-white border-transparent' 
+                : 'bg-white/40 border-white/20 text-orange-600 hover:bg-white/60 hover:scale-[1.02]'
+            }`}
           >
-            <Contact size={18} />
-            <span className="text-[10px] font-black uppercase tracking-widest">Staff Contacts</span>
-          </button>
-          <button 
-            onClick={onLogout}
-            className="flex items-center gap-3 px-5 py-3 rounded-xl text-slate-600 hover:text-red-500 hover:bg-red-50/10 transition-all w-full"
-          >
-            <LogOut size={18} />
-            <span className="text-[10px] font-black uppercase tracking-widest">Logout</span>
+            <Settings2 size={22} className={isSettingsExpanded ? 'animate-spin-slow' : ''} />
+            <span className="text-[11px] font-black uppercase tracking-[3px]">Settings</span>
           </button>
         </div>
       </aside>

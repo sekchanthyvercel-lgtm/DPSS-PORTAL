@@ -20,7 +20,8 @@ import {
   CheckSquare,
   Square,
   Lock,
-  Unlock
+  Unlock,
+  Clock
 } from 'lucide-react';
 import { 
   format, 
@@ -245,297 +246,218 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
 
   return (
     <div className="flex-1 flex flex-col bg-transparent overflow-hidden p-2 md:p-4 lg:p-6">
-      <div className="bg-white/[0.01] backdrop-blur-[1px] rounded-[32px] p-6 mb-6 shadow-2xl shadow-indigo-900/10 border border-white/5 flex flex-wrap items-center justify-between gap-4 transition-all hover:bg-white/5">
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
-            <ClipboardList size={20} strokeWidth={3} />
-          </div>
-          <div>
-            <h2 className="text-base font-black text-slate-950 uppercase tracking-tighter leading-none">Daily Task</h2>
-            <p className="text-[9px] font-black text-slate-900 uppercase mt-1 tracking-[2px]">Task Tracker</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center bg-white/[0.05] p-1 rounded-xl border border-white/10 backdrop-blur-[4px]">
-             <button onClick={() => setViewDate(subWeeks(viewDate, 1))} className="p-1.5 text-slate-600 hover:text-orange-600 transition-colors">
-               <ChevronLeft size={16} />
-             </button>
-             <div className="px-4 text-center min-w-[120px]">
-               <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
-                 {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d')}
-               </p>
-             </div>
-             <button onClick={() => setViewDate(addWeeks(viewDate, 1))} className="p-1.5 text-slate-600 hover:text-orange-600 transition-colors">
-               <ChevronRight size={16} />
-             </button>
-          </div>
-          <button className="p-2 bg-white/[0.05] border border-white/10 rounded-xl text-slate-600 hover:text-orange-600 transition-all shadow-sm backdrop-blur-[4px]">
-            <Calendar size={16} />
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2 flex-1 justify-end shrink-0">
-          <button 
-            onClick={() => setFilters?.({...filters, showHidden: !filters.showHidden})}
-            className={`p-2.5 rounded-xl flex items-center justify-center transition-all shadow-sm border ${filters.showHidden ? 'bg-[#1B254B] text-white border-[#1B254B]' : 'bg-white text-slate-400 border-slate-100 hover:bg-slate-50'}`}
-            title={filters.showHidden ? "Hide Tasks" : "Show Tasks"}
-          >
-            {filters.showHidden ? <Eye size={18} /> : <EyeOff size={18} />}
-          </button>
-          
-          {selectedIds.size > 0 && (
-            <button 
-              onClick={() => {
-                if (confirm(`Delete ${selectedIds.size} selected tasks?`)) {
-                  selectedIds.forEach(id => onDeleteStudent?.(id));
-                  setSelectedIds(new Set());
-                }
-              }}
-              className="px-4 h-9 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 shadow-lg"
-            >
-               <Trash2 size={14} /> DELETE ({selectedIds.size})
-            </button>
-          )}
-
-          {role === 'Admin' && (
-            <button 
-              onClick={() => onClearCategory?.(['DailyTask'])}
-              className="w-9 h-9 bg-orange-50 text-orange-500 border border-orange-100 rounded-xl flex items-center justify-center hover:bg-orange-500 hover:text-white transition-all shadow-sm"
-              title="Clear All Tasks"
-            >
-              <Trash2 size={16} />
-            </button>
-          )}
-
-          <button onClick={() => setIsFrozen(!isFrozen)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-black uppercase text-[9px] transition-all border backdrop-blur-md ${isFrozen ? 'bg-amber-500/80 text-white border-amber-600 shadow-md' : 'bg-white/10 text-slate-900 border-white/20 hover:bg-white/20'}`}>
-            {isFrozen ? <Lock size={12}/> : <Unlock size={12}/>} {isFrozen ? 'FROZEN' : 'FREEZE'}
-          </button>
-
-          <button 
-            onClick={() => onAddStudent({ category: 'DailyTask', shift: 'Morning' })}
-            className="flex items-center gap-2 h-9 px-4 bg-orange-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all"
-          >
-            <Plus size={14} strokeWidth={4} /> Add Task
-          </button>
-        </div>
-
-        {/* Filter Bar */}
-        <div className="w-full basis-full flex flex-wrap items-center gap-3 pt-4 border-t border-slate-300/30 overflow-x-auto no-scrollbar pointer-events-auto shrink-0 relative">
-              <div className="relative w-64 shrink-0">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input 
-                      type="text" 
-                      placeholder="Search tasks..." 
-                      className="w-full h-9 pl-9 pr-3 bg-white border border-slate-300/30 rounded-xl shadow-sm text-[11px] font-bold text-slate-700 outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all placeholder:text-slate-400"
-                      value={filters.searchQuery || ''}
-                      onChange={e => setFilters?.({...filters, searchQuery: e.target.value})}
-                  />
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0 border-l border-slate-300/30 pl-4">
-                  <div className="relative group">
-                      <LayoutGrid size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                      <select value={filters.teacher || ''} onChange={e => setFilters?.({...filters, teacher: e.target.value})} className={filterSelectStyle}>
-                          <option value="">Teachers</option>
-                          {Array.from(new Set(students.filter(s => s.category === 'DailyTask').map(s => s.teachers?.split('&')?.[0]?.trim()).filter(Boolean))).sort().map(t => <option key={t} value={t}>{t}</option>)}
-                      </select>
-                  </div>
-                  <div className="relative group">
-                      <LayoutGrid size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                      <select value={filters.assistant || ''} onChange={e => setFilters?.({...filters, assistant: e.target.value})} className={filterSelectStyle}>
-                          <option value="">Assistants</option>
-                          {Array.from(new Set(students.filter(s => s.category === 'DailyTask').map(s => s.assistant?.trim()).filter(Boolean))).sort().map(a => <option key={a} value={a}>{a}</option>)}
-                      </select>
-                  </div>
-                  <div className="relative group">
-                      <LayoutGrid size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                      <select value={filters.level || ''} onChange={e => setFilters?.({...filters, level: e.target.value})} className={filterSelectStyle}>
-                          <option value="">All Levels</option>
-                          {Array.from(new Set(students.filter(s => s.category === 'DailyTask').map(s => s.level?.trim()).filter(Boolean))).sort().map(l => <option key={l} value={l}>{l}</option>)}
-                      </select>
-                  </div>
-                  <div className="relative group">
-                      <LayoutGrid size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                      <select value={filters.time || ''} onChange={e => setFilters?.({...filters, time: e.target.value})} className={filterSelectStyle}>
-                          <option value="">All Shifts</option>
-                          {Array.from(new Set(students.filter(s => s.category === 'DailyTask').map(s => s.shift?.trim()).filter(Boolean))).sort().map(tm => <option key={tm} value={tm}>{tm}</option>)}
-                      </select>
-                  </div>
-
-                  <button onClick={() => setFilters?.({...filters, searchQuery: '', level: '', time: '', teacher: '', assistant: ''})} className="p-2 ml-1 bg-white/50 border border-slate-300/30 text-slate-800 hover:bg-white rounded-xl transition-all shadow-sm" title="Clear Filters">
-                      <Trash2 size={16} />
-                  </button>
-              </div>
-        </div>
-      </div>
-
-      {/* Spreadsheet View */}
-      <div className="flex-1 bg-white/[0.01] backdrop-blur-[1px] rounded-[40px] shadow-2xl shadow-indigo-900/10 border border-white/5 overflow-hidden flex flex-col transition-all">
-        <div className="overflow-auto flex-1 custom-scrollbar">
-          <table className="w-full border-collapse table-fixed min-w-[1000px]">
-            <thead className="sticky top-0 z-40 bg-white/[0.01] backdrop-blur-[1px]">
-              <tr className="border-b border-white/5">
-                <th className="w-10 px-2 py-4 text-center border-r border-white/5 sticky top-0 bg-white/[0.01] backdrop-blur-[1px]">
-                   <button onClick={() => setSelectedIds(selectedIds.size === filteredStudents.length ? new Set() : new Set(filteredStudents.map(s => s.id)))}>
-                     {selectedIds.size > 0 ? <CheckSquare size={14} className="text-orange-500 mx-auto" /> : <Square size={14} className="text-slate-900/30 mx-auto" />}
-                   </button>
-                </th>
-                <th className="w-10 px-2 py-4 text-center text-[9px] font-black uppercase text-slate-900 border-r border-white/5 sticky top-0 bg-white/[0.01] backdrop-blur-[1px]">#</th>
-                <th className={`px-4 py-4 text-left text-[9px] font-black uppercase text-slate-900 border-r border-white/5 sticky top-0 z-50 bg-white/[0.01] backdrop-blur-[1px] ${isFrozen ? 'left-0 shadow-[1px_0_0_0_rgba(255,255,255,0.05)]' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
-                  <div className="flex items-center justify-between">
-                    Task Name
-                  </div>
-                  <div onMouseDown={onResizeStart} className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary-400 opacity-0 group-hover:opacity-100 transition-opacity z-50" />
-                </th>
-                <th className="w-24 px-2 py-4 text-center text-[9px] font-black uppercase text-slate-900 border-r border-white/5 backdrop-blur-[1px]">Level</th>
-                <th className="w-24 px-2 py-4 text-center text-[9px] font-black uppercase text-slate-900 border-r border-white/5 backdrop-blur-[1px]">Shift</th>
-                <th className="w-24 px-2 py-4 text-center text-[9px] font-black uppercase text-slate-900 border-r border-white/5 backdrop-blur-[1px]">Teacher</th>
-                <th className="w-24 px-2 py-4 text-center text-[9px] font-black uppercase text-slate-900 border-r border-white/5 backdrop-blur-[1px]">Assistant</th>
-                <th className="w-28 px-2 py-4 text-center text-[9px] font-black uppercase text-slate-900 border-r border-white/5 backdrop-blur-[1px]">Deadline</th>
-                
-                {days.map(day => (
-                  <th key={day.toString()} className="w-36 border-r border-white/5 p-0 overflow-hidden">
-                    <div className="text-center py-1.5 border-b border-white/5 bg-emerald-400/5">
-                      <p className="text-[9px] font-black text-emerald-700">{format(day, 'EEE').toUpperCase()}</p>
-                      <p className="text-[8px] font-bold text-slate-500">{format(day, 'MMM d')}</p>
+        {/* New Sophisticated Header */}
+        <div className="bg-white/10 backdrop-blur-3xl rounded-[40px] p-8 mb-6 shadow-2xl border border-white/20">
+            <div className="flex flex-wrap items-center justify-between gap-6">
+                <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-orange-500/30">
+                        <ClipboardList size={28} strokeWidth={2.5} />
                     </div>
-                    <div className="flex divide-x divide-white/5 h-8">
-                      <div className="flex-1 text-[7px] font-black text-slate-400 uppercase flex items-center justify-center tracking-tighter">T1</div>
-                      <div className="flex-1 text-[7px] font-black text-slate-400 uppercase flex items-center justify-center tracking-tighter">T2</div>
-                    </div>
-                  </th>
-                ))}
-                
-                <th className="w-12 px-2 py-4 text-center text-[9px] font-black uppercase text-slate-500">X</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {filteredStudents.length === 0 ? (
-                <tr>
-                  <td colSpan={12} className="py-20 text-center">
-                    <div className="flex flex-col items-center gap-3 text-slate-300">
-                      <ClipboardList size={40} className="opacity-20" />
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">No tasks assigned</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : filteredStudents.map((s, idx) => (
-                <tr key={s.id} className={`transition-colors group h-8 ${getRowBg(idx)} hover:brightness-95 ${s.isHidden ? 'opacity-30' : ''}`}>
-                  <td className="text-center border-r border-slate-100 w-10 px-0">
-                    <div className="flex items-center justify-center min-h-[32px]">
-                       <button onClick={() => { const ns = new Set(selectedIds); ns.has(s.id) ? ns.delete(s.id) : ns.add(s.id); setSelectedIds(ns); }}>
-                          {selectedIds.has(s.id) ? <CheckSquare size={14} className="text-orange-600 mx-auto" /> : <Square size={14} className="text-slate-400/30 mx-auto" />}
-                       </button>
-                    </div>
-                  </td>
-                  <td className="text-center text-[9px] font-black text-slate-500 border-r border-slate-100 w-10 px-0">
-                    <div className="flex items-center justify-center min-h-[32px]">
-                      {idx + 1}
-                    </div>
-                  </td>
-                  <td className={`px-2 border-r border-slate-100 group transition-opacity border-l-[4px] ${getLevelBorderColor(s.level)} bg-inherit ${isFrozen ? 'sticky left-0 z-30 shadow-[1px_0_0_0_#cbd5e1]' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
-                    <div className="flex items-center min-h-[32px] w-full">
-                      <MultilineInput 
-                        value={s.name} 
-                        onChange={val => updateField(s.id, 'name', val)}
-                        placeholder="Task Name"
-                        className="w-full px-2 py-1 bg-transparent text-slate-900 font-black outline-none placeholder:text-slate-400 leading-tight"
-                        style={{ fontSize: settings?.fontSize ? `${settings.fontSize}px` : '11px' }}
-                      />
-                    </div>
-                  </td>
-                  <td className="border-r border-slate-100">
-                    <MultilineInput 
-                      value={s.level || ''} 
-                      onChange={val => updateField(s.id, 'level', val)}
-                      placeholder="Level"
-                      className="w-full h-full px-2 py-1 bg-transparent text-slate-900 text-[10px] font-black outline-none text-center placeholder:text-slate-400"
-                    />
-                  </td>
-                  <td className="border-r border-slate-100">
-                    <select 
-                      value={s.shift || 'Morning'} 
-                      onChange={e => updateField(s.id, 'shift', e.target.value)}
-                      className="w-full h-full px-1 bg-transparent text-[9px] font-black text-emerald-600 outline-none text-center appearance-none uppercase"
-                    >
-                      <option value="Morning">Morning</option>
-                      <option value="Afternoon">Afternoon</option>
-                      <option value="Evening">Evening</option>
-                    </select>
-                  </td>
-                  <td className="border-r border-slate-100">
-                    <MultilineInput 
-                      value={s.teachers || ''} 
-                      onChange={val => updateField(s.id, 'teachers', val)}
-                      placeholder="Teacher"
-                      className="w-full h-full px-2 py-1 bg-transparent text-slate-900 text-[10px] font-black outline-none text-center placeholder:text-slate-400"
-                    />
-                  </td>
-                  <td className="border-r border-slate-100">
-                    <MultilineInput 
-                      value={s.assistant || ''} 
-                      onChange={val => updateField(s.id, 'assistant', val)}
-                      placeholder="Assistant"
-                      className="w-full h-full px-2 py-1 bg-transparent text-slate-900 text-[10px] font-black outline-none text-center placeholder:text-slate-400"
-                    />
-                  </td>
-                  <td className="border-r border-slate-100 px-2">
-                    <input 
-                      type="date"
-                      value={displayToIso(s.deadline || '')} 
-                      onChange={e => updateField(s.id, 'deadline', isoToDisplay(e.target.value))}
-                      className="w-full bg-transparent text-[10px] font-black text-orange-600 outline-none text-center cursor-pointer"
-                    />
-                  </td>
-
-                  {days.map(day => {
-                    const status1 = data.dailyTasks?.[s.id]?.[`${format(day, 'yyyy-MM-dd')}_1`];
-                    const status2 = data.dailyTasks?.[s.id]?.[`${format(day, 'yyyy-MM-dd')}_2`];
-                    
-                    return (
-                      <td key={day.toString()} className="border-r border-slate-100 p-0 overflow-hidden">
-                        <div className="flex h-full min-h-[48px]">
-                          <button 
-                            onClick={() => toggleTask(s.id, day, 1)}
-                            className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-all group/btn ${getStatusColor(status1)}`}
-                          >
-                            {getStatusIcon(status1)}
-                            <span className="text-[7px] font-black uppercase tracking-tighter opacity-80">
-                              {status1 || '···'}
-                            </span>
-                          </button>
-                          <div className="w-[1px] bg-slate-100/50"></div>
-                          <button 
-                            onClick={() => toggleTask(s.id, day, 2)}
-                            className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-all group/btn ${getStatusColor(status2)}`}
-                          >
-                            {getStatusIcon(status2)}
-                            <span className="text-[7px] font-black uppercase tracking-tighter opacity-80">
-                              {status2 || '···'}
-                            </span>
-                          </button>
+                    <div>
+                        <h1 className="text-3xl font-black text-slate-950 uppercase tracking-tighter leading-none">Executive Mission</h1>
+                        <div className="flex items-center gap-3 mt-2">
+                            <span className="px-2 py-0.5 bg-orange-500 text-white text-[8px] font-black rounded-md uppercase tracking-wider">System Ready</span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[3px]">Strategy Hub</span>
                         </div>
-                      </td>
-                    );
-                  })}
+                    </div>
+                </div>
 
-                  <td className="text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <button onClick={() => updateField(s.id, 'isHidden', !s.isHidden)} className={`p-1.5 transition-all ${s.isHidden ? 'text-indigo-600' : 'text-slate-300 hover:text-indigo-600'}`}>
-                        {s.isHidden ? <Eye size={12} /> : <EyeOff size={12} />}
+                <div className="flex items-center gap-8">
+                    <div className="text-center">
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Efficiency</p>
+                        <p className="text-2xl font-black text-slate-800">0%</p>
+                    </div>
+                    <div className="text-center">
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Velocity</p>
+                        <p className="text-2xl font-black text-slate-800">0/0</p>
+                    </div>
+                    <div className="flex items-center gap-3 ml-4">
+                      <button className="flex items-center gap-2 h-9 px-4 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all">
+                        <Zap size={14} fill="currentColor" /> Strategic Plan
                       </button>
-                      <button onClick={() => removeEntry(s.id)} className="p-1.5 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
-                        <Trash size={12} />
+                      <button onClick={() => onAddStudent({ category: 'DailyTask', shift: 'Morning' })} className="flex items-center gap-2 h-9 px-4 bg-[#1B254B] text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg hover:bg-slate-800 transition-all">
+                        <Plus size={14} strokeWidth={4} /> New Objective
                       </button>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                </div>
+            </div>
+
+                {/* Second Row: Navigation and View Switch */}
+                <div className="flex flex-wrap items-center justify-between gap-4 mt-6">
+                    <div className="flex items-center gap-1 bg-white/20 p-1 rounded-xl border border-white/10 backdrop-blur-md">
+                        {['Daily', 'Weekly', 'Calendar'].map((view) => (
+                            <button 
+                                key={view}
+                                className={`px-4 py-1.5 rounded-lg text-[10px] font-black transition-all ${view === 'Weekly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                            >
+                                {view}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => setViewDate(subWeeks(viewDate, 1))} className="p-2 bg-white/40 rounded-xl hover:bg-white/60 transition-all border border-white/10">
+                            <ChevronLeft size={16} />
+                        </button>
+                        <div className="px-6 py-2 bg-white/40 rounded-xl border border-white/10 font-black text-[11px] text-slate-800 uppercase tracking-widest min-w-[180px] text-center">
+                            {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d')}
+                        </div>
+                        <button onClick={() => setViewDate(addWeeks(viewDate, 1))} className="p-2 bg-white/40 rounded-xl hover:bg-white/60 transition-all border border-white/10">
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <button className="p-2.5 bg-white/40 rounded-xl hover:bg-white/60 transition-all border border-white/10 text-slate-600">
+                             <div className="w-5 h-5 flex items-center justify-center"><Search size={18} /></div>
+                        </button>
+                        <button 
+                            onClick={() => onClearCategory?.(['DailyTask'])}
+                            className="p-2.5 bg-white/40 rounded-xl hover:bg-red-500 hover:text-white transition-all border border-white/10 text-slate-600"
+                            title="Clear All"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Spreadsheet Content */}
+            <div className="flex-1 bg-white/5 backdrop-blur-[2px] rounded-[40px] shadow-2xl overflow-hidden flex flex-col border border-white/10">
+                <div className="overflow-auto flex-1 custom-scrollbar">
+                    <table className="w-full border-collapse table-fixed min-w-[1500px]">
+                        <thead className="sticky top-0 z-40 bg-white/10 backdrop-blur-md">
+                            <tr className="border-b border-white/5 uppercase text-[9px] font-black text-slate-800">
+                                <th className="w-10 py-5 text-center border-r border-white/5">#</th>
+                                <th className={`px-6 py-5 text-left border-r border-white/5 sticky left-0 z-50 bg-inherit ${isFrozen ? 'shadow-[1px_0_0_0_rgba(0,0,0,0.1)]' : ''}`} style={{ width: 280 }}>
+                                    Mission Objective
+                                </th>
+                                <th className="w-28 py-5 text-center border-r border-white/5">Priority</th>
+                                <th className="w-24 py-5 text-center border-r border-white/5">Energy</th>
+                                <th className="w-28 py-5 text-center border-r border-white/5">Phase</th>
+                                <th className="w-24 py-5 text-center border-r border-white/5">Domain</th>
+                                <th className="w-24 py-5 text-center border-r border-white/5">Context</th>
+                                <th className="w-32 py-5 text-center border-r border-white/5">Deadline</th>
+                                
+                                {days.map(day => (
+                                    <th key={day.toString()} className="w-48 border-r border-white/5 p-0">
+                                        <div className="text-center py-2 border-b border-white/5">
+                                            <p className="text-[10px] font-black text-slate-800 tracking-tighter">{format(day, 'EEE').toUpperCase()}</p>
+                                            <p className="text-[8px] font-bold text-slate-500">{format(day, 'MMM d')}</p>
+                                        </div>
+                                        <div className="flex divide-x divide-white/5 h-8">
+                                            <div className="flex-1 text-[7px] font-black text-slate-400 flex items-center justify-center">Slot 01</div>
+                                            <div className="flex-1 text-[7px] font-black text-slate-400 flex items-center justify-center">Slot 02</div>
+                                        </div>
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                            {filteredStudents.map((s, idx) => {
+                                const rowBg = getRowBg(idx);
+                                return (
+                                    <tr key={s.id} className={`h-12 transition-all hover:brightness-95 group ${rowBg} ${s.isHidden ? 'opacity-30' : ''}`}>
+                                        <td className="text-center font-bold text-[10px] text-indigo-900/60 border-r border-white/5">{idx + 1}</td>
+                                        <td className={`px-6 border-r border-white/5 sticky left-0 z-30 transition-all bg-inherit ${isFrozen ? 'shadow-[1px_0_0_0_rgba(0,0,0,0.1)]' : ''}`} style={{ width: 280 }}>
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-1 h-8 rounded-full ${getLevelBorderColor(s.level).replace('border-l-', 'bg-')}`} />
+                                                <MultilineInput 
+                                                    value={s.name} 
+                                                    onChange={val => updateField(s.id, 'name', val)}
+                                                    className="w-full bg-transparent font-black text-slate-900 text-xs outline-none"
+                                                />
+                                            </div>
+                                        </td>
+                                        <td className="border-r border-white/5 px-2">
+                                            <select 
+                                                value={s.priority || 'MEDIUM'} 
+                                                onChange={e => updateField(s.id, 'priority', e.target.value)}
+                                                className="w-full h-8 bg-orange-500/10 text-orange-600 rounded-lg text-[9px] font-black text-center appearance-none cursor-pointer outline-none transition-all hover:bg-orange-500/20"
+                                            >
+                                                <option value="LOW">LOW</option>
+                                                <option value="MEDIUM">MEDIUM</option>
+                                                <option value="HIGH">HIGH</option>
+                                                <option value="CRITICAL">CRITICAL</option>
+                                            </select>
+                                        </td>
+                                        <td className="border-r border-white/5">
+                                            <MultilineInput 
+                                                value={s.energy || '1A + (5.1)'} 
+                                                onChange={val => updateField(s.id, 'energy', val)}
+                                                className="w-full h-8 px-2 bg-transparent text-[10px] font-bold text-slate-600 text-center outline-none"
+                                            />
+                                        </td>
+                                        <td className="border-r border-white/5 px-2">
+                                            <select 
+                                                value={s.phase || 'MORNING'} 
+                                                onChange={e => updateField(s.id, 'phase', e.target.value)}
+                                                className="w-full h-8 bg-emerald-500/10 text-emerald-600 rounded-lg text-[9px] font-black text-center appearance-none cursor-pointer outline-none transition-all hover:bg-emerald-500/20"
+                                            >
+                                                <option value="MORNING">MORNING</option>
+                                                <option value="AFTERNOON">AFTERNOON</option>
+                                                <option value="EVENING">EVENING</option>
+                                            </select>
+                                        </td>
+                                        <td className="border-r border-white/5">
+                                            <MultilineInput 
+                                                value={s.domain || 'Category'} 
+                                                onChange={val => updateField(s.id, 'domain', val)}
+                                                className="w-full h-8 px-2 bg-transparent text-[10px] font-medium text-slate-400 text-center outline-none"
+                                            />
+                                        </td>
+                                        <td className="border-r border-white/5">
+                                            <MultilineInput 
+                                                value={s.context || 'Group'} 
+                                                onChange={val => updateField(s.id, 'context', val)}
+                                                className="w-full h-8 px-2 bg-transparent text-[10px] font-medium text-slate-400 text-center outline-none"
+                                            />
+                                        </td>
+                                        <td className="border-r border-white/5 px-4 relative group/dd">
+                                            <div className="flex items-center justify-center gap-2 bg-white/20 px-2 py-1.5 rounded-lg border border-white/10 group-hover/dd:bg-white/40 transition-all">
+                                                <input 
+                                                    type="date"
+                                                    value={displayToIso(s.deadline || '')} 
+                                                    onChange={e => updateField(s.id, 'deadline', isoToDisplay(e.target.value))}
+                                                    className="w-full bg-transparent text-[10px] font-black text-orange-600 outline-none text-center cursor-pointer"
+                                                />
+                                            </div>
+                                        </td>
+                                        {days.map(day => {
+                                            const status1 = data.dailyTasks?.[s.id]?.[`${format(day, 'yyyy-MM-dd')}_1`];
+                                            const status2 = data.dailyTasks?.[s.id]?.[`${format(day, 'yyyy-MM-dd')}_2`];
+                                            return (
+                                                <td key={day.toString()} className="border-r border-white/5 p-0">
+                                                    <div className="flex h-12">
+                                                        <button 
+                                                            onClick={() => toggleTask(s.id, day, 1)}
+                                                            className="flex-1 flex items-center justify-center transition-all group/cell"
+                                                        >
+                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${status1 === 'Done' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : status1 === 'Not Yet' ? 'bg-indigo-500/80 text-white shadow-lg shadow-indigo-500/20' : 'bg-white/40 border border-white/20'}`}>
+                                                                {status1 === 'Done' ? <CheckCircle2 size={16} /> : status1 === 'Not Yet' ? <Clock size={16} /> : <div className="w-1.5 h-1.5 bg-slate-200 rounded-full" />}
+                                                            </div>
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => toggleTask(s.id, day, 2)}
+                                                            className="flex-1 flex items-center justify-center transition-all group/cell"
+                                                        >
+                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${status2 === 'Done' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : status2 === 'Not Yet' ? 'bg-indigo-500/80 text-white shadow-lg shadow-indigo-500/20' : 'bg-white/40 border border-white/20'}`}>
+                                                                {status2 === 'Done' ? <CheckCircle2 size={16} /> : status2 === 'Not Yet' ? <Clock size={16} /> : <div className="w-1.5 h-1.5 bg-slate-200 rounded-full" />}
+                                                            </div>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            );
+                                        })}
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
+
+export default DailyTaskTable;
