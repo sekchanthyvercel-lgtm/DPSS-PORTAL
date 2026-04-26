@@ -18,7 +18,9 @@ import {
   Eye,
   EyeOff,
   CheckSquare,
-  Square
+  Square,
+  Lock,
+  Unlock
 } from 'lucide-react';
 import { 
   format, 
@@ -93,6 +95,30 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
 }) => {
   const [viewDate, setViewDate] = useState(new Date());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isFrozen, setIsFrozen] = useState(false);
+  const [studentNameWidth, setStudentNameWidth] = useState(192);
+
+  const resizingRef = React.useRef<{ startX: number; startWidth: number } | null>(null);
+
+  const onResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    resizingRef.current = { startX: e.clientX, startWidth: studentNameWidth };
+    document.addEventListener('mousemove', onResizeMove);
+    document.addEventListener('mouseup', onResizeEnd);
+  };
+
+  const onResizeMove = (e: MouseEvent) => {
+    if (!resizingRef.current) return;
+    const { startX, startWidth } = resizingRef.current;
+    const diff = e.clientX - startX;
+    setStudentNameWidth(Math.max(50, startWidth + diff));
+  };
+
+  const onResizeEnd = () => {
+    resizingRef.current = null;
+    document.removeEventListener('mousemove', onResizeMove);
+    document.removeEventListener('mouseup', onResizeEnd);
+  };
 
   // Week Interval
   const weekStart = startOfWeek(viewDate, { weekStartsOn: 1 }); // Monday
@@ -282,6 +308,10 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
             </button>
           )}
 
+          <button onClick={() => setIsFrozen(!isFrozen)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-black uppercase text-[9px] transition-all border backdrop-blur-md ${isFrozen ? 'bg-amber-500/80 text-white border-amber-600 shadow-md' : 'bg-white/10 text-slate-900 border-white/20 hover:bg-white/20'}`}>
+            {isFrozen ? <Lock size={12}/> : <Unlock size={12}/>} {isFrozen ? 'FROZEN' : 'FREEZE'}
+          </button>
+
           <button 
             onClick={() => onAddStudent({ category: 'DailyTask', shift: 'Morning' })}
             className="flex items-center gap-2 h-9 px-4 bg-orange-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all"
@@ -346,13 +376,18 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
           <table className="w-full border-collapse table-fixed min-w-[1000px]">
             <thead className="sticky top-0 z-40 bg-white/[0.01] backdrop-blur-[1px]">
               <tr className="border-b border-white/5">
-                <th className="w-10 px-2 py-4 text-center border-r border-white/5 sticky left-0 z-50 bg-white/[0.01] backdrop-blur-[1px]">
+                <th className="w-10 px-2 py-4 text-center border-r border-white/5 sticky top-0 bg-white/[0.01] backdrop-blur-[1px]">
                    <button onClick={() => setSelectedIds(selectedIds.size === filteredStudents.length ? new Set() : new Set(filteredStudents.map(s => s.id)))}>
                      {selectedIds.size > 0 ? <CheckSquare size={14} className="text-orange-500 mx-auto" /> : <Square size={14} className="text-slate-900/30 mx-auto" />}
                    </button>
                 </th>
-                <th className="w-10 px-2 py-4 text-center text-[9px] font-black uppercase text-slate-900 border-r border-white/5 sticky left-10 z-50 bg-white/[0.01] backdrop-blur-[1px]">#</th>
-                <th className="w-48 px-4 py-4 text-left text-[9px] font-black uppercase text-slate-900 border-r border-white/5 sticky left-20 z-50 bg-white/[0.01] backdrop-blur-[1px]">Task Name</th>
+                <th className="w-10 px-2 py-4 text-center text-[9px] font-black uppercase text-slate-900 border-r border-white/5 sticky top-0 bg-white/[0.01] backdrop-blur-[1px]">#</th>
+                <th className={`px-4 py-4 text-left text-[9px] font-black uppercase text-slate-900 border-r border-white/5 sticky top-0 z-50 bg-white/[0.01] backdrop-blur-[1px] ${isFrozen ? 'left-0 shadow-[1px_0_0_0_rgba(255,255,255,0.05)]' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                  <div className="flex items-center justify-between">
+                    Task Name
+                  </div>
+                  <div onMouseDown={onResizeStart} className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary-400 opacity-0 group-hover:opacity-100 transition-opacity z-50" />
+                </th>
                 <th className="w-24 px-2 py-4 text-center text-[9px] font-black uppercase text-slate-900 border-r border-white/5 backdrop-blur-[1px]">Level</th>
                 <th className="w-24 px-2 py-4 text-center text-[9px] font-black uppercase text-slate-900 border-r border-white/5 backdrop-blur-[1px]">Shift</th>
                 <th className="w-24 px-2 py-4 text-center text-[9px] font-black uppercase text-slate-900 border-r border-white/5 backdrop-blur-[1px]">Teacher</th>
@@ -387,19 +422,19 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                 </tr>
               ) : filteredStudents.map((s, idx) => (
                 <tr key={s.id} className={`transition-colors group h-8 ${getRowBg(idx)} hover:brightness-95 ${s.isHidden ? 'opacity-30' : ''}`}>
-                  <td className="text-center border-r border-slate-100 sticky left-0 z-30 bg-inherit w-10 px-0">
+                  <td className="text-center border-r border-slate-100 w-10 px-0">
                     <div className="flex items-center justify-center min-h-[32px]">
                        <button onClick={() => { const ns = new Set(selectedIds); ns.has(s.id) ? ns.delete(s.id) : ns.add(s.id); setSelectedIds(ns); }}>
                           {selectedIds.has(s.id) ? <CheckSquare size={14} className="text-orange-600 mx-auto" /> : <Square size={14} className="text-slate-400/30 mx-auto" />}
                        </button>
                     </div>
                   </td>
-                  <td className="text-center text-[9px] font-black text-slate-500 border-r border-slate-100 sticky left-10 z-30 bg-inherit w-10 px-0">
+                  <td className="text-center text-[9px] font-black text-slate-500 border-r border-slate-100 w-10 px-0">
                     <div className="flex items-center justify-center min-h-[32px]">
                       {idx + 1}
                     </div>
                   </td>
-                  <td className={`px-2 border-r border-slate-100 sticky left-20 z-30 group-hover:opacity-90 transition-opacity border-l-[4px] ${getLevelBorderColor(s.level)} bg-inherit`}>
+                  <td className={`px-2 border-r border-slate-100 group transition-opacity border-l-[4px] ${getLevelBorderColor(s.level)} bg-inherit ${isFrozen ? 'sticky left-0 z-30 shadow-[1px_0_0_0_#cbd5e1]' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                     <div className="flex items-center min-h-[32px] w-full">
                       <MultilineInput 
                         value={s.name} 

@@ -127,10 +127,11 @@ export const StudentTable: React.FC<StudentTableProps> = ({
 }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isFrozen, setIsFrozen] = useState(false); 
+  const [studentNameWidth, setStudentNameWidth] = useState(220);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, colId: string } | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
-  const resizingRef = useRef<{ col: string; startX: number; startWidth: number } | null>(null);
+  const resizingRef = useRef<{ col: string | 'studentName'; startX: number; startWidth: number } | null>(null);
 
   const filteredStudents = useMemo(() => {
     let result = students.filter(s => {
@@ -248,11 +249,15 @@ export const StudentTable: React.FC<StudentTableProps> = ({
     setContextMenu(null);
   };
 
-  const onResizeStart = (colId: string, e: React.MouseEvent) => {
+  const onResizeStart = (colId: string | 'studentName', e: React.MouseEvent) => {
     e.preventDefault();
-    const col = columns.find(c => c.id === colId);
-    if (!col) return;
-    resizingRef.current = { col: colId, startX: e.clientX, startWidth: col.width };
+    if (colId === 'studentName') {
+      resizingRef.current = { col: colId, startX: e.clientX, startWidth: studentNameWidth };
+    } else {
+      const col = columns.find(c => c.id === colId);
+      if (!col) return;
+      resizingRef.current = { col: colId, startX: e.clientX, startWidth: col.width };
+    }
     document.addEventListener('mousemove', onResizeMove);
     document.addEventListener('mouseup', onResizeEnd);
   };
@@ -261,7 +266,11 @@ export const StudentTable: React.FC<StudentTableProps> = ({
     if (!resizingRef.current) return;
     const { col, startX, startWidth } = resizingRef.current;
     const diff = e.clientX - startX;
-    onUpdateColumns(columns.map(c => c.id === col ? { ...c, width: Math.max(50, startWidth + diff) } : c));
+    if (col === 'studentName') {
+      setStudentNameWidth(Math.max(50, startWidth + diff));
+    } else {
+      onUpdateColumns(columns.map(c => c.id === col ? { ...c, width: Math.max(50, startWidth + diff) } : c));
+    }
   };
 
   const onResizeEnd = () => {
@@ -270,7 +279,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
     document.removeEventListener('mouseup', onResizeEnd);
   };
 
-  const totalWidth = columns.reduce((acc, c) => acc + c.width, 0) + 280;
+  const totalWidth = columns.reduce((acc, c) => acc + c.width, 0) + studentNameWidth + 285;
 
   const resetFilters = () => {
     setFilters?.({
@@ -379,16 +388,21 @@ export const StudentTable: React.FC<StudentTableProps> = ({
               <table className="border-collapse table-fixed bg-transparent" style={{ width: totalWidth, minWidth: '100%' }}>
                   <thead>
                     <tr className="bg-white/[0.01] border-b border-white/5 h-10 backdrop-blur-[1px]">
-                        <th className={`border-r border-white/5 sticky top-0 z-50 bg-white/[0.01] ${isFrozen ? 'left-0 shadow-[1px_0_0_0_rgba(255,255,255,0.05)]' : ''}`} style={{ width: 45, left: isFrozen ? 0 : undefined }}>
+                        <th className={`border-r border-white/5 sticky top-0 z-40 bg-white/[0.01]`} style={{ width: 45 }}>
                             <button onClick={() => setSelectedIds(selectedIds.size === filteredStudents.length ? new Set() : new Set(filteredStudents.map(s => s.id)))}>
                                 {selectedIds.size > 0 ? <CheckSquare size={16} className="text-primary-500 mx-auto" /> : <Square size={16} className="text-slate-900/30 mx-auto" />}
                             </button>
                         </th>
-                        <th className={`border-r border-white/5 sticky top-0 z-50 bg-white/[0.02] text-center text-[10px] font-black text-slate-900 ${isFrozen ? 'left-[45px] shadow-[1px_0_0_0_rgba(255,255,255,0.05)]' : ''}`} style={{ width: 40, left: isFrozen ? 45 : undefined }}>#</th>
-                        <th className={`px-3 border-r border-white/5 sticky top-0 z-50 bg-white/[0.01] text-slate-900 font-black text-[11px] uppercase tracking-tighter cursor-pointer ${isFrozen ? 'left-[85px] shadow-[1px_0_0_0_rgba(255,255,255,0.05)]' : ''}`} style={{ width: 220, left: isFrozen ? 85 : undefined }}>STUDENT NAME</th>
+                        <th className={`border-r border-white/5 sticky top-0 z-40 bg-white/[0.02] text-center text-[10px] font-black text-slate-900`} style={{ width: 40 }}>#</th>
+                        <th className={`px-3 border-r border-white/5 sticky top-0 z-50 bg-white/[0.01] text-slate-900 font-black text-[11px] uppercase tracking-tighter cursor-pointer ${isFrozen ? 'left-0 shadow-[1px_0_0_0_rgba(255,255,255,0.05)]' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                          <div className="flex items-center justify-between">
+                            STUDENT NAME
+                          </div>
+                          <div onMouseDown={e => { e.stopPropagation(); onResizeStart('studentName', e); }} className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary-400 opacity-0 group-hover:opacity-100 transition-opacity z-50" />
+                        </th>
                         
                         {columns.map((col, idx) => {
-                            let stickyLeft = isFrozen && idx === 0 ? 85 + 220 : undefined;
+                            let stickyLeft = isFrozen && idx === 0 ? studentNameWidth : undefined;
                             const isSorted = sortConfig?.key === col.key;
                             return (
                                 <th 
@@ -436,19 +450,19 @@ export const StudentTable: React.FC<StudentTableProps> = ({
 
                           return (
                             <tr key={s.id} className={`h-8 transition-all hover:brightness-95`} style={{ backgroundColor: rowBg, color: textColor }}>
-                                <td className={`text-center border-r border-white/5 ${isFrozen ? 'sticky left-0 z-20 shadow-[1px_0_0_0_rgba(255,255,255,0.05)]' : ''}`} style={{ left: isFrozen ? 0 : undefined, backgroundColor: rowBg }}>
+                                <td className={`text-center border-r border-white/5`} style={{ backgroundColor: rowBg }}>
                                     <div className="flex items-center justify-center h-full">
                                         <button onClick={() => { const ns = new Set(selectedIds); ns.has(s.id) ? ns.delete(s.id) : ns.add(s.id); setSelectedIds(ns); }}>
                                           {selectedIds.has(s.id) ? <CheckSquare size={14} className="text-primary-600" /> : <Square size={14} className="text-slate-400/30" />}
                                         </button>
                                     </div>
                                 </td>
-                                <td className={`text-center text-[10px] font-black border-r border-slate-200/30 ${isFrozen ? 'sticky left-[45px] z-20 shadow-[1px_0_0_0_#cbd5e1]' : ''}`} style={{ left: isFrozen ? 45 : undefined, backgroundColor: rowBg, color: '#94a3b8' }}>
+                                <td className={`text-center text-[10px] font-black border-r border-slate-200/30`} style={{ backgroundColor: rowBg, color: '#94a3b8' }}>
                                     <div className="flex items-center justify-center min-h-[32px] leading-tight">
                                         {i + 1}
                                     </div>
                                 </td>
-                                 <td className={`px-0 border-r border-slate-200/30 ${isFrozen ? 'sticky left-[85px] z-20 shadow-[1px_0_0_0_#cbd5e1]' : ''}`} style={{ left: isFrozen ? 85 : undefined, backgroundColor: rowBg }}>
+                                 <td className={`px-0 border-r border-slate-200/30 group ${isFrozen ? 'sticky left-0 z-20 shadow-[1px_0_0_0_#cbd5e1]' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined, backgroundColor: rowBg }}>
                                     <div className="flex items-center min-h-[32px] w-full">
                                         <MultilineInput 
                                           value={s.name} 
