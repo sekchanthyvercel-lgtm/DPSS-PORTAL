@@ -10,10 +10,32 @@ interface DPSSTableProps {
 
 const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
+  const [sidebarWidth, setSidebarWidth] = useState(300);
   const [pickerPos, setPickerPos] = useState<{ x: number, y: number } | null>(null);
   const [activeColor, setActiveColor] = useState<string | null>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const savedRange = useRef<Range | null>(null);
+  const resizingRef = useRef<{ startX: number; startWidth: number } | null>(null);
+  
+  const onResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    resizingRef.current = { startX: e.clientX, startWidth: sidebarWidth };
+    document.addEventListener('mousemove', onResizeMove);
+    document.addEventListener('mouseup', onResizeEnd);
+  };
+
+  const onResizeMove = (e: MouseEvent) => {
+    if (!resizingRef.current) return;
+    const { startX, startWidth } = resizingRef.current;
+    const diff = e.clientX - startX;
+    setSidebarWidth(Math.max(200, Math.min(600, startWidth + diff)));
+  };
+
+  const onResizeEnd = () => {
+    resizingRef.current = null;
+    document.removeEventListener('mousemove', onResizeMove);
+    document.removeEventListener('mouseup', onResizeEnd);
+  };
   
   const colors = [
     { name: 'Yellow', value: '#fef3c7' },
@@ -175,8 +197,11 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
 
   return (
     <div className="flex h-[90vh] p-2 gap-2">
-      {/* Sidebar with Fonts */}
-      <div className="w-[300px] bg-white/10 backdrop-blur-md rounded-3xl p-4 border border-white/20 flex flex-col gap-4 overflow-hidden">
+      {/* Resizable Sidebar with Fonts */}
+      <div 
+        style={{ width: `${sidebarWidth}px` }}
+        className="bg-white/10 backdrop-blur-md rounded-3xl p-4 border border-white/20 flex flex-col gap-4 overflow-hidden relative group/sidebar"
+      >
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-black text-slate-800 tracking-tight">DPSS Portal</h2>
           <span className="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold uppercase">Hall Study</span>
@@ -188,6 +213,14 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
 
         <div className="flex-1 overflow-y-auto pr-2 space-y-1 custom-scrollbar">
             {topics.map(t => renderTopic(t))}
+        </div>
+
+        {/* Resize Handle */}
+        <div 
+          onMouseDown={onResizeStart}
+          className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-orange-500/20 active:bg-orange-500/40 transition-colors z-50 flex items-center justify-center"
+        >
+            <div className="w-0.5 h-8 bg-slate-300 rounded-full group-hover/sidebar:opacity-100 opacity-30 transition-opacity" />
         </div>
       </div>
       

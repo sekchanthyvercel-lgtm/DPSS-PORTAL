@@ -254,10 +254,10 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                         <ClipboardList size={28} strokeWidth={2.5} />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black text-slate-950 uppercase tracking-tighter leading-none">Executive Mission</h1>
+                        <h1 className="text-3xl font-black text-slate-950 uppercase tracking-tighter leading-none">Task Hub</h1>
                         <div className="flex items-center gap-3 mt-2">
                             <span className="px-2 py-0.5 bg-orange-500 text-white text-[8px] font-black rounded-md uppercase tracking-wider">System Ready</span>
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[3px]">Strategy Hub</span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[3px]">Mission Control</span>
                         </div>
                     </div>
                 </div>
@@ -275,8 +275,8 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                       <button className="flex items-center gap-2 h-9 px-4 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all">
                         <Zap size={14} fill="currentColor" /> Strategic Plan
                       </button>
-                      <button onClick={() => onAddStudent({ category: 'DailyTask', shift: 'Morning' })} className="flex items-center gap-2 h-9 px-4 bg-[#1B254B] text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg hover:bg-slate-800 transition-all">
-                        <Plus size={14} strokeWidth={4} /> New Objective
+                      <button onClick={() => onAddStudent({ category: 'DailyTask', shift: 'Morning' })} className="flex items-center gap-2 h-9 px-4 bg-orange-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg hover:bg-orange-600 transition-all">
+                        <Plus size={14} strokeWidth={4} /> Add New Topic
                       </button>
                     </div>
                 </div>
@@ -329,8 +329,11 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                         <thead className="sticky top-0 z-40 bg-white/10 backdrop-blur-md">
                             <tr className="border-b border-white/5 uppercase text-[9px] font-black text-slate-800">
                                 <th className="w-10 py-5 text-center border-r border-white/5">#</th>
-                                <th className={`px-6 py-5 text-left border-r border-white/5 sticky left-0 z-50 bg-inherit ${isFrozen ? 'shadow-[1px_0_0_0_rgba(0,0,0,0.1)]' : ''}`} style={{ width: 280 }}>
-                                    Mission Objective
+                                <th className={`px-6 py-5 text-left border-r border-white/5 sticky left-0 z-50 bg-inherit transition-all group ${isFrozen ? 'shadow-[1px_0_0_0_rgba(0,0,0,0.1)]' : ''}`} style={{ width: studentNameWidth }}>
+                                    <div className="flex items-center justify-between">
+                                      New Topic
+                                    </div>
+                                    <div onMouseDown={onResizeStart} className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-orange-500 opacity-0 group-hover:opacity-100 transition-opacity z-50" />
                                 </th>
                                 <th className="w-28 py-5 text-center border-r border-white/5">Priority</th>
                                 <th className="w-24 py-5 text-center border-r border-white/5">Energy</th>
@@ -359,7 +362,7 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                                 return (
                                     <tr key={s.id} className={`h-12 transition-all hover:brightness-95 group ${rowBg} ${s.isHidden ? 'opacity-30' : ''}`}>
                                         <td className="text-center font-bold text-[10px] text-indigo-900/60 border-r border-white/5">{idx + 1}</td>
-                                        <td className={`px-6 border-r border-white/5 sticky left-0 z-30 transition-all bg-inherit ${isFrozen ? 'shadow-[1px_0_0_0_rgba(0,0,0,0.1)]' : ''}`} style={{ width: 280 }}>
+                                        <td className={`px-6 border-r border-white/5 sticky left-0 z-30 transition-all bg-inherit ${isFrozen ? 'shadow-[1px_0_0_0_rgba(0,0,0,0.1)]' : ''}`} style={{ width: studentNameWidth }}>
                                             <div className="flex items-center gap-3">
                                                 <div className={`w-1 h-8 rounded-full ${getLevelBorderColor(s.level).replace('border-l-', 'bg-')}`} />
                                                 <MultilineInput 
