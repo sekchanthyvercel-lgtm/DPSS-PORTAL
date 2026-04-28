@@ -45,6 +45,27 @@ const getRowBg = (idx: number): string => {
   return colors[idx % colors.length];
 };
 
+const getAssistantColor = (name: string) => {
+  if (!name || name === 'N/A') return 'bg-slate-400 text-white';
+  const colors = [
+    'bg-indigo-600 text-white',
+    'bg-rose-600 text-white',
+    'bg-emerald-600 text-white',
+    'bg-amber-600 text-white',
+    'bg-violet-600 text-white',
+    'bg-cyan-600 text-white',
+    'bg-fuchsia-600 text-white',
+    'bg-sky-600 text-white',
+    'bg-pink-600 text-white',
+    'bg-teal-600 text-white'
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+};
+
 /**
  * Icons for the Attendance Status based on screenshot: 
  * status 0 is a green solid check box.
@@ -408,16 +429,16 @@ export const AttendanceTable: React.FC<Props> = ({
                       </div>
                     </td>
                     <td className="px-4 border-r border-slate-200/10">
-                      <div className={`text-[11px] font-bold text-slate-500 uppercase truncate ${isHidden ? 'opacity-30' : ''}`}>{s.teachers || 'N/A'}</div>
+                      <div className={`text-[11px] font-black text-[#1B254B] uppercase truncate ${isHidden ? 'opacity-30' : ''}`}>{s.teachers || 'N/A'}</div>
                     </td>
                     <td className="px-4 border-r border-slate-200/10 text-center">
-                      <div className={`text-[11px] font-black text-slate-600 uppercase ${isHidden ? 'opacity-30' : ''}`}>{s.level || 'N/A'}</div>
+                      <div className={`text-[11px] font-black text-[#1B254B] uppercase ${isHidden ? 'opacity-30' : ''}`}>{s.level || 'N/A'}</div>
                     </td>
                     <td className="px-4 border-r border-slate-200/10">
-                      <div className={`text-[11px] font-black text-slate-500 ${isHidden ? 'opacity-30' : ''}`}>{s.time || 'N/A'}</div>
+                      <div className={`text-[11px] font-black text-[#1B254B] uppercase ${isHidden ? 'opacity-30' : ''}`}>{s.time || 'N/A'}</div>
                     </td>
                     <td className="px-4 border-r border-slate-200/10">
-                      <div className={`text-[11px] font-black text-primary-600 uppercase tracking-widest ${isHidden ? 'opacity-30' : ''}`}>{s.assistant || 'N/A'}</div>
+                      <div className={`text-[11px] font-black ${getAssistantColor(s.assistant || '')} px-2 py-0.5 rounded backdrop-blur-md w-max uppercase tracking-widest shadow-sm ${isHidden ? 'opacity-30' : ''}`}>{s.assistant || 'N/A'}</div>
                     </td>
                     
                     {/* Dynamic Date Columns */}

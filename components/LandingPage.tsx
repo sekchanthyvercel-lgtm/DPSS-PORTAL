@@ -25,7 +25,7 @@ export const LandingPage: React.FC<Props> = ({ onLogin }) => {
           <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-[4px] border border-white/10">
             <ShieldCheck className="text-white" size={32} />
           </div>
-          <h1 className="text-2xl font-black text-slate-900 mb-1 uppercase tracking-tighter shadow-sm">DPS Portal</h1>
+          <h1 className="text-2xl font-black text-slate-900 mb-1 uppercase tracking-tighter shadow-sm">DPSS ENGLISH PORTAL</h1>
           <p className="text-slate-700 text-[10px] font-black uppercase tracking-[4px]">Staff Secure Login</p>
         </div>
         

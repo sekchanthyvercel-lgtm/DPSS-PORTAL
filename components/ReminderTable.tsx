@@ -182,9 +182,11 @@ const ReminderTable: React.FC<ReminderTableProps> = ({
             <button onClick={() => setViewMode('List')} className={`px-4 py-1.5 rounded-lg text-[10px] font-black transition-all ${viewMode === 'List' ? 'bg-[#1B254B] text-white shadow-lg' : 'text-slate-600'}`}>List</button>
           </div>
 
-          <button onClick={() => setIsFullScreen(!isFullScreen)} className="p-2.5 bg-white/40 rounded-xl hover:bg-white/60 transition-all border border-white/10 text-slate-600">
-             {isFullScreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
-          </button>
+          {viewMode === 'Calendar' && (
+            <button onClick={() => setIsFullScreen(!isFullScreen)} className="p-2.5 bg-white/40 rounded-xl hover:bg-white/60 transition-all border border-white/10 text-slate-600">
+               {isFullScreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+            </button>
+          )}
 
           <button 
             onClick={() => onAddStudent({ category: 'Reminder', deadline: format(new Date(), 'dd/MM/yy') })}

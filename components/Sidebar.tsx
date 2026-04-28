@@ -53,7 +53,22 @@ interface SidebarProps {
   canRedo?: boolean;
   onUndo?: () => void;
   onRedo?: () => void;
+  localBackground?: string;
+  setLocalBackground?: (bg: string) => void;
 }
+
+const DEFAULT_BGS = [
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=2000', // Original Beach
+  'linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)', // Clean Grey
+  'linear-gradient(to top, #fff1eb 0%, #ace0f9 100%)', // Soft Peach/Blue
+  'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=2000', // Clean Architecture
+  'linear-gradient(to top, #a18cd1 0%, #fbc2eb 100%)', // Soft Purple
+  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=2000', // Abstract Fluid
+  'linear-gradient(to right, #4facfe 0%, #00f2fe 100%)', // Bright Blue
+  'https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80&w=2000', // Dark Gradient
+  'linear-gradient(to top, #3f51b1 0%, #5a55ae 13%, #7b5fac 25%, #8f6aae 38%, #a86aa4 50%, #cc6b8e 62%, #f18271 75%, #f3a469 87%, #f7c978 100%)', // Sunset
+  'linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%)' // Minimal
+];
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
   isOpen, 
@@ -73,7 +88,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   canUndo,
   canRedo,
   onUndo,
-  onRedo
+  onRedo,
+  localBackground,
+  setLocalBackground
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -90,27 +107,57 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  const handleSetLocalBackground = (bgUrl: string) => {
+    if (setLocalBackground) {
+      setLocalBackground(bgUrl);
+      localStorage.setItem('dps_background', bgUrl);
+    }
+  };
+
   const handleBackgroundUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && onUpdateSettings) {
+    if (file && setLocalBackground) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        onUpdateSettings({
-          ...(settings || { fontSize: 12, fontFamily: "'Inter', sans-serif" }),
-          backgroundImage: event.target?.result as string
-        });
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1280;
+          const MAX_HEIGHT = 720;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          // Compress to WebP with 0.4 quality to save massive space
+          const dataUrl = canvas.toDataURL('image/webp', 0.4);
+          handleSetLocalBackground(dataUrl);
+          
+          if (fileInputRef.current) fileInputRef.current.value = '';
+        };
+        img.src = event.target?.result as string;
       };
       reader.readAsDataURL(file);
     }
   };
 
   const removeBackground = () => {
-    if (onUpdateSettings) {
-      onUpdateSettings({
-        ...(settings || { fontSize: 12, fontFamily: "'Inter', sans-serif" }),
-        backgroundImage: undefined
-      });
-    }
+    handleSetLocalBackground(DEFAULT_BGS[0]);
   };
 
   const resetFilters = () => {
@@ -129,10 +176,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems = [
     { id: Tab.Hall, icon: LayoutGrid, label: 'Hall Study', roles: ['Admin', 'Teacher', 'Finance'] },
+    { id: Tab.Attendance, icon: CalendarCheck, label: 'Attendance', roles: ['Admin', 'Teacher', 'Finance'] },
     { id: Tab.Penalty, icon: Zap, label: 'Late/Absence Log', roles: ['Admin', 'Teacher', 'Finance'] },
     { id: Tab.DailyTask, icon: ClipboardList, label: 'Daily Task', roles: ['Admin', 'Teacher', 'Finance'] },
     { id: Tab.Reminder, icon: Bell, label: 'Reminder', roles: ['Admin', 'Teacher', 'Finance'] },
-    { id: Tab.Attendance, icon: CalendarCheck, label: 'Attendance', roles: ['Admin', 'Teacher', 'Finance'] },
     { id: Tab.DPSS, icon: FileText, label: 'DPSS', roles: ['Admin', 'Teacher', 'Finance'] },
     { id: Tab.RecycleBin, icon: Trash2, label: 'Recycle Bin', roles: ['Admin', 'Teacher'] },
   ];
@@ -172,8 +219,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               D
             </div>
             <div>
-              <h2 className="text-lg font-black tracking-tight uppercase leading-none text-slate-900">DPS Portal</h2>
-              <p className="text-[9px] font-black text-slate-700 uppercase tracking-widest mt-1">Clean Management</p>
+              <h2 className="text-lg font-black tracking-tight uppercase leading-none text-slate-900">DPSS ENGLISH</h2>
+              <p className="text-[9px] font-black text-slate-700 uppercase tracking-widest mt-1">PORTAL MANAGEMENT</p>
             </div>
           </div>
           <button 
@@ -282,16 +329,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="px-2 pb-2 space-y-6 animate-in slide-in-from-bottom-4 duration-300">
               {/* Customization */}
               <div className="space-y-3">
-                <p className="text-[10px] font-black text-slate-900 uppercase tracking-[3px] ml-1">Customization</p>
+                <p className="text-[10px] font-black text-slate-900 uppercase tracking-[3px] ml-1">Background Theme</p>
+                
+                <div className="grid grid-cols-5 gap-2">
+                  {DEFAULT_BGS.map((bg, idx) => (
+                    <button 
+                      key={idx}
+                      onClick={() => handleSetLocalBackground(bg)}
+                      style={{ background: bg.includes('gradient') ? bg : `url(${bg}) center/cover` }}
+                      className={`h-10 rounded-lg overflow-hidden border-2 transition-all ${
+                        localBackground === bg ? 'border-orange-500 scale-105 shadow-md' : 'border-transparent hover:scale-105'
+                      }`}
+                    />
+                  ))}
+                </div>
+
                 <div className="flex gap-2">
                   <button 
                     onClick={() => fileInputRef.current?.click()}
                     className="flex-1 flex items-center justify-center gap-2 py-3 bg-white/40 border border-white/40 rounded-2xl text-slate-800 hover:bg-white/60 transition-all text-[10px] font-black uppercase tracking-wider shadow-sm"
                   >
-                    <ImageIcon size={16} /> Background
+                    <ImageIcon size={16} /> Upload Custom
                   </button>
                   <input type="file" ref={fileInputRef} onChange={handleBackgroundUpload} className="hidden" accept="image/*" />
-                  {settings?.backgroundImage && (
+                  {localBackground && !DEFAULT_BGS.includes(localBackground) && (
                     <button 
                         onClick={removeBackground} 
                         className="w-12 h-12 flex items-center justify-center bg-red-500/10 text-red-500 border border-red-500/20 rounded-2xl hover:bg-red-500 hover:text-white transition-all shadow-sm"

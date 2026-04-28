@@ -210,7 +210,10 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                       <button onClick={onQuickAdd} className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-xl text-[10px] font-black shadow-lg hover:scale-105 active:scale-95 transition-all">
                           <Zap size={14} className="fill-yellow-400 text-yellow-400 shrink-0" /> AI AUTO
                       </button>
-                      <button onClick={() => onAddStudent?.({ category: 'Penalty' })} className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl text-[10px] font-black shadow-lg hover:bg-orange-600 active:scale-95 transition-all">
+                      <button onClick={() => {
+                        setFilters?.({ searchQuery: '', teacher: '', assistant: '', time: '', level: '', behavior: '' });
+                        onAddStudent?.({ category: 'Penalty' });
+                      }} className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl text-[10px] font-black shadow-lg hover:bg-orange-600 active:scale-95 transition-all">
                           <Plus size={16} strokeWidth={3} className="shrink-0"/> ADD ENTRY
                       </button>
                       <button onClick={() => setIsFrozen(!isFrozen)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-black uppercase text-[9px] transition-all border backdrop-blur-md ${isFrozen ? 'bg-amber-500/80 text-white border-amber-600 shadow-md' : 'bg-white/10 text-slate-900 border-white/20 hover:bg-white/20'}`}>
@@ -315,6 +318,9 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                           <div onMouseDown={onResizeStart} className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary-400 opacity-0 group-hover:opacity-100 transition-opacity z-50" />
                         </th>
                         <th className="w-24 border-r border-white/5 text-[10px] font-black text-orange-600 text-center px-3 sticky top-0 z-40 bg-white/[0.03] backdrop-blur-[2px]">Thumbprint</th>
+                        <th className="w-24 border-r border-white/5 text-[10px] font-black text-slate-900 text-center px-3 sticky top-0 bg-white/[0.03] backdrop-blur-[2px]">Behavior 1</th>
+                        <th className="w-24 border-r border-white/5 text-[10px] font-black text-slate-900 text-center px-3 sticky top-0 bg-white/[0.03] backdrop-blur-[2px]">Behavior 2</th>
+                        <th className="w-24 border-r border-white/5 text-[10px] font-black text-slate-900 text-center px-3 sticky top-0 bg-white/[0.03] backdrop-blur-[2px]">Behavior 3</th>
                         <th className="w-40 border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 bg-white/[0.03] backdrop-blur-[2px]">Teachers</th>
                         <th className="w-36 border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 bg-white/[0.03] backdrop-blur-[2px]">Assistant</th>
                         <th className="w-24 border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 bg-white/[0.03] backdrop-blur-[2px]">Level</th>
@@ -367,6 +373,15 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                             </select>
                         </td>
                         <td className="border-r border-slate-100">
+                            <MultilineInput value={s.behavior1 || ''} onChange={val => updateField(s.id, 'behavior1', val)} className="w-full bg-transparent outline-none px-3 py-1 text-[10px] font-medium text-slate-700 text-center" />
+                        </td>
+                        <td className="border-r border-slate-100">
+                            <MultilineInput value={s.behavior2 || ''} onChange={val => updateField(s.id, 'behavior2', val)} className="w-full bg-transparent outline-none px-3 py-1 text-[10px] font-medium text-slate-700 text-center" />
+                        </td>
+                        <td className="border-r border-slate-100">
+                            <MultilineInput value={s.behavior3 || ''} onChange={val => updateField(s.id, 'behavior3', val)} className="w-full bg-transparent outline-none px-3 py-1 text-[10px] font-medium text-slate-700 text-center" />
+                        </td>
+                        <td className="border-r border-slate-100">
                             <MultilineInput value={s.teachers || ''} onChange={val => updateField(s.id, 'teachers', val)} className="w-full bg-transparent outline-none px-3 py-1 text-[10px] font-bold text-slate-500 uppercase" />
                         </td>
                         <td className="border-r border-slate-100">
@@ -387,6 +402,9 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                                     <option value="">-</option>
                                     <option value="Lateness">Lateness</option>
                                     <option value="Absence">Absence</option>
+                                    <option value="Wrong Shoes">Wrong Shoes</option>
+                                    <option value="No cards">No cards</option>
+                                    <option value="Wrong Uniforms">Wrong Uniforms</option>
                                     <option value="Normal">Normal</option>
                                 </select>
                             </td>

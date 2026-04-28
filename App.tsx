@@ -22,14 +22,14 @@ import { addMonths, format } from 'date-fns';
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
   { id: 'c2', key: 'teachers', label: 'TEACHERS', width: 180, visible: true, type: 'text' },
+  { id: 'c9', key: 'assistant', label: 'ASSISTANT', width: 150, visible: true, type: 'text' },
   { id: 'c3', key: 'level', label: 'LEVEL', width: 85, visible: true, type: 'text' },
   { id: 'c5', key: 'behavior', label: 'BEHAVIOR', width: 180, visible: true, type: 'text' },
   { id: 'c_schedule', key: 'schedule', label: 'SCHEDULE', width: 140, visible: true, type: 'text' },
   { id: 'c4', key: 'time', label: 'TIME', width: 110, visible: true, type: 'text' },
   { id: 'c6', key: 'duration', label: 'DURATION', width: 100, visible: true, type: 'text' },
   { id: 'c7', key: 'startDate', label: 'START', width: 100, visible: true, type: 'text' },
-  { id: 'c8', key: 'deadline', label: 'DEADLINE', width: 100, visible: true, type: 'text' },
-  { id: 'c9', key: 'assistant', label: 'ASSISTANT', width: 150, visible: true, type: 'text' }
+  { id: 'c8', key: 'deadline', label: 'DEADLINE', width: 100, visible: true, type: 'text' }
 ];
 
 const App: React.FC = () => {
@@ -47,6 +47,10 @@ const App: React.FC = () => {
       backgroundImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=2000'
     },
     attendance: {}
+  });
+
+  const [localBackground, setLocalBackground] = useState<string>(() => {
+    return localStorage.getItem('dps_background') || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=2000';
   });
 
   const [history, setHistory] = useState<AppData[]>([]);
@@ -138,10 +142,12 @@ const App: React.FC = () => {
 
   const activeStudents = useMemo(() => data.students.filter(s => !s.deletedAt), [data.students]);
 
+  const allActiveStudents = useMemo(() => data.students.filter(s => !s.deletedAt), [data.students]);
+
   const uniqueTeachers = useMemo(() => {
     const ts = new Set<string>();
-    // From students
-    activeStudents.forEach(s => {
+    // From all active students across all tabs
+    allActiveStudents.forEach(s => {
       if (s.teachers) String(s.teachers).split('&').forEach(t => ts.add(t.trim()));
     });
     // From staff directory (all can be teachers/assistants)
@@ -149,42 +155,40 @@ const App: React.FC = () => {
       Object.keys(data.staffDirectory).forEach(name => ts.add(name.trim()));
     }
     return Array.from(ts).filter(Boolean).sort();
-  }, [data.students, data.staffDirectory]);
+  }, [allActiveStudents, data.staffDirectory]);
 
   const uniqueAssistants = useMemo(() => {
     const asst = new Set<string>();
-    // From students
-    activeStudents.forEach(s => {
+    allActiveStudents.forEach(s => {
       if (s.assistant) String(s.assistant).split('&').forEach(a => asst.add(a.trim()));
     });
-    // From staff directory
     if (data.staffDirectory) {
       Object.keys(data.staffDirectory).forEach(name => asst.add(name.trim()));
     }
     return Array.from(asst).filter(Boolean).sort();
-  }, [data.students, data.staffDirectory]);
+  }, [allActiveStudents, data.staffDirectory]);
 
   const uniqueTimes = useMemo(() => {
     const tm = new Set<string>();
-    activeStudents.forEach(s => {
+    allActiveStudents.forEach(s => {
       if (s.time) String(s.time).split('&').forEach(t => tm.add(t.trim()));
     });
     return Array.from(tm).filter(Boolean).sort();
-  }, [data.students]);
+  }, [allActiveStudents]);
 
   const uniqueLevels = useMemo(() => {
     const lv = new Set<string>();
-    activeStudents.forEach(s => {
+    allActiveStudents.forEach(s => {
       if (s.level) String(s.level).split('&').forEach(l => lv.add(l.trim()));
     });
     return Array.from(lv).filter(Boolean).sort();
-  }, [data.students]);
+  }, [allActiveStudents]);
 
   const uniqueBehaviors = useMemo(() => {
     const bh = new Set<string>();
-    activeStudents.forEach(s => s.behavior && bh.add(String(s.behavior).trim()));
+    allActiveStudents.forEach(s => s.behavior && bh.add(String(s.behavior).trim()));
     return Array.from(bh).filter(Boolean).sort();
-  }, [activeStudents]);
+  }, [allActiveStudents]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -212,6 +216,16 @@ const App: React.FC = () => {
           } else {
             newCols.push(DEFAULT_COLUMNS.find(c => c.key === 'schedule')!);
           }
+          newData.settings.columns = newCols;
+        }
+
+        // Migration: Reorder 'assistant' between 'teachers' and 'level' if it is at the end
+        const assistantIdx = newData.settings.columns.findIndex((c: any) => c.key === 'assistant');
+        const teachersIdx = newData.settings.columns.findIndex((c: any) => c.key === 'teachers');
+        if (assistantIdx !== -1 && teachersIdx !== -1 && assistantIdx > teachersIdx + 1) {
+          const newCols = [...newData.settings.columns];
+          const [assistantCol] = newCols.splice(assistantIdx, 1);
+          newCols.splice(teachersIdx + 1, 0, assistantCol);
           newData.settings.columns = newCols;
         }
       }
@@ -353,9 +367,10 @@ const App: React.FC = () => {
 
   return (
     <div 
-      className="h-screen bg-transparent flex font-sans overflow-hidden transition-all duration-700" 
+      className="h-screen flex font-sans overflow-hidden transition-all duration-700 bg-cover bg-center bg-fixed" 
       style={{ 
-        fontFamily: data.settings?.fontFamily || "'Inter', sans-serif"
+        fontFamily: data.settings?.fontFamily || "'Inter', sans-serif",
+        backgroundImage: localBackground ? (localBackground.includes('linear-gradient') || localBackground.includes('radial-gradient') ? localBackground : `url('${localBackground}')`) : "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=2000')"
       }}
     >
       <Sidebar 
@@ -385,6 +400,8 @@ const App: React.FC = () => {
         canRedo={redoStack.length > 0}
         onUndo={undo}
         onRedo={redo}
+        localBackground={localBackground}
+        setLocalBackground={setLocalBackground}
       />
       
       <AIModal 
