@@ -101,6 +101,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [isSettingsExpanded, setIsSettingsExpanded] = React.useState(false);
 
   const handleTabSelect = (tab: Tab) => {
+    // If user is selecting text, don't trigger the tab switch
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) {
+      return;
+    }
     setActiveTab(tab);
     if (window.innerWidth < 768) {
       setIsOpen(false);

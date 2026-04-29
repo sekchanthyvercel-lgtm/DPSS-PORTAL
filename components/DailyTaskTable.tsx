@@ -74,6 +74,8 @@ interface DailyTaskTableProps {
   data: AppData;
   filters: FilterState;
   setFilters?: (f: FilterState) => void;
+  uniqueTeachers?: string[];
+  uniqueAssistants?: string[];
   onUpdate: (data: AppData) => void;
   onAddStudent: (defaults: Partial<Student>) => void;
   onDeleteStudent?: (id: string) => void;
@@ -87,6 +89,8 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
   data,
   filters,
   setFilters,
+  uniqueTeachers = [],
+  uniqueAssistants = [],
   onUpdate,
   onAddStudent,
   onDeleteStudent,
@@ -96,7 +100,7 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
 }) => {
   const [viewDate, setViewDate] = useState(new Date());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [isFrozen, setIsFrozen] = useState(false);
+  const [isFrozen, setIsFrozen] = useState(true);
   const [studentNameWidth, setStudentNameWidth] = useState(192);
 
   const resizingRef = React.useRef<{ startX: number; startWidth: number } | null>(null);
@@ -329,9 +333,9 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                         <thead className="sticky top-0 z-40 bg-white/10 backdrop-blur-md">
                             <tr className="border-b border-white/5 uppercase text-[9px] font-black text-slate-800">
                                 <th className="w-10 py-5 text-center border-r border-white/5">#</th>
-                                <th className={`px-6 py-5 text-left border-r border-white/5 sticky left-0 z-50 bg-inherit transition-all group ${isFrozen ? 'shadow-[1px_0_0_0_rgba(0,0,0,0.1)]' : ''}`} style={{ width: studentNameWidth }}>
+                                <th className={`px-6 py-5 text-left border-r border-white/5 sticky left-0 z-50 transition-all group ${isFrozen ? 'bg-white shadow-[1px_0_0_0_rgba(0,0,0,0.1)]' : 'bg-inherit'}`} style={{ width: studentNameWidth }}>
                                     <div className="flex items-center justify-between">
-                                      New Topic
+                                      STUDENT NAME
                                     </div>
                                     <div onMouseDown={onResizeStart} className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-orange-500 opacity-0 group-hover:opacity-100 transition-opacity z-50" />
                                 </th>
@@ -362,7 +366,7 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                                 return (
                                     <tr key={s.id} className={`h-12 transition-all hover:brightness-95 group ${rowBg} ${s.isHidden ? 'opacity-30' : ''}`}>
                                         <td className="text-center font-bold text-[10px] text-indigo-900/60 border-r border-white/5">{idx + 1}</td>
-                                        <td className={`px-6 border-r border-white/5 sticky left-0 z-30 transition-all bg-inherit ${isFrozen ? 'shadow-[1px_0_0_0_rgba(0,0,0,0.1)]' : ''}`} style={{ width: studentNameWidth }}>
+                                        <td className={`px-6 border-r border-white/5 sticky left-0 z-30 transition-all ${isFrozen ? 'bg-white shadow-[1px_0_0_0_rgba(0,0,0,0.1)]' : 'bg-inherit'}`} style={{ width: studentNameWidth }}>
                                             <div className="flex items-center gap-3">
                                                 <div className={`w-1 h-8 rounded-full ${getLevelBorderColor(s.level).replace('border-l-', 'bg-')}`} />
                                                 <MultilineInput 

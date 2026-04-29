@@ -14,9 +14,53 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
   const [pickerPos, setPickerPos] = useState<{ x: number, y: number } | null>(null);
   const [activeColor, setActiveColor] = useState<string | null>(null);
   const editorRef = useRef<HTMLDivElement>(null);
+  const skipNextRender = useRef(false);
+  const lastContentRef = useRef<string | null>(null);
   const savedRange = useRef<Range | null>(null);
   const resizingRef = useRef<{ startX: number; startWidth: number } | null>(null);
   
+  const topics = useMemo(() => (data.dpssTopics || []).map(t => ({
+    ...t,
+    content: typeof t.content === 'string' ? t.content : '',
+    alignment: t.alignment || 'left',
+    children: t.children || []
+  })), [data.dpssTopics]);
+
+  const findTopic = (items: DPSSTopic[], id: string): DPSSTopic | null => {
+    for (const item of items) {
+      if (item.id === id) return item;
+      if (item.children) {
+        const found = findTopic(item.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const selectedTopic = useMemo(() => selectedTopicId ? findTopic(topics, selectedTopicId) : null, [topics, selectedTopicId]);
+
+  // Initialize content when topic changes
+  useEffect(() => {
+    if (selectedTopic && editorRef.current) {
+        if (selectedTopic.content !== editorRef.current.innerHTML) {
+            editorRef.current.innerHTML = selectedTopic.content;
+            lastContentRef.current = selectedTopic.content;
+            
+            // Ensure we scroll to top when changing topics
+            if (editorRef.current.parentElement) {
+                editorRef.current.parentElement.scrollTop = 0;
+            }
+        }
+    }
+  }, [selectedTopicId, selectedTopic?.id]);
+
+  const handleEditorScroll = (e: React.WheelEvent) => {
+    // Ensuring smooth scroll bubble
+    if (editorRef.current) {
+        // e.stopPropagation();
+    }
+  };
+
   const onResizeStart = (e: React.MouseEvent) => {
     e.preventDefault();
     resizingRef.current = { startX: e.clientX, startWidth: sidebarWidth };
@@ -55,13 +99,6 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
   ];
   
   const dpssSettings = data.settings || { fontSize: 18, fontFamily: 'Inter' };
-
-  const topics = (data.dpssTopics || []).map(t => ({
-    ...t,
-    content: typeof t.content === 'string' ? t.content : '',
-    alignment: t.alignment || 'left',
-    children: t.children || []
-  }));
 
   const handleSelection = () => {
     const selection = window.getSelection();
@@ -125,17 +162,6 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
     });
   };
 
-  const findTopic = (items: DPSSTopic[], id: string): DPSSTopic | null => {
-    for (const item of items) {
-      if (item.id === id) return item;
-      if (item.children) {
-        const found = findTopic(item.children, id);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-
   const addTopic = (parentId?: string) => {
     const newTopic: DPSSTopic = { id: uuidv4(), title: 'New Topic', content: '', alignment: 'left' };
     const updateTopics = (items: DPSSTopic[]): DPSSTopic[] => {
@@ -163,6 +189,9 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
   };
 
   const updateTopic = (id: string, updates: Partial<DPSSTopic>) => {
+    if (updates.content !== undefined) {
+      skipNextRender.current = true;
+    }
     const updateItems = (items: DPSSTopic[]): DPSSTopic[] => {
       return items.map(item => {
         if (item.id === id) return { ...item, ...updates };
@@ -173,8 +202,6 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
     onUpdate({ ...data, dpssTopics: updateItems(topics) });
   };
 
-  const selectedTopic = selectedTopicId ? findTopic(topics, selectedTopicId) : null;
-
   const insertDate = () => {
     if (!selectedTopic) return;
     const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -184,7 +211,11 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
 
   const renderTopic = (topic: DPSSTopic, depth = 0) => (
     <div key={topic.id} style={{ marginLeft: `${depth * 15}px` }}>
-      <div onClick={() => setSelectedTopicId(topic.id)} className={`p-2 my-1 rounded-lg cursor-pointer flex items-center justify-between ${selectedTopicId === topic.id ? 'bg-orange-100/50' : 'bg-white/5 hover:bg-white/10'}`}>
+      <div onClick={() => {
+        const selection = window.getSelection();
+        if (selection && selection.toString().length > 0) return;
+        setSelectedTopicId(topic.id);
+      }} className={`p-2 my-1 rounded-lg cursor-pointer flex items-center justify-between ${selectedTopicId === topic.id ? 'bg-orange-100/50' : 'bg-white/5 hover:bg-white/10'}`}>
         <span className="font-bold text-[13px] text-slate-700 truncate max-w-[180px]">{topic.title}</span>
         <div className='flex gap-1 shrink-0'>
             <button onClick={(e) => { e.stopPropagation(); addTopic(topic.id); }}><Plus size={14} className="text-slate-400 hover:text-green-500"/></button>
@@ -225,17 +256,19 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
       </div>
       
       {/* Editor Area */}
-      <div className="flex-1 bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/20 relative overflow-hidden flex flex-col">
+      <div className="flex-1 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 relative flex flex-col overflow-hidden">
         {selectedTopic ? (
-            <div className="space-y-4 h-full flex flex-col">
-                <input 
-                    value={selectedTopic.title} 
-                    onChange={(e) => updateTopic(selectedTopic.id, { title: e.target.value })}
-                    className="w-full text-4xl font-black text-slate-900 bg-transparent outline-none p-2 border-b-2 border-orange-500/20 focus:border-orange-500 transition-all"
-                    placeholder="Topic Title..."
-                />
+            <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="p-6 border-b border-white/10 bg-white/5">
+                    <input 
+                        value={selectedTopic.title} 
+                        onChange={(e) => updateTopic(selectedTopic.id, { title: e.target.value })}
+                        className="w-full text-4xl font-black text-slate-900 bg-transparent outline-none p-2 border-b-2 border-orange-500/20 focus:border-orange-500 transition-all"
+                        placeholder="Topic Title..."
+                    />
+                </div>
                 
-                <div className='flex flex-wrap gap-3 p-2 border-b border-white/20 items-center sticky top-0 bg-white/30 backdrop-blur-xl z-20 rounded-xl'>
+                <div className='flex flex-wrap gap-3 p-3 items-center bg-white/30 backdrop-blur-xl z-20 border-b border-white/10'>
                     <div className="flex gap-1 bg-white/40 p-1 rounded-lg">
                       <button className="p-1.5 hover:bg-white rounded transition-colors" title="Align Left" onClick={() => updateTopic(selectedTopic.id, { alignment: 'left' })}><AlignLeft size={16} /></button>
                       <button className="p-1.5 hover:bg-white rounded transition-colors" title="Align Center" onClick={() => updateTopic(selectedTopic.id, { alignment: 'center' })}><AlignCenter size={16} /></button>
@@ -319,48 +352,58 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
                     </button>
                 </div>
 
-                {/* Floating Selection Tooltip */}
-                {pickerPos && (
-                  <div 
-                    className="fixed z-50 bg-white/90 backdrop-blur p-2 rounded-2xl shadow-2xl border border-white flex gap-2 animate-in fade-in zoom-in slide-in-from-bottom-2 duration-200"
-                    style={{ 
-                      left: pickerPos.x, 
-                      top: pickerPos.y, 
-                      transform: 'translateX(-50%)' 
-                    }}
-                    onMouseDown={(e) => e.preventDefault()} // Prevent focus loss
-                  >
-                    {colors.map(color => (
-                        <button 
-                            key={color.value}
-                            className={`w-6 h-6 rounded-full border border-black/5 hover:scale-110 transition-transform ${color.value === 'transparent' ? 'bg-slate-100 flex items-center justify-center' : ''}`}
-                            style={{ backgroundColor: color.value }}
-                            onClick={() => applyColor(color.value)}
-                            title={color.name}
-                        >
-                          {color.value === 'transparent' && <span className="text-[8px] font-black opacity-40">✕</span>}
-                        </button>
-                    ))}
-                  </div>
-                )}
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-white/5">
+                    {/* Floating Selection Tooltip */}
+                    {pickerPos && (
+                      <div 
+                        className="fixed z-50 bg-white/90 backdrop-blur p-2 rounded-2xl shadow-2xl border border-white flex gap-2 animate-in fade-in zoom-in slide-in-from-bottom-2 duration-200"
+                        style={{ 
+                          left: pickerPos.x, 
+                          top: pickerPos.y, 
+                          transform: 'translateX(-50%)' 
+                        }}
+                        onMouseDown={(e) => e.preventDefault()} // Prevent focus loss
+                      >
+                        {colors.map(color => (
+                            <button 
+                                key={color.value}
+                                className={`w-6 h-6 rounded-full border border-black/5 hover:scale-110 transition-transform ${color.value === 'transparent' ? 'bg-slate-100 flex items-center justify-center' : ''}`}
+                                style={{ backgroundColor: color.value }}
+                                onClick={() => applyColor(color.value)}
+                                title={color.name}
+                            >
+                              {color.value === 'transparent' && <span className="text-[8px] font-black opacity-40">✕</span>}
+                            </button>
+                        ))}
+                      </div>
+                    )}
 
-                <div 
-                    ref={editorRef}
-                    contentEditable={true}
-                    onMouseUp={handleSelection}
-                    onKeyUp={handleSelection}
-                    onBlur={(e) => {
-                      updateTopic(selectedTopic.id, { content: e.currentTarget.innerHTML });
-                    }}
-                    dangerouslySetInnerHTML={{ __html: selectedTopic.content }}
-                    style={{ 
-                      textAlign: selectedTopic.alignment, 
-                      minHeight: '300px',
-                      fontSize: `${dpssSettings.fontSize}px`,
-                      fontFamily: dpssSettings.fontFamily
-                    }}
-                    className="w-full flex-1 bg-white/5 outline-none p-8 rounded-3xl text-slate-800 leading-relaxed font-medium transition-all focus:bg-white/20"
-                />
+                    <div 
+                        ref={editorRef}
+                        contentEditable={true}
+                        onMouseUp={handleSelection}
+                        onKeyUp={handleSelection}
+                        onBlur={(e) => {
+                          const newContent = e.currentTarget.innerHTML;
+                          if (newContent !== lastContentRef.current) {
+                            updateTopic(selectedTopic.id, { content: newContent });
+                            lastContentRef.current = newContent;
+                          }
+                        }}
+                        onInput={(e) => {
+                            const newContent = e.currentTarget.innerHTML;
+                            lastContentRef.current = newContent;
+                        }}
+                        style={{ 
+                          textAlign: selectedTopic.alignment, 
+                          minHeight: '80vh',
+                          fontSize: `${dpssSettings.fontSize}px`,
+                          fontFamily: dpssSettings.fontFamily,
+                          userSelect: 'text'
+                        }}
+                        className="w-full outline-none p-10 rounded-3xl text-slate-800 leading-relaxed font-medium select-text cursor-text relative z-10"
+                    />
+                </div>
             </div>
         ) : (
             <div className="h-full flex flex-col items-center justify-center gap-4 text-slate-400">

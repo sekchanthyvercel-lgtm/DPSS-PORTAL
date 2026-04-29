@@ -12,15 +12,15 @@ interface Props {
   onUpdate: (data: AppData) => void;
   onQuickAdd: (defaults: Partial<Student>) => void;
   onAddStudent: (defaults: Partial<Student>) => void;
+  filters: any;
+  setFilters: (f: any) => void;
 }
 
 type SubTab = 'Batch' | 'Queue' | 'Form' | 'Settings';
 
-export const CardGenerator: React.FC<Props> = ({ students, data, onUpdate, onAddStudent }) => {
+export const CardGenerator: React.FC<Props> = ({ students, data, onUpdate, onAddStudent, filters, setFilters }) => {
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('Batch');
-  const [searchTerm, setSearchTerm] = useState('');
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
-
   const [idCounters, setIdCounters] = useState(data.idCounters || { FullTime: 2021, PartTime: 2000 });
 
   // Sync local sequence state with global data if it changes externally
@@ -31,9 +31,22 @@ export const CardGenerator: React.FC<Props> = ({ students, data, onUpdate, onAdd
   }, [data.idCounters]);
 
   const cardStudents = useMemo(() => {
-    return students.filter(s => s.category === 'Card')
-      .filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [students, searchTerm]);
+    const query = (filters.searchQuery || '').toLowerCase();
+    return students.filter(s => s.category === 'Card' || (query && s.name.toLowerCase().includes(query)))
+      .filter(s => {
+          const matchesSearch = !query || 
+              s.name.toLowerCase().includes(query) ||
+              (s.displayId && s.displayId.toLowerCase().includes(query));
+          
+          const matchesTeacher = !filters.teacher || 
+              (s.teachers && s.teachers.toUpperCase().includes(filters.teacher.toUpperCase()));
+          
+          const matchesAssistant = !filters.assistant || 
+              (s.assistant && s.assistant.toUpperCase().includes(filters.assistant.toUpperCase()));
+
+          return matchesSearch && matchesTeacher && matchesAssistant;
+      });
+  }, [students, filters]);
 
   const queueStudents = useMemo(() => {
     return students.filter(s => s.category === 'Queue');

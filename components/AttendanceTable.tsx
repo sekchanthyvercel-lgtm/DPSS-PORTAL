@@ -37,29 +37,29 @@ const ASSISTANT_COLORS: Record<string, string> = {
 
 const getRowBg = (idx: number): string => {
   const colors = [
-    'bg-emerald-400/5',
-    'bg-emerald-400/5',
-    'bg-amber-400/5',
-    'bg-indigo-400/5',
-    'bg-rose-400/5',
-    'bg-violet-400/5',
-    'bg-teal-400/5',
-    'bg-orange-400/5'
+    'bg-emerald-50/10',
+    'bg-emerald-50/10',
+    'bg-amber-50/10',
+    'bg-indigo-50/10',
+    'bg-rose-50/10',
+    'bg-violet-50/10',
+    'bg-teal-50/10',
+    'bg-orange-50/10'
   ];
   return colors[idx % colors.length];
 };
 
 const getTeacherColor = (name: string) => {
-  if (!name || name === 'N/A') return 'bg-slate-100 text-slate-500';
+  if (!name || name === 'N/A') return 'bg-slate-50 text-slate-400';
   const colors = [
-    'bg-slate-100 text-slate-900 border border-slate-200',
-    'bg-blue-100 text-blue-900 border border-blue-200',
-    'bg-teal-100 text-teal-900 border border-teal-200',
-    'bg-orange-100 text-orange-900 border border-orange-200',
-    'bg-purple-100 text-purple-900 border border-purple-200',
-    'bg-pink-100 text-pink-900 border border-pink-200',
-    'bg-green-100 text-green-900 border border-green-200',
-    'bg-red-100 text-red-900 border border-red-200'
+    'bg-slate-50 text-slate-800 border border-slate-100',
+    'bg-blue-50 text-blue-800 border border-blue-100',
+    'bg-teal-50 text-teal-800 border border-teal-100',
+    'bg-orange-50 text-orange-800 border border-orange-100',
+    'bg-purple-50 text-purple-800 border border-purple-100',
+    'bg-pink-50 text-pink-800 border border-pink-100',
+    'bg-green-50 text-green-800 border border-green-100',
+    'bg-red-50 text-red-800 border border-red-100'
   ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
@@ -69,16 +69,16 @@ const getTeacherColor = (name: string) => {
 };
 
 const getAssistantColor = (name: string) => {
-  if (!name || name === 'N/A') return 'bg-slate-100 text-slate-500';
+  if (!name || name === 'N/A') return 'bg-slate-50 text-slate-400';
   const colors = [
-    'bg-indigo-100 text-indigo-900 border border-indigo-200',
-    'bg-rose-100 text-rose-900 border border-rose-200',
-    'bg-emerald-100 text-emerald-900 border border-emerald-200',
-    'bg-amber-100 text-amber-900 border border-amber-200',
-    'bg-violet-100 text-violet-900 border border-violet-200',
-    'bg-cyan-100 text-cyan-900 border border-cyan-200',
-    'bg-fuchsia-100 text-fuchsia-900 border border-fuchsia-200',
-    'bg-sky-100 text-sky-900 border border-sky-200'
+    'bg-indigo-50 text-indigo-800 border border-indigo-100',
+    'bg-rose-50 text-rose-800 border border-rose-100',
+    'bg-emerald-50 text-emerald-800 border border-emerald-100',
+    'bg-amber-50 text-amber-800 border border-amber-100',
+    'bg-violet-50 text-violet-800 border border-violet-100',
+    'bg-cyan-50 text-cyan-800 border border-cyan-100',
+    'bg-fuchsia-50 text-fuchsia-800 border border-fuchsia-100',
+    'bg-sky-50 text-sky-800 border border-sky-100'
   ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
@@ -123,7 +123,7 @@ export const AttendanceTable: React.FC<Props> = ({
   onUpdate, onAddStudent, onDeleteStudent, isLocked = false, role, onClearCategory, settings
 }) => {
   const [viewDate, setViewDate] = useState(new Date());
-  const [isFrozen, setIsFrozen] = useState(false);
+  const [isFrozen, setIsFrozen] = useState(true);
   const [studentNameWidth, setStudentNameWidth] = useState(220);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
@@ -449,7 +449,7 @@ export const AttendanceTable: React.FC<Props> = ({
                         {idx + 1}
                       </div>
                     </td>
-                    <td className={`px-5 border-r border-slate-200/10 bg-inherit shadow-sm ${isFrozen ? 'sticky left-0 z-30' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                    <td className={`px-5 border-r border-slate-200/10 shadow-sm ${isFrozen ? 'sticky left-0 z-30 bg-white' : 'bg-inherit'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                       <div 
                         className={`font-black text-[#1B254B] uppercase tracking-tight truncate flex items-center min-h-[32px] ${isHidden ? 'opacity-30' : ''}`}
                         style={{ fontSize: settings?.fontSize ? `${settings.fontSize}px` : '12px' }}

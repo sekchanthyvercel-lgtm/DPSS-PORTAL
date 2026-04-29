@@ -147,24 +147,24 @@ const App: React.FC = () => {
   const getNameColor = (name: string, isAssistant: boolean = false) => {
     if (!name || name === 'N/A') return 'bg-slate-200 text-slate-600';
     const assistantColors = [
-      'bg-indigo-100 text-indigo-900 border border-indigo-200',
-      'bg-rose-100 text-rose-900 border border-rose-200',
-      'bg-emerald-100 text-emerald-900 border border-emerald-200',
-      'bg-amber-100 text-amber-900 border border-amber-200', 
-      'bg-violet-100 text-violet-900 border border-violet-200',
-      'bg-cyan-100 text-cyan-900 border border-cyan-200',
-      'bg-fuchsia-100 text-fuchsia-900 border border-fuchsia-200',
-      'bg-sky-100 text-sky-900 border border-sky-200'
+      'bg-indigo-50 text-indigo-900 border border-indigo-100',
+      'bg-rose-50 text-rose-900 border border-rose-100',
+      'bg-emerald-50 text-emerald-900 border border-emerald-100',
+      'bg-amber-50 text-amber-900 border border-amber-100', 
+      'bg-violet-50 text-violet-900 border border-violet-100',
+      'bg-cyan-50 text-cyan-900 border border-cyan-100',
+      'bg-fuchsia-50 text-fuchsia-900 border border-fuchsia-100',
+      'bg-sky-50 text-sky-900 border border-sky-100'
     ];
     const teacherColors = [
-      'bg-slate-100 text-slate-900 border border-slate-200',
-      'bg-blue-100 text-blue-900 border border-blue-200',
-      'bg-teal-100 text-teal-900 border border-teal-200',
-      'bg-orange-100 text-orange-900 border border-orange-200',
-      'bg-purple-100 text-purple-900 border border-purple-200',
-      'bg-pink-100 text-pink-900 border border-pink-200',
-      'bg-green-100 text-green-900 border border-green-200',
-      'bg-red-100 text-red-900 border border-red-200'
+      'bg-slate-50 text-slate-900 border border-slate-100',
+      'bg-blue-50 text-blue-900 border border-blue-100',
+      'bg-teal-50 text-teal-900 border border-teal-100',
+      'bg-orange-50 text-orange-900 border border-orange-100',
+      'bg-purple-50 text-purple-900 border border-purple-100',
+      'bg-pink-50 text-pink-900 border border-pink-100',
+      'bg-green-50 text-green-900 border border-green-100',
+      'bg-red-50 text-red-900 border border-red-100'
     ];
     const palette = isAssistant ? assistantColors : teacherColors;
     let hash = 0;
@@ -516,6 +516,8 @@ const App: React.FC = () => {
                 onDeleteStudent={handleDeleteStudent}
                 filters={filters} 
                 setFilters={setFilters}
+                uniqueTeachers={uniqueTeachers}
+                uniqueAssistants={uniqueAssistants}
                 onAddStudent={(defaults) => handleAddStudent(defaults)} 
                 role={currentUser.role}
                 onClearCategory={handleClearCategory}
@@ -567,6 +569,8 @@ const App: React.FC = () => {
                 onQuickAdd={() => setIsAiOpen(true)}
                 onAddStudent={handleAddStudent}
                 isLocked={isModuleLocked('Finance')}
+                filters={filters}
+                setFilters={setFilters}
               />
             )}
             {activeTab === Tab.StudentCard && (
@@ -576,6 +580,8 @@ const App: React.FC = () => {
                 onUpdate={handleUpdate} 
                 onQuickAdd={() => setIsAiOpen(true)}
                 onAddStudent={handleAddStudent}
+                filters={filters}
+                setFilters={setFilters}
               />
             )}
             {activeTab === Tab.Maintenance && (

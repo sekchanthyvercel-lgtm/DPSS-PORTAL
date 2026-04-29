@@ -99,9 +99,18 @@ const ReminderTable: React.FC<ReminderTableProps> = ({
     .filter(s => s.category === 'Reminder')
     .filter(s => {
       const query = (filters.searchQuery || '').toLowerCase();
-      return (s.name || '').toLowerCase().includes(query) || 
+      const matchesSearch = !query || 
+             (s.name || '').toLowerCase().includes(query) || 
              (s.note || '').toLowerCase().includes(query) ||
              (s.status || '').toLowerCase().includes(query);
+
+      const matchesTeacher = !filters.teacher || 
+          (s.teachers || '').toUpperCase().includes(filters.teacher.toUpperCase());
+          
+      const matchesAssistant = !filters.assistant || 
+          (s.assistant || '').toUpperCase().includes(filters.assistant.toUpperCase());
+
+      return matchesSearch && matchesTeacher && matchesAssistant;
     });
 
   const monthStart = startOfMonth(viewDate);

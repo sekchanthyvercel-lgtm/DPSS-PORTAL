@@ -66,7 +66,7 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
   role, onClearCategory, settings
 }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [isFrozen, setIsFrozen] = useState(false);
+  const [isFrozen, setIsFrozen] = useState(true);
   const [studentNameWidth, setStudentNameWidth] = useState(220);
   
   const resizingRef = useRef<{ startX: number; startWidth: number } | null>(null);
@@ -91,12 +91,12 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
     document.removeEventListener('mouseup', onResizeEnd);
   };
 
-  const penaltyStudents = useMemo(() => students.filter(s => s.category === 'Late/Absence' && !s.deletedAt), [students]);
+  const penaltyStudents = useMemo(() => students.filter(s => s.category === 'Penalty' && !s.deletedAt), [students]);
 
   const localTeachers = useMemo(() => {
     const ts = new Set<string>();
     penaltyStudents.forEach(s => {
-      if (s.teachers) String(s.teachers).split('&').forEach(t => ts.add(t.trim()));
+      if (s.teachers) String(s.teachers).split(/[&+,\/]+/).forEach(t => ts.add(t.trim()));
     });
     return Array.from(ts).filter(Boolean).sort();
   }, [penaltyStudents]);
@@ -104,7 +104,7 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
   const localAssistants = useMemo(() => {
     const asst = new Set<string>();
     penaltyStudents.forEach(s => {
-      if (s.assistant) asst.add(String(s.assistant).trim());
+      if (s.assistant) String(s.assistant).split(/[&+,\/]+/).forEach(a => asst.add(a.trim()));
     });
     return Array.from(asst).filter(Boolean).sort();
   }, [penaltyStudents]);
@@ -120,7 +120,7 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
   const localLevels = useMemo(() => {
     const lv = new Set<string>();
     penaltyStudents.forEach(s => {
-      if (s.level) lv.add(String(s.level).trim().toUpperCase());
+      if (s.level) String(s.level).split('&').forEach(l => lv.add(l.trim().toUpperCase()));
     });
     return Array.from(lv).filter(Boolean).sort();
   }, [penaltyStudents]);
@@ -131,7 +131,9 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
         const matchesSearch = !query || 
             String(s.name || '').toLowerCase().includes(query) ||
             String(s.assistant || '').toLowerCase().includes(query) ||
-            String(s.teachers || '').toLowerCase().includes(query);
+            String(s.teachers || '').toLowerCase().includes(query) ||
+            String(s.level || '').toLowerCase().includes(query) ||
+            String(s.time || '').toLowerCase().includes(query);
         
         const matchesTeacher = !filters.teacher || String(s.teachers || '').toUpperCase().includes(filters.teacher.toUpperCase());
         const matchesAssistant = !filters.assistant || String(s.assistant || '').toUpperCase().includes(filters.assistant.toUpperCase());
@@ -319,7 +321,7 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                           </div>
                         </th>
                         <th className="w-10 border-r border-white/5 text-[10px] font-black text-slate-900 sticky top-0 bg-white">#</th>
-                        <th className={`border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 bg-white ${isFrozen ? 'left-0 z-50 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                        <th className={`border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 bg-white ${isFrozen ? 'left-0 z-50 shadow-[1px_0_0_0_rgba(0,0,0,0.1)]' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                           <div className="flex items-center justify-between">
                             Student Name
                           </div>
@@ -360,7 +362,7 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                             {idx + 1}
                           </div>
                         </td>
-                        <td className={`border-r border-slate-100 bg-white/60 group ${isFrozen ? 'sticky left-0 z-20 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined, backgroundColor: 'inherit' }}>
+                        <td className={`border-r border-slate-100 group ${isFrozen ? 'sticky left-0 z-20 bg-white shadow-[2px_0_5px_rgba(0,0,0,0.05)]' : 'bg-white/60'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                             <div className="flex items-center min-h-[32px] w-full">
                                 <MultilineInput 
                                     value={s.name} 

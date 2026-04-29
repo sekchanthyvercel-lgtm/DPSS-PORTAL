@@ -99,20 +99,20 @@ const isDeadlineDue = (deadline: string) => {
 };
 
 const ASSISTANT_PALETTE = [
-  'rgba(224, 242, 254, 0.4)', // Sky
-  'rgba(240, 253, 244, 0.4)', // Emerald
-  'rgba(254, 252, 232, 0.4)', // Amber
-  'rgba(250, 245, 255, 0.4)', // Purple
-  'rgba(255, 247, 237, 0.4)', // Orange
-  'rgba(253, 242, 248, 0.4)', // Pink
-  'rgba(240, 253, 250, 0.4)', // Teal
-  'rgba(245, 243, 255, 0.4)', // Indigo
-  'rgba(236, 253, 245, 0.4)', // Mint
-  'rgba(255, 241, 242, 0.4)'  // Rose
+  'rgba(224, 242, 254, 0.15)', // Sky
+  'rgba(240, 253, 244, 0.15)', // Emerald
+  'rgba(254, 252, 232, 0.15)', // Amber
+  'rgba(250, 245, 255, 0.15)', // Purple
+  'rgba(255, 247, 237, 0.15)', // Orange
+  'rgba(253, 242, 248, 0.15)', // Pink
+  'rgba(240, 253, 250, 0.15)', // Teal
+  'rgba(245, 243, 255, 0.15)', // Indigo
+  'rgba(236, 253, 245, 0.15)', // Mint
+  'rgba(255, 241, 242, 0.15)'  // Rose
 ];
 
 const getAssistantBgColor = (assistant: string): string => {
-  if (!assistant) return 'rgba(248, 250, 252, 0.4)';
+  if (!assistant) return 'rgba(248, 250, 252, 0.1)';
   let hash = 0;
   for (let i = 0; i < assistant.length; i++) {
     hash = assistant.charCodeAt(i) + ((hash << 5) - hash);
@@ -126,7 +126,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
   role, onClearCategory, settings
 }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [isFrozen, setIsFrozen] = useState(false); 
+  const [isFrozen, setIsFrozen] = useState(true); 
   const [studentNameWidth, setStudentNameWidth] = useState(220);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, colId: string } | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
@@ -394,7 +394,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                             </button>
                         </th>
                         <th className={`border-r border-white/5 sticky top-0 z-40 bg-white/[0.02] text-center text-[10px] font-black text-slate-900`} style={{ width: 40 }}>#</th>
-                        <th className={`px-3 border-r border-white/5 sticky top-0 z-50 bg-white/[0.01] text-slate-900 font-black text-[11px] uppercase tracking-tighter cursor-pointer ${isFrozen ? 'left-0 shadow-[1px_0_0_0_rgba(255,255,255,0.05)]' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                        <th className={`px-3 border-r border-white/5 sticky top-0 z-50 text-slate-900 font-black text-[11px] uppercase tracking-tighter cursor-pointer ${isFrozen ? 'left-0 bg-white shadow-[1px_0_0_0_rgba(0,0,0,0.1)]' : 'bg-white/[0.01]'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                           <div className="flex items-center justify-between">
                             STUDENT NAME
                           </div>
@@ -434,17 +434,17 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                           let textColor = '#0f172a';
                           
                           if (deadlineDue) {
-                              rowBg = 'rgba(255, 237, 213, 0.4)'; // Orange (Orange 100)
+                              rowBg = 'rgba(255, 237, 213, 0.15)'; // Orange (Orange 100)
                               textColor = '#c2410c'; // High contrast dark orange text
                           }
                           
                           if (s.headTeacher) {
-                              rowBg = 'rgba(254, 226, 226, 0.4)'; // Red (Red 100)
+                              rowBg = 'rgba(254, 226, 226, 0.15)'; // Red (Red 100)
                               textColor = '#b91c1c'; // High contrast dark red text
                           }
 
                           if (s.isHidden) {
-                              rowBg = 'rgba(248, 250, 252, 0.4)';
+                              rowBg = 'rgba(248, 250, 252, 0.1)';
                               textColor = '#475569';
                           }
 
@@ -462,7 +462,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                         {i + 1}
                                     </div>
                                 </td>
-                                 <td className={`px-0 border-r border-slate-200/30 group ${isFrozen ? 'sticky left-0 z-20 shadow-[1px_0_0_0_#cbd5e1]' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined, backgroundColor: rowBg }}>
+                                 <td className={`px-0 border-r border-slate-200/30 group ${isFrozen ? 'sticky left-0 z-20 bg-white shadow-[1px_0_0_0_#cbd5e1]' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                                     <div className="flex items-center min-h-[32px] w-full">
                                         <MultilineInput 
                                           value={s.name} 

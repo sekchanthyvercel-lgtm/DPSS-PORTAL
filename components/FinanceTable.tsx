@@ -47,6 +47,8 @@ interface Props {
   onQuickAdd: (defaults: Partial<Student>) => void;
   onAddStudent: (defaults: Partial<Student>) => void;
   isLocked?: boolean;
+  filters: any;
+  setFilters: (f: any) => void;
 }
 
 const MONTHS = [
@@ -60,11 +62,10 @@ const DEFAULT_WIDTHS = {
   no: 48, id: 128, name: 208, fee: 112, months: 64, act: 80
 };
 
-export const FinanceTable: React.FC<Props> = ({ students, data, onUpdate, onQuickAdd, onAddStudent, isLocked = false }) => {
+export const FinanceTable: React.FC<Props> = ({ students, data, onUpdate, onQuickAdd, onAddStudent, isLocked = false, filters, setFilters }) => {
   const [activeTab, setActiveTab] = useState<StudyType>('PartTime');
   const [selectedClass] = useState<string>('');
   const [year, setYear] = useState(new Date().getFullYear());
-  const [searchTerm, setSearchTerm] = useState('');
   const [showOnlyDue] = useState<boolean>(false);
   const [focusedCell, setFocusedCell] = useState<{ id: string; field: string } | null>(null);
   
@@ -116,20 +117,29 @@ export const FinanceTable: React.FC<Props> = ({ students, data, onUpdate, onQuic
 
   const filteredStudents = useMemo(() => {
     return students.filter(s => {
-      const query = searchTerm.toLowerCase();
+      const query = (filters.searchQuery || '').toLowerCase();
       const matchesSearch = !query || 
-        s.name.toLowerCase().includes(query) || 
-        (s.displayId && s.displayId.toLowerCase().includes(query)) ||
-        (s.assistant && s.assistant.toLowerCase().includes(query)) ||
-        (s.teachers && s.teachers.toLowerCase().includes(query));
+        (s.name || '').toLowerCase().includes(query) || 
+        (s.displayId || '').toLowerCase().includes(query) ||
+        (s.assistant || '').toLowerCase().includes(query) ||
+        (s.teachers || '').toLowerCase().includes(query);
+
+      const matchesTeacher = !filters.teacher || 
+          (s.teachers || '').toUpperCase().includes(filters.teacher.toUpperCase());
+          
+      const matchesAssistant = !filters.assistant || 
+          (s.assistant || '').toUpperCase().includes(filters.assistant.toUpperCase());
 
       return s.category === 'Office' &&
         (s.studyType || 'PartTime') === activeTab && 
         (!selectedClass || s.className === selectedClass) && 
         matchesSearch && 
-        (showOnlyDue ? isStudentDue(s) : true);
+        matchesTeacher &&
+        matchesAssistant &&
+        (showOnlyDue ? isStudentDue(s) : true) &&
+        (filters.showHidden || !s.isHidden);
     }).sort((a, b) => a.order - b.order);
-  }, [students, activeTab, selectedClass, searchTerm, showOnlyDue, year]);
+  }, [students, activeTab, selectedClass, filters, showOnlyDue, year]);
 
   const getRowBg = (idx: number): string => {
     const colors = [
@@ -214,7 +224,12 @@ export const FinanceTable: React.FC<Props> = ({ students, data, onUpdate, onQuic
       <div className="p-3 bg-white/[0.01] border-b border-white/5 flex items-center justify-between gap-4 backdrop-blur-[1px]">
           <div className="relative flex-1 max-w-sm">
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
-             <input placeholder="Find student..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-9 pr-3 py-2 bg-white/[0.03] border border-white/10 rounded-xl text-sm outline-none font-black text-slate-900 placeholder:text-slate-500" />
+             <input 
+                placeholder="Find student..." 
+                value={filters.searchQuery || ''} 
+                onChange={e => setFilters({ ...filters, searchQuery: e.target.value })} 
+                className="w-full pl-9 pr-3 py-2 bg-white/[0.03] border border-white/10 rounded-xl text-sm outline-none font-black text-slate-900 placeholder:text-slate-500" 
+             />
           </div>
           <div className="flex items-center gap-2">
               <button disabled={isLocked} onClick={() => onQuickAdd({ studyType: activeTab, className: selectedClass, category: 'Office' })} className="px-5 py-2 bg-orange-600/90 text-white rounded-xl text-xs font-black uppercase shadow-lg disabled:opacity-30 backdrop-blur-[2px]">AI Add</button>

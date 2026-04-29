@@ -13,24 +13,24 @@ interface StatCardProps {
 
 const getNameBg = (name: string, isAssistant: boolean) => {
   const assistants = [
-    'from-indigo-50 to-indigo-100',
-    'from-rose-50 to-rose-100',
-    'from-emerald-50 to-emerald-100',
-    'from-amber-50 to-amber-100',
-    'from-violet-50 to-violet-100',
-    'from-cyan-50 to-cyan-100',
-    'from-pink-50 to-pink-100',
-    'from-sky-50 to-sky-100'
+    'from-indigo-50/50 to-indigo-100/30',
+    'from-rose-50/50 to-rose-100/30',
+    'from-emerald-50/50 to-emerald-100/30',
+    'from-amber-50/50 to-amber-100/30',
+    'from-violet-50/50 to-violet-100/30',
+    'from-cyan-50/50 to-cyan-100/30',
+    'from-pink-50/50 to-pink-100/30',
+    'from-sky-50/50 to-sky-100/30'
   ];
   const teachers = [
-    'from-slate-50 to-slate-100',
-    'from-blue-50 to-indigo-100',
-    'from-teal-50 to-emerald-100',
-    'from-orange-50 to-red-100',
-    'from-purple-50 to-fuchsia-100',
-    'from-pink-50 to-rose-100',
-    'from-green-50 to-teal-100',
-    'from-red-50 to-rose-100'
+    'from-slate-50/50 to-slate-100/30',
+    'from-blue-50/50 to-indigo-100/30',
+    'from-teal-50/50 to-emerald-100/30',
+    'from-orange-50/50 to-red-100/30',
+    'from-purple-50/50 to-fuchsia-100/30',
+    'from-pink-50/50 to-rose-100/30',
+    'from-green-50/50 to-teal-100/30',
+    'from-red-50/50 to-rose-100/30'
   ];
   const palette = isAssistant ? assistants : teachers;
   let hash = 0;
@@ -43,8 +43,17 @@ const getNameBg = (name: string, isAssistant: boolean) => {
 const StatCard: React.FC<StatCardProps> = ({ title, total, breakdown, icon: Icon, isAssistant, onClick }) => {
   const bgGradient = getNameBg(title, isAssistant);
   
+  const handleCardClick = (e: React.MouseEvent) => {
+    // If user is selecting text, don't trigger the click navigation
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) {
+      return;
+    }
+    onClick();
+  };
+
   return (
-    <div className="bg-white/40 backdrop-blur-md rounded-[32px] overflow-hidden border border-white/60 shadow-xl hover:shadow-2xl transition-all group flex flex-col h-full cursor-pointer" onClick={onClick}>
+    <div className="bg-white/40 backdrop-blur-md rounded-[32px] overflow-hidden border border-white/60 shadow-xl hover:shadow-2xl transition-all group flex flex-col h-full cursor-pointer" onClick={handleCardClick}>
       {/* Top Header with Name */}
       <div className={`p-5 bg-gradient-to-br ${bgGradient} text-slate-900 border-b border-white/20`}>
         <div className="flex items-center justify-between">
@@ -108,7 +117,7 @@ export const Dashboard: React.FC<Props> = ({
   filters, setFilters, uniqueTeachers = [], uniqueAssistants = [] 
 }) => {
   const activeStudents = useMemo(() => 
-    students.filter(s => (s.category === 'Hall' || s.category === 'Class') && !s.isHidden),
+    students.filter(s => !s.isHidden),
   [students]);
 
   const teacherStats = useMemo(() => {
@@ -145,7 +154,7 @@ export const Dashboard: React.FC<Props> = ({
   }, [activeStudents]);
 
   const filteredTeachers = useMemo(() => {
-    // Strictly hide teachers if an assistant is selected and no other teacher/search filter is present
+    // Hide entire section if assistant is selected specifically
     if (filters?.assistant && !filters?.teacher && !filters?.searchQuery) return [];
     
     let list = teacherStats;
@@ -159,7 +168,7 @@ export const Dashboard: React.FC<Props> = ({
   }, [teacherStats, filters]);
 
   const filteredAssistants = useMemo(() => {
-    // Strictly hide assistants if a teacher is selected and no other assistant/search filter is present
+    // Hide entire section if teacher is selected specifically
     if (filters?.teacher && !filters?.assistant && !filters?.searchQuery) return [];
     
     let list = assistantStats;
