@@ -321,7 +321,7 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                           </div>
                         </th>
                         <th className="w-10 border-r border-white/5 text-[10px] font-black text-slate-900 sticky top-0 bg-white">#</th>
-                        <th className={`border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 bg-white ${isFrozen ? 'left-0 z-50 shadow-[1px_0_0_0_rgba(0,0,0,0.1)]' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                        <th className={`border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 bg-white ${isFrozen ? 'left-0 z-50 shadow-[2px_0_5px_rgba(0,0,0,0.1)]' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                           <div className="flex items-center justify-between">
                             Student Name
                           </div>

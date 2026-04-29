@@ -235,7 +235,7 @@ export const AttendanceTable: React.FC<Props> = ({
   const Th = ({ label, colId, width, stickyLeft }: { label: string, colId: string, width?: number, stickyLeft?: number }) => (
     <th 
       onClick={() => handleSort(colId)}
-      className={`px-4 py-4 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest border-r border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors group ${stickyLeft !== undefined ? 'sticky z-20 bg-inherit' : ''}`}
+      className={`px-4 py-4 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest border-r border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors group ${stickyLeft !== undefined ? 'sticky z-50 bg-white shadow-[1px_0_0_0_rgba(0,0,0,0.1)]' : ''}`}
       style={{ width, left: stickyLeft }}
     >
       <div className="flex items-center justify-between">
@@ -398,7 +398,7 @@ export const AttendanceTable: React.FC<Props> = ({
                 </th>
                 <th className="px-4 py-4 text-center text-[10px] font-black uppercase text-slate-900 w-12 border-r border-white/5 sticky top-0 bg-white/[0.02] backdrop-blur-[2px]">#</th>
                 <th 
-                  className={`px-4 py-4 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest border-r border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors group sticky top-0 z-50 bg-white ${isFrozen ? 'left-0 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]' : ''}`}
+                  className={`px-4 py-4 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest border-r border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors group sticky top-0 z-50 bg-white ${isFrozen ? 'left-0 shadow-[2px_0_5px_rgba(0,0,0,0.1)]' : ''}`}
                   style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}
                   onClick={() => handleSort('name')}
                 >
@@ -449,7 +449,7 @@ export const AttendanceTable: React.FC<Props> = ({
                         {idx + 1}
                       </div>
                     </td>
-                    <td className={`px-5 border-r border-slate-200/10 shadow-sm ${isFrozen ? 'sticky left-0 z-30 bg-white' : 'bg-inherit'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                    <td className={`px-5 border-r border-slate-200/10 shadow-sm ${isFrozen ? 'sticky left-0 z-30 bg-white shadow-[2px_0_5px_rgba(0,0,0,0.05)]' : 'bg-inherit'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                       <div 
                         className={`font-black text-[#1B254B] uppercase tracking-tight truncate flex items-center min-h-[32px] ${isHidden ? 'opacity-30' : ''}`}
                         style={{ fontSize: settings?.fontSize ? `${settings.fontSize}px` : '12px' }}

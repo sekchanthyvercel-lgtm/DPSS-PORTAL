@@ -394,7 +394,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                             </button>
                         </th>
                         <th className={`border-r border-white/5 sticky top-0 z-40 bg-white/[0.02] text-center text-[10px] font-black text-slate-900`} style={{ width: 40 }}>#</th>
-                        <th className={`px-3 border-r border-white/5 sticky top-0 z-50 text-slate-900 font-black text-[11px] uppercase tracking-tighter cursor-pointer ${isFrozen ? 'left-0 bg-white shadow-[1px_0_0_0_rgba(0,0,0,0.1)]' : 'bg-white/[0.01]'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                        <th className={`px-3 border-r border-white/5 sticky top-0 z-50 text-slate-900 font-black text-[11px] uppercase tracking-tighter cursor-pointer ${isFrozen ? 'left-0 bg-white shadow-[2px_0_5px_rgba(0,0,0,0.1)]' : 'bg-white/[0.01]'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                           <div className="flex items-center justify-between">
                             STUDENT NAME
                           </div>
@@ -462,7 +462,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                         {i + 1}
                                     </div>
                                 </td>
-                                 <td className={`px-0 border-r border-slate-200/30 group ${isFrozen ? 'sticky left-0 z-20 bg-white shadow-[1px_0_0_0_#cbd5e1]' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                                 <td className={`px-0 border-r border-slate-200/30 group ${isFrozen ? 'sticky left-0 z-20 bg-white shadow-[2px_0_5px_rgba(0,0,0,0.05)]' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                                     <div className="flex items-center min-h-[32px] w-full">
                                         <MultilineInput 
                                           value={s.name} 
