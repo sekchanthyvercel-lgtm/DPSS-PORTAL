@@ -14,6 +14,7 @@ import { SupermanAnimation } from './components/SupermanAnimation';
 import ReminderTable from './components/ReminderTable';
 import DPSSTable from './components/DPSSTable';
 import { RecycleBin } from './components/RecycleBin';
+import { Dashboard } from './components/Dashboard';
 import { AppData, Student, CurrentUser, UserRole, ColumnConfig, Tab, ViewMode, AppSettings, StudentCategory } from './types';
 import { subscribeToData, saveData } from './services/firebase';
 import { Menu, X } from 'lucide-react';
@@ -140,17 +141,49 @@ const App: React.FC = () => {
     }
   }, [loading, data.students.length === 0]);
 
-  const activeStudents = useMemo(() => data.students.filter(s => !s.deletedAt), [data.students]);
-
   const allActiveStudents = useMemo(() => data.students.filter(s => !s.deletedAt), [data.students]);
+
+  // Updated name-to-color logic that can be used consistently
+  const getNameColor = (name: string, isAssistant: boolean = false) => {
+    if (!name || name === 'N/A') return 'bg-slate-200 text-slate-600';
+    const assistantColors = [
+      'bg-indigo-100 text-indigo-900 border border-indigo-200',
+      'bg-rose-100 text-rose-900 border border-rose-200',
+      'bg-emerald-100 text-emerald-900 border border-emerald-200',
+      'bg-amber-100 text-amber-900 border border-amber-200', 
+      'bg-violet-100 text-violet-900 border border-violet-200',
+      'bg-cyan-100 text-cyan-900 border border-cyan-200',
+      'bg-fuchsia-100 text-fuchsia-900 border border-fuchsia-200',
+      'bg-sky-100 text-sky-900 border border-sky-200'
+    ];
+    const teacherColors = [
+      'bg-slate-100 text-slate-900 border border-slate-200',
+      'bg-blue-100 text-blue-900 border border-blue-200',
+      'bg-teal-100 text-teal-900 border border-teal-200',
+      'bg-orange-100 text-orange-900 border border-orange-200',
+      'bg-purple-100 text-purple-900 border border-purple-200',
+      'bg-pink-100 text-pink-900 border border-pink-200',
+      'bg-green-100 text-green-900 border border-green-200',
+      'bg-red-100 text-red-900 border border-red-200'
+    ];
+    const palette = isAssistant ? assistantColors : teacherColors;
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return palette[Math.abs(hash) % palette.length];
+  };
 
   const uniqueTeachers = useMemo(() => {
     const ts = new Set<string>();
-    // From all active students across all tabs
+    // From all active students
     allActiveStudents.forEach(s => {
-      if (s.teachers) String(s.teachers).split('&').forEach(t => ts.add(t.trim()));
+      if (s.teachers) {
+        String(s.teachers).split(/[&+,\/]+/).forEach(t => ts.add(t.trim()));
+      }
+      if (s.teacher) ts.add(String(s.teacher).trim()); // Some legacy keys might use .teacher
     });
-    // From staff directory (all can be teachers/assistants)
+    // From staff directory
     if (data.staffDirectory) {
       Object.keys(data.staffDirectory).forEach(name => ts.add(name.trim()));
     }
@@ -160,7 +193,9 @@ const App: React.FC = () => {
   const uniqueAssistants = useMemo(() => {
     const asst = new Set<string>();
     allActiveStudents.forEach(s => {
-      if (s.assistant) String(s.assistant).split('&').forEach(a => asst.add(a.trim()));
+      if (s.assistant) {
+        String(s.assistant).split(/[&+,\/]+/).forEach(a => asst.add(a.trim()));
+      }
     });
     if (data.staffDirectory) {
       Object.keys(data.staffDirectory).forEach(name => asst.add(name.trim()));
@@ -437,7 +472,7 @@ const App: React.FC = () => {
           <>
             {activeTab === Tab.Hall && (
               <StudentTable 
-                students={activeStudents} 
+                students={allActiveStudents} 
                 columns={data.settings?.columns || DEFAULT_COLUMNS}
                 onUpdate={students => handleUpdate({...data, students: [...students, ...data.students.filter(s => s.deletedAt)]})} 
                 onUpdateColumns={cols => handleUpdate({...data, settings: { ...data.settings!, columns: cols }})}
@@ -458,7 +493,7 @@ const App: React.FC = () => {
             )}
             {activeTab === Tab.Penalty && (
               <PenaltyTable 
-                students={activeStudents} 
+                students={allActiveStudents} 
                 onUpdate={students => handleUpdate({...data, students: [...students, ...data.students.filter(s => s.deletedAt)]})} 
                 onDeleteStudent={handleDeleteStudent}
                 filters={filters} 
@@ -475,7 +510,7 @@ const App: React.FC = () => {
             )}
             {activeTab === Tab.DailyTask && (
               <DailyTaskTable 
-                students={activeStudents} 
+                students={allActiveStudents} 
                 data={data}
                 onUpdate={handleUpdate} 
                 onDeleteStudent={handleDeleteStudent}
@@ -489,7 +524,7 @@ const App: React.FC = () => {
             )}
             {activeTab === Tab.Reminder && (
               <ReminderTable 
-                students={activeStudents} 
+                students={allActiveStudents} 
                 onAddStudent={handleAddStudent}
                 onUpdateStudent={(id, updates) => handleUpdate({ ...data, students: data.students.map(s => s.id === id ? { ...s, ...updates } : s) })}
                 onDeleteStudent={handleDeleteStudent}
@@ -506,11 +541,15 @@ const App: React.FC = () => {
             )}
             {activeTab === Tab.Attendance && (
               <AttendanceTable 
-                students={activeStudents} 
+                students={allActiveStudents} 
                 data={data} 
                 onDeleteStudent={handleDeleteStudent}
                 filters={filters} 
                 setFilters={setFilters}
+                uniqueTeachers={uniqueTeachers}
+                uniqueAssistants={uniqueAssistants}
+                uniqueLevels={uniqueLevels}
+                uniqueTimes={uniqueTimes}
                 onUpdate={handleUpdate} 
                 onAddStudent={handleAddStudent}
                 onQuickAdd={() => setIsAiOpen(true)}
@@ -522,7 +561,7 @@ const App: React.FC = () => {
             )}
             {activeTab === Tab.Finance && (
               <FinanceTable 
-                students={activeStudents} 
+                students={allActiveStudents} 
                 data={data} 
                 onUpdate={handleUpdate} 
                 onQuickAdd={() => setIsAiOpen(true)}
@@ -532,7 +571,7 @@ const App: React.FC = () => {
             )}
             {activeTab === Tab.StudentCard && (
               <CardGenerator 
-                students={activeStudents} 
+                students={allActiveStudents} 
                 data={data} 
                 onUpdate={handleUpdate} 
                 onQuickAdd={() => setIsAiOpen(true)}
@@ -544,6 +583,24 @@ const App: React.FC = () => {
             )}
             {activeTab === Tab.RecycleBin && (
               <RecycleBin data={data} onUpdate={handleUpdate} />
+            )}
+            {activeTab === Tab.Dashboard && (
+              <Dashboard 
+                data={data} 
+                students={allActiveStudents} 
+                filters={filters}
+                setFilters={setFilters}
+                uniqueTeachers={uniqueTeachers}
+                uniqueAssistants={uniqueAssistants}
+                onSelectTeacher={(name) => {
+                  setFilters({ ...filters, teacher: name, assistant: '', searchQuery: '' });
+                  setActiveTab(Tab.Hall);
+                }}
+                onSelectAssistant={(name) => {
+                  setFilters({ ...filters, assistant: name, teacher: '', searchQuery: '' });
+                  setActiveTab(Tab.Hall);
+                }}
+              />
             )}
           </>
         )}

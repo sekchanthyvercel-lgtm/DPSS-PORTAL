@@ -133,6 +133,7 @@ export enum Tab {
   Attendance = 'Attendance',
   Finance = 'Finance',
   StudentCard = 'StudentCard',
+  Dashboard = 'Dashboard',
   Maintenance = 'Maintenance',
   RecycleBin = 'RecycleBin'
 }

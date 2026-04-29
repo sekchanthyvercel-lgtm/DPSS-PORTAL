@@ -175,6 +175,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const navItems = [
+    { id: Tab.Dashboard, icon: LayoutDashboard, label: 'Dashboard', roles: ['Admin', 'Teacher', 'Finance'] },
     { id: Tab.Hall, icon: LayoutGrid, label: 'Hall Study', roles: ['Admin', 'Teacher', 'Finance'] },
     { id: Tab.Attendance, icon: CalendarCheck, label: 'Attendance', roles: ['Admin', 'Teacher', 'Finance'] },
     { id: Tab.Penalty, icon: Zap, label: 'Late/Absence Log', roles: ['Admin', 'Teacher', 'Finance'] },

@@ -59,18 +59,16 @@ interface PenaltyTableProps {
 
 export const PenaltyTable: React.FC<PenaltyTableProps> = ({ 
   students, onUpdate, onDeleteStudent, filters, setFilters, 
-  uniqueTeachers: globalTeachers = [], 
-  uniqueAssistants: globalAssistants = [], 
-  uniqueLevels: globalLevels = [], 
+  uniqueTeachers = [], 
+  uniqueAssistants = [], 
+  uniqueLevels = [], 
   onQuickAdd, onAddStudent,
   role, onClearCategory, settings
 }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isFrozen, setIsFrozen] = useState(false);
   const [studentNameWidth, setStudentNameWidth] = useState(220);
-  // Independence: Derive filter options only from Penalty category students
-  const penaltyStudents = useMemo(() => students.filter(s => s.category === 'Penalty'), [students]);
-
+  
   const resizingRef = useRef<{ startX: number; startWidth: number } | null>(null);
 
   const onResizeStart = (e: React.MouseEvent) => {
@@ -93,10 +91,12 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
     document.removeEventListener('mouseup', onResizeEnd);
   };
 
+  const penaltyStudents = useMemo(() => students.filter(s => s.category === 'Late/Absence' && !s.deletedAt), [students]);
+
   const localTeachers = useMemo(() => {
     const ts = new Set<string>();
     penaltyStudents.forEach(s => {
-      if (s.teachers) String(s.teachers).split('&').forEach(t => ts.add(t.trim().toUpperCase()));
+      if (s.teachers) String(s.teachers).split('&').forEach(t => ts.add(t.trim()));
     });
     return Array.from(ts).filter(Boolean).sort();
   }, [penaltyStudents]);
@@ -104,10 +104,18 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
   const localAssistants = useMemo(() => {
     const asst = new Set<string>();
     penaltyStudents.forEach(s => {
-      if (s.assistant) asst.add(String(s.assistant).trim().toUpperCase());
+      if (s.assistant) asst.add(String(s.assistant).trim());
     });
     return Array.from(asst).filter(Boolean).sort();
   }, [penaltyStudents]);
+
+  const filterTeachers = useMemo(() => {
+    return Array.from(new Set([...uniqueTeachers, ...localTeachers])).sort();
+  }, [uniqueTeachers, localTeachers]);
+
+  const filterAssistants = useMemo(() => {
+    return Array.from(new Set([...uniqueAssistants, ...localAssistants])).sort();
+  }, [uniqueAssistants, localAssistants]);
 
   const localLevels = useMemo(() => {
     const lv = new Set<string>();
@@ -273,14 +281,14 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                       <LayoutGrid size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" />
                       <select value={filters.teacher} onChange={e => setFilters?.({...filters, teacher: e.target.value})} className={filterSelectStyle}>
                           <option value="">Teachers</option>
-                          {localTeachers.map(t => <option key={t} value={t}>{t}</option>)}
+                          {filterTeachers.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
                   </div>
                   <div className="relative group">
                       <LayoutGrid size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" />
                       <select value={filters.assistant} onChange={e => setFilters?.({...filters, assistant: e.target.value})} className={filterSelectStyle}>
                           <option value="">Assistants</option>
-                          {localAssistants.map(a => <option key={a} value={a}>{a}</option>)}
+                          {filterAssistants.map(a => <option key={a} value={a}>{a}</option>)}
                       </select>
                   </div>
                   <div className="relative group">
@@ -405,7 +413,8 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                                     <option value="Wrong Shoes">Wrong Shoes</option>
                                     <option value="No cards">No cards</option>
                                     <option value="Wrong Uniforms">Wrong Uniforms</option>
-                                    <option value="Normal">Normal</option>
+                                    <option value="Late Check (Normal)">Late Check (Normal)</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </td>
                             <td className="border-r border-slate-100">

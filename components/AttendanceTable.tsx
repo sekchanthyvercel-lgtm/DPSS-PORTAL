@@ -13,6 +13,10 @@ interface Props {
   data: AppData;
   filters: any;
   setFilters?: (f: any) => void;
+  uniqueTeachers: string[];
+  uniqueAssistants: string[];
+  uniqueLevels: string[];
+  uniqueTimes: string[];
   onUpdate: (newData: AppData) => void;
   onAddStudent: (defaults: Partial<Student>) => void;
   onDeleteStudent?: (id: string) => void;
@@ -45,19 +49,36 @@ const getRowBg = (idx: number): string => {
   return colors[idx % colors.length];
 };
 
-const getAssistantColor = (name: string) => {
-  if (!name || name === 'N/A') return 'bg-slate-400 text-white';
+const getTeacherColor = (name: string) => {
+  if (!name || name === 'N/A') return 'bg-slate-100 text-slate-500';
   const colors = [
-    'bg-indigo-600 text-white',
-    'bg-rose-600 text-white',
-    'bg-emerald-600 text-white',
-    'bg-amber-600 text-white',
-    'bg-violet-600 text-white',
-    'bg-cyan-600 text-white',
-    'bg-fuchsia-600 text-white',
-    'bg-sky-600 text-white',
-    'bg-pink-600 text-white',
-    'bg-teal-600 text-white'
+    'bg-slate-100 text-slate-900 border border-slate-200',
+    'bg-blue-100 text-blue-900 border border-blue-200',
+    'bg-teal-100 text-teal-900 border border-teal-200',
+    'bg-orange-100 text-orange-900 border border-orange-200',
+    'bg-purple-100 text-purple-900 border border-purple-200',
+    'bg-pink-100 text-pink-900 border border-pink-200',
+    'bg-green-100 text-green-900 border border-green-200',
+    'bg-red-100 text-red-900 border border-red-200'
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+};
+
+const getAssistantColor = (name: string) => {
+  if (!name || name === 'N/A') return 'bg-slate-100 text-slate-500';
+  const colors = [
+    'bg-indigo-100 text-indigo-900 border border-indigo-200',
+    'bg-rose-100 text-rose-900 border border-rose-200',
+    'bg-emerald-100 text-emerald-900 border border-emerald-200',
+    'bg-amber-100 text-amber-900 border border-amber-200',
+    'bg-violet-100 text-violet-900 border border-violet-200',
+    'bg-cyan-100 text-cyan-900 border border-cyan-200',
+    'bg-fuchsia-100 text-fuchsia-900 border border-fuchsia-200',
+    'bg-sky-100 text-sky-900 border border-sky-200'
   ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
@@ -82,8 +103,13 @@ const getStatusIcon = (status?: number) => {
     </div>
   );
   if (status === 1) return (
-    <div className="w-8 h-6 bg-orange-500 rounded-sm flex items-center justify-center text-white shadow-sm mx-auto">
+    <div className="w-8 h-6 bg-rose-500 rounded-sm flex items-center justify-center text-white shadow-sm mx-auto">
        <span className="text-[10px] font-black">A</span>
+    </div>
+  );
+  if (status === 2) return (
+    <div className="w-8 h-6 bg-cyan-600 rounded-sm flex items-center justify-center text-white shadow-sm mx-auto">
+       <span className="text-[10px] font-black tracking-tighter">AP</span>
     </div>
   );
   return (
@@ -92,7 +118,9 @@ const getStatusIcon = (status?: number) => {
 };
 
 export const AttendanceTable: React.FC<Props> = ({ 
-  students, data, filters, setFilters, onUpdate, onAddStudent, onDeleteStudent, isLocked = false, role, onClearCategory, settings
+  students, data, filters, setFilters, 
+  uniqueTeachers = [], uniqueAssistants = [], uniqueLevels = [], uniqueTimes = [],
+  onUpdate, onAddStudent, onDeleteStudent, isLocked = false, role, onClearCategory, settings
 }) => {
   const [viewDate, setViewDate] = useState(new Date());
   const [isFrozen, setIsFrozen] = useState(false);
@@ -179,6 +207,7 @@ export const AttendanceTable: React.FC<Props> = ({
     if (cur === undefined) next = 0; // Present
     else if (cur === 0) next = 0.25; // Late
     else if (cur === 0.25) next = 1; // Absent
+    else if (cur === 1) next = 2; // Absent with Permission
     else next = undefined; // Reset
 
     if (next === undefined) {
@@ -324,28 +353,28 @@ export const AttendanceTable: React.FC<Props> = ({
                       <LayoutGrid size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                       <select value={filters.teacher || ''} onChange={e => setFilters && setFilters({...filters, teacher: e.target.value})} className={filterSelectStyle}>
                           <option value="">Teachers</option>
-                          {Array.from(new Set(students.filter(s => s.category === 'Class' || s.category === 'Hall').map(s => s.teachers?.split('&')?.[0]?.trim()).filter(Boolean))).sort().map(t => <option key={t} value={t}>{t}</option>)}
+                          {uniqueTeachers.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
                   </div>
                   <div className="relative group">
                       <LayoutGrid size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                       <select value={filters.assistant || ''} onChange={e => setFilters && setFilters({...filters, assistant: e.target.value})} className={filterSelectStyle}>
                           <option value="">Assistants</option>
-                          {Array.from(new Set(students.filter(s => s.category === 'Class' || s.category === 'Hall').map(s => s.assistant?.trim()).filter(Boolean))).sort().map(a => <option key={a} value={a}>{a}</option>)}
+                          {uniqueAssistants.map(a => <option key={a} value={a}>{a}</option>)}
                       </select>
                   </div>
                   <div className="relative group">
                       <LayoutGrid size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                       <select value={filters.level || ''} onChange={e => setFilters && setFilters({...filters, level: e.target.value})} className={filterSelectStyle}>
                           <option value="">All Levels</option>
-                          {Array.from(new Set(students.filter(s => s.category === 'Class' || s.category === 'Hall').map(s => s.level?.trim()).filter(Boolean))).sort().map(l => <option key={l} value={l}>{l}</option>)}
+                          {uniqueLevels.map(l => <option key={l} value={l}>{l}</option>)}
                       </select>
                   </div>
                   <div className="relative group">
                       <LayoutGrid size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                       <select value={filters.time || ''} onChange={e => setFilters && setFilters({...filters, time: e.target.value})} className={filterSelectStyle}>
                           <option value="">All Times</option>
-                          {Array.from(new Set(students.filter(s => s.category === 'Class' || s.category === 'Hall').map(s => s.time?.trim()).filter(Boolean))).sort().map(tm => <option key={tm} value={tm}>{tm}</option>)}
+                          {uniqueTimes.map(tm => <option key={tm} value={tm}>{tm}</option>)}
                       </select>
                   </div>
 
@@ -429,7 +458,13 @@ export const AttendanceTable: React.FC<Props> = ({
                       </div>
                     </td>
                     <td className="px-4 border-r border-slate-200/10">
-                      <div className={`text-[11px] font-black text-[#1B254B] uppercase truncate ${isHidden ? 'opacity-30' : ''}`}>{s.teachers || 'N/A'}</div>
+                      <div className="flex flex-wrap gap-1">
+                        {(s.teachers || 'N/A').split('&').map((t, i) => (
+                          <div key={i} className={`text-[10px] font-black ${getTeacherColor(t.trim())} px-2 py-0.5 rounded backdrop-blur-sm uppercase truncate ${isHidden ? 'opacity-30' : ''}`}>
+                            {t.trim()}
+                          </div>
+                        ))}
+                      </div>
                     </td>
                     <td className="px-4 border-r border-slate-200/10 text-center">
                       <div className={`text-[11px] font-black text-[#1B254B] uppercase ${isHidden ? 'opacity-30' : ''}`}>{s.level || 'N/A'}</div>
