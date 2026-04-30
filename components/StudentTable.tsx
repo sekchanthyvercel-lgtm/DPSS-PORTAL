@@ -61,7 +61,7 @@ interface StudentTableProps {
   uniqueBehaviors?: string[];
   onQuickAdd?: () => void;
   onAddStudent?: (defaults: Partial<Student>) => void;
-  onDeleteStudent?: (id: string) => void;
+  onDeleteStudent?: (ids: string | string[], skipConfirm?: boolean) => void;
   role?: UserRole;
   onClearCategory?: (cats: StudentCategory[]) => void;
   settings?: AppSettings;
@@ -127,7 +127,20 @@ export const StudentTable: React.FC<StudentTableProps> = ({
 }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isFrozen, setIsFrozen] = useState(true); 
-  const [studentNameWidth, setStudentNameWidth] = useState(220);
+  const [studentNameWidth, setStudentNameWidth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('dps_studentNameWidth');
+      if (saved) return parseInt(saved, 10);
+      return window.innerWidth < 768 ? 120 : 180;
+    }
+    return 180;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('dps_studentNameWidth', studentNameWidth.toString());
+    }
+  }, [studentNameWidth]);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, colId: string } | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
@@ -249,25 +262,31 @@ export const StudentTable: React.FC<StudentTableProps> = ({
     setContextMenu(null);
   };
 
-  const onResizeStart = (colId: string | 'studentName', e: React.MouseEvent) => {
-    e.preventDefault();
+  const onResizeStart = (colId: string | 'studentName', e: React.MouseEvent | React.TouchEvent) => {
+    if (!('touches' in e)) {
+      e.preventDefault();
+    }
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     if (colId === 'studentName') {
-      resizingRef.current = { col: colId, startX: e.clientX, startWidth: studentNameWidth };
+      resizingRef.current = { col: colId, startX: clientX, startWidth: studentNameWidth };
     } else {
       const col = columns.find(c => c.id === colId);
       if (!col) return;
-      resizingRef.current = { col: colId, startX: e.clientX, startWidth: col.width };
+      resizingRef.current = { col: colId, startX: clientX, startWidth: col.width };
     }
     document.addEventListener('mousemove', onResizeMove);
     document.addEventListener('mouseup', onResizeEnd);
+    document.addEventListener('touchmove', onResizeMove, { passive: false });
+    document.addEventListener('touchend', onResizeEnd);
   };
 
-  const onResizeMove = (e: MouseEvent) => {
+  const onResizeMove = (e: MouseEvent | TouchEvent) => {
     if (!resizingRef.current) return;
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
     const { col, startX, startWidth } = resizingRef.current;
-    const diff = e.clientX - startX;
+    const diff = clientX - startX;
     if (col === 'studentName') {
-      setStudentNameWidth(Math.max(50, startWidth + diff));
+      setStudentNameWidth(Math.max(80, startWidth + diff));
     } else {
       onUpdateColumns(columns.map(c => c.id === col ? { ...c, width: Math.max(50, startWidth + diff) } : c));
     }
@@ -277,6 +296,8 @@ export const StudentTable: React.FC<StudentTableProps> = ({
     resizingRef.current = null;
     document.removeEventListener('mousemove', onResizeMove);
     document.removeEventListener('mouseup', onResizeEnd);
+    document.removeEventListener('touchmove', onResizeMove);
+    document.removeEventListener('touchend', onResizeEnd);
   };
 
   const totalWidth = columns.reduce((acc, c) => acc + c.width, 0) + studentNameWidth + 285;
@@ -378,6 +399,19 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                       <button onClick={() => setIsFrozen(!isFrozen)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-black uppercase text-[9px] transition-all border backdrop-blur-md ${isFrozen ? 'bg-amber-500/80 text-white border-amber-600 shadow-md' : 'bg-white/10 text-slate-900 border-white/20 hover:bg-white/20'}`}>
                         {isFrozen ? <Lock size={12}/> : <Unlock size={12}/>} {isFrozen ? 'FROZEN' : 'FREEZE'}
                       </button>
+                      {selectedIds.size > 0 && (
+                          <button 
+                            onClick={() => {
+                              if (confirm(`Delete ${selectedIds.size} selected students?`)) {
+                                onDeleteStudent?.(Array.from(selectedIds), true);
+                                setSelectedIds(new Set());
+                              }
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-red-500/10 hover:bg-red-600 transition-all backdrop-blur-md"
+                          >
+                            <Trash2 size={16} /> DELETE ({selectedIds.size})
+                          </button>
+                      )}
                   </div>
               </div>
           </div>
@@ -394,11 +428,11 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                             </button>
                         </th>
                         <th className={`border-r border-white/5 sticky top-0 z-40 bg-white/[0.02] text-center text-[10px] font-black text-slate-900`} style={{ width: 40 }}>#</th>
-                        <th className={`px-3 border-r border-white/5 sticky top-0 z-50 text-slate-900 font-black text-[11px] uppercase tracking-tighter cursor-pointer ${isFrozen ? 'left-0 bg-white shadow-[2px_0_5px_rgba(0,0,0,0.1)]' : 'bg-white/[0.01]'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                        <th className={`px-3 border-r border-white/5 sticky top-0 z-50 text-slate-900 font-black text-[11px] uppercase tracking-tighter cursor-pointer ${isFrozen ? 'left-0 bg-white/90 backdrop-blur-[4px] shadow-[2px_0_5px_rgba(0,0,0,0.1)]' : 'bg-white/[0.01]'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                           <div className="flex items-center justify-between">
                             STUDENT NAME
                           </div>
-                          <div onMouseDown={e => { e.stopPropagation(); onResizeStart('studentName', e); }} className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary-400 opacity-0 group-hover:opacity-100 transition-opacity z-50" />
+                          <div onMouseDown={e => { e.stopPropagation(); onResizeStart('studentName', e); }} onTouchStart={e => { e.stopPropagation(); onResizeStart('studentName', e); }} className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary-400 opacity-0 group-hover:opacity-100 transition-opacity z-50" />
                         </th>
                         
                         {columns.map((col, idx) => {
@@ -416,7 +450,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                         {col.label}
                                         <ArrowUpDown size={10} className={`${isSorted ? 'opacity-100 text-primary-500' : 'opacity-0 group-hover:opacity-30'} ml-1 shrink-0 transition-opacity`} />
                                     </div>
-                                    <div onMouseDown={e => { e.stopPropagation(); onResizeStart(col.id, e); }} className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary-400 opacity-0 group-hover:opacity-100 transition-opacity z-10" />
+                                    <div onMouseDown={e => { e.stopPropagation(); onResizeStart(col.id, e); }} onTouchStart={e => { e.stopPropagation(); onResizeStart(col.id, e); }} className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary-400 opacity-0 group-hover:opacity-100 transition-opacity z-10" />
                                 </th>
                             );
                         })}
@@ -462,7 +496,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                         {i + 1}
                                     </div>
                                 </td>
-                                 <td className={`px-0 border-r border-slate-200/30 group ${isFrozen ? 'sticky left-0 z-20 bg-white shadow-[2px_0_5px_rgba(0,0,0,0.05)]' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                                 <td className={`px-0 border-r border-slate-200/30 group ${isFrozen ? 'sticky left-0 z-20 bg-white/90 backdrop-blur-[4px] shadow-[2px_0_5px_rgba(0,0,0,0.05)]' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                                     <div className="flex items-center min-h-[32px] w-full">
                                         <MultilineInput 
                                           value={s.name} 

@@ -70,7 +70,7 @@ interface ReminderTableProps {
   students: Student[];
   onAddStudent: (defaults?: Partial<Student>) => void;
   onUpdateStudent: (id: string, updates: Partial<Student>) => void;
-  onDeleteStudent: (id: string) => void;
+  onDeleteStudent: (ids: string | string[], skipConfirm?: boolean) => void;
   onClearCategory: (categories: string[]) => void;
   filters: FilterState;
   setFilters: (filters: FilterState) => void;

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   ClipboardList, 
   Search, 
@@ -78,7 +78,7 @@ interface DailyTaskTableProps {
   uniqueAssistants?: string[];
   onUpdate: (data: AppData) => void;
   onAddStudent: (defaults: Partial<Student>) => void;
-  onDeleteStudent?: (id: string) => void;
+  onDeleteStudent?: (ids: string | string[], skipConfirm?: boolean) => void;
   role: UserRole;
   onClearCategory?: (categories: string[]) => void;
   settings?: AppSettings;
@@ -101,28 +101,49 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
   const [viewDate, setViewDate] = useState(new Date());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isFrozen, setIsFrozen] = useState(true);
-  const [studentNameWidth, setStudentNameWidth] = useState(192);
+  const [studentNameWidth, setStudentNameWidth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('dps_studentNameWidth');
+      if (saved) return parseInt(saved, 10);
+      return window.innerWidth < 768 ? 120 : 180;
+    }
+    return 180;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('dps_studentNameWidth', studentNameWidth.toString());
+    }
+  }, [studentNameWidth]);
 
   const resizingRef = React.useRef<{ startX: number; startWidth: number } | null>(null);
 
-  const onResizeStart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    resizingRef.current = { startX: e.clientX, startWidth: studentNameWidth };
+  const onResizeStart = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!('touches' in e)) {
+      e.preventDefault();
+    }
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    resizingRef.current = { startX: clientX, startWidth: studentNameWidth };
     document.addEventListener('mousemove', onResizeMove);
     document.addEventListener('mouseup', onResizeEnd);
+    document.addEventListener('touchmove', onResizeMove, { passive: false });
+    document.addEventListener('touchend', onResizeEnd);
   };
 
-  const onResizeMove = (e: MouseEvent) => {
+  const onResizeMove = (e: MouseEvent | TouchEvent) => {
     if (!resizingRef.current) return;
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
     const { startX, startWidth } = resizingRef.current;
-    const diff = e.clientX - startX;
-    setStudentNameWidth(Math.max(50, startWidth + diff));
+    const diff = clientX - startX;
+    setStudentNameWidth(Math.max(80, startWidth + diff));
   };
 
   const onResizeEnd = () => {
     resizingRef.current = null;
     document.removeEventListener('mousemove', onResizeMove);
     document.removeEventListener('mouseup', onResizeEnd);
+    document.removeEventListener('touchmove', onResizeMove);
+    document.removeEventListener('touchend', onResizeEnd);
   };
 
   // Week Interval
@@ -202,9 +223,9 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
     return null;
   };
 
-  const getRowBg = (idx: number) => {
+  const getRowBg = (assistantName?: string) => {
+    if (!assistantName) return 'bg-slate-50 border-white/5';
     const colors = [
-      'bg-emerald-400/10',
       'bg-emerald-400/10',
       'bg-amber-400/10',
       'bg-indigo-400/10',
@@ -213,7 +234,11 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
       'bg-teal-400/10',
       'bg-orange-400/10'
     ];
-    return colors[idx % colors.length];
+    let hash = 0;
+    for (let i = 0; i < assistantName.length; i++) {
+        hash = assistantName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
   };
 
   const isoToDisplay = (iso: string) => {
@@ -333,11 +358,11 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                         <thead className="sticky top-0 z-40 bg-white/10 backdrop-blur-md">
                             <tr className="border-b border-white/5 uppercase text-[9px] font-black text-slate-800">
                                 <th className="w-10 py-5 text-center border-r border-white/5">#</th>
-                                <th className={`px-6 py-5 text-left border-r border-white/5 sticky left-0 z-50 transition-all group ${isFrozen ? 'bg-white shadow-[2px_0_5px_rgba(0,0,0,0.1)]' : 'bg-inherit'}`} style={{ width: studentNameWidth }}>
+                                <th className={`px-6 py-5 text-left border-r border-white/5 sticky left-0 z-50 transition-all group ${isFrozen ? 'bg-white/90 backdrop-blur-md shadow-[2px_0_5px_rgba(0,0,0,0.1)]' : 'bg-inherit'}`} style={{ width: studentNameWidth }}>
                                     <div className="flex items-center justify-between">
                                       STUDENT NAME
                                     </div>
-                                    <div onMouseDown={onResizeStart} className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-orange-500 opacity-0 group-hover:opacity-100 transition-opacity z-50" />
+                                    <div onMouseDown={onResizeStart} onTouchStart={onResizeStart} className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-orange-500 opacity-0 group-hover:opacity-100 transition-opacity z-50" />
                                 </th>
                                 <th className="w-28 py-5 text-center border-r border-white/5">Priority</th>
                                 <th className="w-24 py-5 text-center border-r border-white/5">Energy</th>
@@ -362,11 +387,11 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                         </thead>
                         <tbody className="divide-y divide-white/5">
                             {filteredStudents.map((s, idx) => {
-                                const rowBg = getRowBg(idx);
+                                const rowBg = getRowBg(s.assistant);
                                 return (
                                     <tr key={s.id} className={`h-12 transition-all hover:brightness-95 group ${rowBg} ${s.isHidden ? 'opacity-30' : ''}`}>
                                         <td className="text-center font-bold text-[10px] text-indigo-900/60 border-r border-white/5">{idx + 1}</td>
-                                        <td className={`px-6 border-r border-white/5 sticky left-0 z-30 transition-all ${isFrozen ? 'bg-white shadow-[2px_0_5px_rgba(0,0,0,0.05)]' : 'bg-inherit'}`} style={{ width: studentNameWidth }}>
+                                        <td className={`px-6 border-r border-white/5 sticky left-0 z-30 transition-all ${isFrozen ? 'bg-white/90 backdrop-blur-md shadow-[2px_0_5px_rgba(0,0,0,0.05)]' : 'bg-inherit'}`} style={{ width: studentNameWidth }}>
                                             <div className="flex items-center gap-3">
                                                 <div className={`w-1 h-8 rounded-full ${getLevelBorderColor(s.level).replace('border-l-', 'bg-')}`} />
                                                 <MultilineInput 

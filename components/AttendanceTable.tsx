@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Student, AppData, UserRole, AppSettings, StudentCategory } from '../types';
 import { format, addDays, getDaysInMonth, startOfMonth } from 'date-fns';
 import { 
@@ -19,7 +19,7 @@ interface Props {
   uniqueTimes: string[];
   onUpdate: (newData: AppData) => void;
   onAddStudent: (defaults: Partial<Student>) => void;
-  onDeleteStudent?: (id: string) => void;
+  onDeleteStudent?: (ids: string | string[], skipConfirm?: boolean) => void;
   onQuickAdd: () => void;
   isLocked?: boolean;
   role?: UserRole;
@@ -124,29 +124,50 @@ export const AttendanceTable: React.FC<Props> = ({
 }) => {
   const [viewDate, setViewDate] = useState(new Date());
   const [isFrozen, setIsFrozen] = useState(true);
-  const [studentNameWidth, setStudentNameWidth] = useState(220);
+  const [studentNameWidth, setStudentNameWidth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('dps_studentNameWidth');
+      if (saved) return parseInt(saved, 10);
+      return window.innerWidth < 768 ? 120 : 180;
+    }
+    return 180;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('dps_studentNameWidth', studentNameWidth.toString());
+    }
+  }, [studentNameWidth]);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
   const resizingRef = React.useRef<{ startX: number; startWidth: number } | null>(null);
 
-  const onResizeStart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    resizingRef.current = { startX: e.clientX, startWidth: studentNameWidth };
+  const onResizeStart = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!('touches' in e)) {
+      e.preventDefault();
+    }
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    resizingRef.current = { startX: clientX, startWidth: studentNameWidth };
     document.addEventListener('mousemove', onResizeMove);
     document.addEventListener('mouseup', onResizeEnd);
+    document.addEventListener('touchmove', onResizeMove, { passive: false });
+    document.addEventListener('touchend', onResizeEnd);
   };
 
-  const onResizeMove = (e: MouseEvent) => {
+  const onResizeMove = (e: MouseEvent | TouchEvent) => {
     if (!resizingRef.current) return;
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
     const { startX, startWidth } = resizingRef.current;
-    const diff = e.clientX - startX;
-    setStudentNameWidth(Math.max(50, startWidth + diff));
+    const diff = clientX - startX;
+    setStudentNameWidth(Math.max(80, startWidth + diff));
   };
 
   const onResizeEnd = () => {
     resizingRef.current = null;
     document.removeEventListener('mousemove', onResizeMove);
     document.removeEventListener('mouseup', onResizeEnd);
+    document.removeEventListener('touchmove', onResizeMove);
+    document.removeEventListener('touchend', onResizeEnd);
   };
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -317,7 +338,7 @@ export const AttendanceTable: React.FC<Props> = ({
             <button 
               onClick={() => {
                 if (confirm(`Delete ${selectedIds.size} selected records?`)) {
-                  selectedIds.forEach(id => onDeleteStudent?.(id));
+                  onDeleteStudent?.(Array.from(selectedIds), true);
                   setSelectedIds(new Set());
                 }
               }}
@@ -398,7 +419,7 @@ export const AttendanceTable: React.FC<Props> = ({
                 </th>
                 <th className="px-4 py-4 text-center text-[10px] font-black uppercase text-slate-900 w-12 border-r border-white/5 sticky top-0 bg-white/[0.02] backdrop-blur-[2px]">#</th>
                 <th 
-                  className={`px-4 py-4 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest border-r border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors group sticky top-0 z-50 bg-white ${isFrozen ? 'left-0 shadow-[2px_0_5px_rgba(0,0,0,0.1)]' : ''}`}
+                  className={`px-4 py-4 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest border-r border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors group sticky top-0 z-50 ${isFrozen ? 'left-0 bg-white/90 backdrop-blur-md shadow-[2px_0_5px_rgba(0,0,0,0.1)]' : 'bg-white'}`}
                   style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}
                   onClick={() => handleSort('name')}
                 >
@@ -406,7 +427,7 @@ export const AttendanceTable: React.FC<Props> = ({
                     Student Name
                     <ArrowUpDown size={10} className={`${sortConfig?.key === 'name' ? 'opacity-100 text-primary-500' : 'opacity-20 group-hover:opacity-100'} transition-opacity`} />
                   </div>
-                  <div onMouseDown={onResizeStart} className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary-400 opacity-0 group-hover:opacity-100 transition-opacity z-50" />
+                  <div onMouseDown={onResizeStart} onTouchStart={onResizeStart} className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary-400 opacity-0 group-hover:opacity-100 transition-opacity z-50" />
                 </th>
                 <Th label="Teacher" colId="teachers" width={160} />
                 <Th label="Level" colId="level" width={100} />
@@ -424,7 +445,7 @@ export const AttendanceTable: React.FC<Props> = ({
                    </th>
                 ))}
                 
-                <th className="px-4 py-4 text-center text-[10px] font-black uppercase text-slate-400 w-24 sticky right-0 z-50 bg-[#F8FAFC] border-l border-slate-100 shadow-[-2px_0_4px_rgba(0,0,0,0.02)]">Actions</th>
+                <th className="px-4 py-4 text-center text-[10px] font-black uppercase text-slate-400 w-24 border-l border-slate-100 shadow-[-2px_0_4px_rgba(0,0,0,0.02)]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -449,7 +470,7 @@ export const AttendanceTable: React.FC<Props> = ({
                         {idx + 1}
                       </div>
                     </td>
-                    <td className={`px-5 border-r border-slate-200/10 shadow-sm ${isFrozen ? 'sticky left-0 z-30 bg-white shadow-[2px_0_5px_rgba(0,0,0,0.05)]' : 'bg-inherit'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                    <td className={`px-5 border-r border-slate-200/10 shadow-sm ${isFrozen ? 'sticky left-0 z-30 bg-white/90 backdrop-blur-md shadow-[2px_0_5px_rgba(0,0,0,0.05)]' : 'bg-inherit'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                       <div 
                         className={`font-black text-[#1B254B] uppercase tracking-tight truncate flex items-center min-h-[32px] ${isHidden ? 'opacity-30' : ''}`}
                         style={{ fontSize: settings?.fontSize ? `${settings.fontSize}px` : '12px' }}
@@ -495,8 +516,8 @@ export const AttendanceTable: React.FC<Props> = ({
                         );
                     })}
 
-                    {/* Actions Sticky Column */}
-                    <td className="px-4 sticky right-0 z-30 bg-inherit border-l border-slate-200/10 shadow-[-2px_0_4px_rgba(0,0,0,0.02)]">
+                    {/* Actions Column */}
+                    <td className="px-4 bg-inherit border-l border-slate-200/10 shadow-[-2px_0_4px_rgba(0,0,0,0.02)]">
                       <div className="flex items-center justify-center gap-2">
                         <button 
                           onClick={() => onUpdate({ ...data, students: students.map(st => st.id === s.id ? { ...st, isHidden: !isHidden } : st) })}

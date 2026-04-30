@@ -367,11 +367,15 @@ const App: React.FC = () => {
     handleUpdate({ ...data, students: updatedStudents });
   };
 
-  const handleDeleteStudent = (id: string) => {
-    if (window.confirm('Move to Recycle Bin?')) {
+  const handleDeleteStudent = (ids: string | string[], skipConfirm = false) => {
+    const idList = Array.isArray(ids) ? ids : [ids];
+    if (idList.length === 0) return;
+    
+    if (skipConfirm || window.confirm(idList.length > 1 ? `Move ${idList.length} records to Recycle Bin?` : 'Move to Recycle Bin?')) {
       const now = new Date().toISOString();
+      const idSet = new Set(idList);
       const updatedStudents = data.students.map(s => 
-        s.id === id ? { ...s, deletedAt: now } : s
+        idSet.has(s.id) ? { ...s, deletedAt: now } : s
       );
       handleUpdate({ ...data, students: updatedStudents });
     }

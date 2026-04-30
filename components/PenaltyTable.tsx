@@ -51,7 +51,7 @@ interface PenaltyTableProps {
   uniqueLevels?: string[];
   onQuickAdd?: () => void;
   onAddStudent?: (defaults: Partial<Student>) => void;
-  onDeleteStudent?: (id: string) => void;
+  onDeleteStudent?: (ids: string | string[], skipConfirm?: boolean) => void;
   role?: UserRole;
   onClearCategory?: (cats: StudentCategory[]) => void;
   settings?: AppSettings;
@@ -67,28 +67,49 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
 }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isFrozen, setIsFrozen] = useState(true);
-  const [studentNameWidth, setStudentNameWidth] = useState(220);
+  const [studentNameWidth, setStudentNameWidth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('dps_studentNameWidth');
+      if (saved) return parseInt(saved, 10);
+      return window.innerWidth < 768 ? 120 : 180;
+    }
+    return 180;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('dps_studentNameWidth', studentNameWidth.toString());
+    }
+  }, [studentNameWidth]);
   
   const resizingRef = useRef<{ startX: number; startWidth: number } | null>(null);
 
-  const onResizeStart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    resizingRef.current = { startX: e.clientX, startWidth: studentNameWidth };
+  const onResizeStart = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!('touches' in e)) {
+      e.preventDefault();
+    }
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    resizingRef.current = { startX: clientX, startWidth: studentNameWidth };
     document.addEventListener('mousemove', onResizeMove);
     document.addEventListener('mouseup', onResizeEnd);
+    document.addEventListener('touchmove', onResizeMove, { passive: false });
+    document.addEventListener('touchend', onResizeEnd);
   };
 
-  const onResizeMove = (e: MouseEvent) => {
+  const onResizeMove = (e: MouseEvent | TouchEvent) => {
     if (!resizingRef.current) return;
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
     const { startX, startWidth } = resizingRef.current;
-    const diff = e.clientX - startX;
-    setStudentNameWidth(Math.max(50, startWidth + diff));
+    const diff = clientX - startX;
+    setStudentNameWidth(Math.max(80, startWidth + diff));
   };
 
   const onResizeEnd = () => {
     resizingRef.current = null;
     document.removeEventListener('mousemove', onResizeMove);
     document.removeEventListener('mouseup', onResizeEnd);
+    document.removeEventListener('touchmove', onResizeMove);
+    document.removeEventListener('touchend', onResizeEnd);
   };
 
   const penaltyStudents = useMemo(() => students.filter(s => s.category === 'Penalty' && !s.deletedAt), [students]);
@@ -233,7 +254,7 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                           <button 
                             onClick={() => {
                               if (confirm(`Delete ${selectedIds.size} selected items?`)) {
-                                selectedIds.forEach(id => onDeleteStudent?.(id));
+                                onDeleteStudent?.(Array.from(selectedIds), true);
                                 setSelectedIds(new Set());
                               }
                             }}
@@ -321,11 +342,11 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                           </div>
                         </th>
                         <th className="w-10 border-r border-white/5 text-[10px] font-black text-slate-900 sticky top-0 bg-white">#</th>
-                        <th className={`border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 bg-white ${isFrozen ? 'left-0 z-50 shadow-[2px_0_5px_rgba(0,0,0,0.1)]' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                        <th className={`border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 ${isFrozen ? 'left-0 z-50 bg-white/90 backdrop-blur-[4px] shadow-[2px_0_5px_rgba(0,0,0,0.1)]' : 'bg-white'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                           <div className="flex items-center justify-between">
                             Student Name
                           </div>
-                          <div onMouseDown={onResizeStart} className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary-400 opacity-0 group-hover:opacity-100 transition-opacity z-50" />
+                          <div onMouseDown={onResizeStart} onTouchStart={onResizeStart} className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary-400 opacity-0 group-hover:opacity-100 transition-opacity z-50" />
                         </th>
                         <th className="w-24 border-r border-white/5 text-[10px] font-black text-orange-600 text-center px-3 sticky top-0 z-40 bg-white/[0.03] backdrop-blur-[2px]">Thumbprint</th>
                         <th className="w-24 border-r border-white/5 text-[10px] font-black text-slate-900 text-center px-3 sticky top-0 bg-white/[0.03] backdrop-blur-[2px]">Behavior 1</th>
@@ -362,7 +383,7 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                             {idx + 1}
                           </div>
                         </td>
-                        <td className={`border-r border-slate-100 group ${isFrozen ? 'sticky left-0 z-20 bg-white shadow-[2px_0_5px_rgba(0,0,0,0.05)]' : 'bg-white/60'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                        <td className={`border-r border-slate-100 group ${isFrozen ? 'sticky left-0 z-20 bg-white/90 backdrop-blur-[4px] shadow-[2px_0_5px_rgba(0,0,0,0.05)]' : 'bg-white/60'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                             <div className="flex items-center min-h-[32px] w-full">
                                 <MultilineInput 
                                     value={s.name} 
