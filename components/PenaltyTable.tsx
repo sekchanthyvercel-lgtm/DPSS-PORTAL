@@ -55,6 +55,8 @@ interface PenaltyTableProps {
   role?: UserRole;
   onClearCategory?: (cats: StudentCategory[]) => void;
   settings?: AppSettings;
+  category?: StudentCategory;
+  title?: string;
 }
 
 export const PenaltyTable: React.FC<PenaltyTableProps> = ({ 
@@ -63,7 +65,9 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
   uniqueAssistants = [], 
   uniqueLevels = [], 
   onQuickAdd, onAddStudent,
-  role, onClearCategory, settings
+  role, onClearCategory, settings,
+  category = 'Penalty',
+  title = 'Late / Absence Log'
 }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isFrozen, setIsFrozen] = useState(true);
@@ -112,7 +116,7 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
     document.removeEventListener('touchend', onResizeEnd);
   };
 
-  const penaltyStudents = useMemo(() => students.filter(s => s.category === 'Penalty' && !s.deletedAt), [students]);
+  const penaltyStudents = useMemo(() => students.filter(s => s.category === category && !s.deletedAt), [students, category]);
 
   const localTeachers = useMemo(() => {
     const ts = new Set<string>();
@@ -231,7 +235,7 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                           <Zap size={20} className="fill-white" />
                       </div>
                       <div>
-                          <h2 className="text-sm font-black text-[#1B254B] leading-none tracking-tight">Late / Absence Log</h2>
+                          <h2 className="text-sm font-black text-[#1B254B] leading-none tracking-tight">{title}</h2>
                           <p className="text-[10px] font-bold text-slate-400 mt-1 tracking-widest">{filteredStudents.length} Students Listed</p>
                       </div>
                   </div>
@@ -243,7 +247,7 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                       </button>
                       <button onClick={() => {
                         setFilters?.({ searchQuery: '', teacher: '', assistant: '', time: '', level: '', behavior: '' });
-                        onAddStudent?.({ category: 'Penalty' });
+                        onAddStudent?.({ category: category });
                       }} className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl text-[10px] font-black shadow-lg hover:bg-orange-600 active:scale-95 transition-all">
                           <Plus size={16} strokeWidth={3} className="shrink-0"/> ADD ENTRY
                       </button>
@@ -277,7 +281,7 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                 </button>
                 {role === 'Admin' && (
                   <button 
-                    onClick={() => onClearCategory?.(['Penalty'])} 
+                    onClick={() => onClearCategory?.([category])} 
                     title="CLEAR ALL RECORDS"
                     className="p-3 bg-red-50 border border-red-100 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all shadow-sm"
                   >

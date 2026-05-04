@@ -8,7 +8,7 @@ interface Props {
   onClose: () => void;
   onAdd: (data: Partial<Student> | Partial<Student>[]) => void;
   defaults?: Partial<Student>;
-  mode: 'Hall' | 'Finance' | 'Attendance' | 'DailyTask';
+  mode: 'Hall' | 'Finance' | 'Attendance' | 'DailyTask' | 'Penalty' | 'PenaltyHall';
 }
 
 export const AIModal: React.FC<Props> = ({ isOpen, onClose, onAdd, defaults, mode }) => {
@@ -108,6 +108,17 @@ Start: 23-Dec-2025
 Assistant: Kheang Dalin
 
 (Or paste a table screenshot with these columns)`;
+  } else if (mode === 'Penalty' || mode === 'PenaltyHall') {
+      title = mode === 'Penalty' ? 'AI Quick Add (Late/Absend Everyday Study)' : 'AI Quick Add (Hall Study Log)';
+      placeholderText = `Format:
+Name: Sok Chandara
+Teachers: Pichdavina
+Assistant: Dalin
+Level: 2A
+Log 1: Lateness (23/12/25)
+Log 2: Absence (25/12/25)
+
+(Or paste a table screenshot)`;
   } else {
       title = 'AI Quick Add (Finance)';
       placeholderText = `Format:

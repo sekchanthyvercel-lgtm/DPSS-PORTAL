@@ -3,7 +3,7 @@
 
 export type StudyType = 'FullTime' | 'PartTime' | 'Khmer';
 
-export type StudentCategory = 'Hall' | 'Class' | 'Office' | 'Card' | 'Queue' | 'Penalty' | 'DailyTask' | 'Reminder';
+export type StudentCategory = 'Hall' | 'Class' | 'Office' | 'Card' | 'Queue' | 'Penalty' | 'PenaltyHall' | 'DailyTask' | 'Reminder';
 
 export type UserRole = 'Admin' | 'Teacher' | 'Finance';
 
@@ -127,6 +127,7 @@ export enum Tab {
   Hall = 'Hall',
   Hall2 = 'Hall2',
   Penalty = 'Penalty',
+  PenaltyHall = 'PenaltyHall',
   DailyTask = 'DailyTask',
   Reminder = 'Reminder',
   DPSS = 'DPSS',

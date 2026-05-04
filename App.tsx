@@ -325,6 +325,7 @@ const App: React.FC = () => {
         if (activeTab === Tab.Attendance) determinedCategory = 'Class';
         else if (activeTab === Tab.Finance) determinedCategory = 'Office';
         else if (activeTab === Tab.Penalty) determinedCategory = 'Penalty';
+        else if (activeTab === Tab.PenaltyHall) determinedCategory = 'PenaltyHall';
         
         return {
           id: uuidv4(),
@@ -450,7 +451,9 @@ const App: React.FC = () => {
         mode={
             activeTab === Tab.Attendance ? 'Attendance' : 
             activeTab === Tab.Finance ? 'Finance' : 
-            activeTab === Tab.DailyTask ? 'DailyTask' : 'Hall'
+            activeTab === Tab.DailyTask ? 'DailyTask' : 
+            activeTab === Tab.Penalty ? 'Penalty' :
+            activeTab === Tab.PenaltyHall ? 'PenaltyHall' : 'Hall'
         } 
       />
       
@@ -510,6 +513,27 @@ const App: React.FC = () => {
                 role={currentUser.role}
                 onClearCategory={handleClearCategory}
                 settings={data.settings}
+                category="Penalty"
+                title="Late/Absend Everyday Study"
+              />
+            )}
+            {activeTab === Tab.PenaltyHall && (
+              <PenaltyTable 
+                students={allActiveStudents} 
+                onUpdate={students => handleUpdate({...data, students: [...students, ...data.students.filter(s => s.deletedAt)]})} 
+                onDeleteStudent={handleDeleteStudent}
+                filters={filters} 
+                setFilters={setFilters}
+                uniqueTeachers={uniqueTeachers}
+                uniqueAssistants={uniqueAssistants}
+                uniqueLevels={uniqueLevels}
+                onQuickAdd={() => setIsAiOpen(true)} 
+                onAddStudent={(defaults) => handleAddStudent(defaults)} 
+                role={currentUser.role}
+                onClearCategory={handleClearCategory}
+                settings={data.settings}
+                category="PenaltyHall"
+                title="Late/absence Hall Study"
               />
             )}
             {activeTab === Tab.DailyTask && (

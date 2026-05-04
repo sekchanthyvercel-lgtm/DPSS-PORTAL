@@ -107,7 +107,7 @@ const calculateDeadline = (startDate: Date, durationStr: string): Date => {
     return addMonths(startDate, amount);
 };
 
-export const parseStudentData = async (inputText: string, imageFile?: File, mode: 'Hall' | 'Finance' | 'Attendance' | 'DailyTask' = 'Hall'): Promise<Partial<Student>[] | null> => {
+export const parseStudentData = async (inputText: string, imageFile?: File, mode: 'Hall' | 'Finance' | 'Attendance' | 'DailyTask' | 'Penalty' | 'PenaltyHall' = 'Hall'): Promise<Partial<Student>[] | null> => {
   const parts: any[] = [];
   if (imageFile) parts.push(await fileToGenerativePart(imageFile));
   if (inputText) parts.push({ text: `Context: ${inputText}` });
@@ -119,6 +119,10 @@ export const parseStudentData = async (inputText: string, imageFile?: File, mode
       prompt = `Extract Finance records: ID (displayId), Name (name), Fee (schoolFee), Level (level), Start Date (startDate), Teachers (teachers), Monthly Payments (paymentList), Duration (duration).`;
   } else if (mode === 'DailyTask') {
       prompt = `Extract Teacher Daily Task assignments: Teacher Name (name), Level (level), Shift (shift). Shift should be 'Morning', 'Afternoon', or 'Evening'.`;
+  } else if (mode === 'Penalty' || mode === 'PenaltyHall') {
+      prompt = `Extract Late/Absence log records: Name (name), Teachers (teachers), Assistant (assistant), Level (level), 
+      Log 1 Type (penaltyType1 - e.g. Lateness, Absence, No cards, Wrong Uniforms, Other), Log 1 Date (penaltyDate1), 
+      Log 2 Type (penaltyType2), Log 2 Date (penaltyDate2).`;
   } else {
       prompt = `Extract Attendance list: Full Name (name). Keep Sex (M)/(F) if present.`;
   }
@@ -157,6 +161,11 @@ export const parseStudentData = async (inputText: string, imageFile?: File, mode
               assistant: { type: Type.STRING },
               duration: { type: Type.STRING },
               shift: { type: Type.STRING },
+              penaltyType1: { type: Type.STRING },
+              penaltyDate1: { type: Type.STRING },
+              penaltyType2: { type: Type.STRING },
+              penaltyDate2: { type: Type.STRING },
+              penaltyComments: { type: Type.STRING },
               paymentList: { 
                 type: Type.ARRAY,
                 items: {
@@ -190,6 +199,16 @@ export const parseStudentData = async (inputText: string, imageFile?: File, mode
                 sanitizedData.deadline = format(deadlineDate, 'dd/MM/yy');
             }
         }
+
+        // Normalize penalty dates
+        for (let i = 1; i <= 7; i++) {
+            const dateKey = `penaltyDate${i}`;
+            if (sanitizedData[dateKey]) {
+                const pDate = normalizeDate(sanitizedData[dateKey]);
+                if (pDate) sanitizedData[dateKey] = format(pDate, 'dd/MM/yy');
+            }
+        }
+
         return { ...sanitizedData, payments };
     });
   } catch (error) {
