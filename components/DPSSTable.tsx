@@ -1,7 +1,11 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Plus, Trash2, Calendar, AlignLeft, AlignCenter, AlignRight, Highlighter, Type, Settings2, MousePointer2, Minus, Layout, Square, Quote } from 'lucide-react';
+import { 
+    Plus, Trash2, Calendar, AlignLeft, AlignCenter, AlignRight, Highlighter, Type, Settings2, MousePointer2, Minus, Layout, Square, Quote,
+    FileSpreadsheet, FileText
+} from 'lucide-react';
 import { AppData, DPSSTopic } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { exportToExcel, exportToWord } from '../services/excelService';
 
 interface DPSSTableProps {
   data: AppData;
@@ -338,22 +342,51 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
         {selectedTopic ? (
             <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="p-8 pb-4 bg-white/20">
-                   <div className="max-w-4xl mx-auto w-full">
+                   <div className="max-w-6xl mx-auto w-full">
                       <input 
                           value={selectedTopic.title} 
                           onChange={(e) => updateTopic(selectedTopic.id, { title: e.target.value })}
-                          className="w-full text-4xl md:text-5xl font-black text-[#1B254B] bg-transparent outline-none py-2 border-b-4 border-orange-500/20 focus:border-orange-500 transition-all uppercase tracking-tight placeholder:text-slate-200"
+                          className="w-full text-4xl md:text-6xl font-black text-[#1B254B] bg-transparent outline-none py-2 border-b-8 border-orange-500/20 focus:border-orange-500 transition-all uppercase tracking-tighter placeholder:text-slate-200"
                           placeholder="Untitled Topic..."
                       />
                    </div>
                 </div>
                 
                 <div className='sticky top-0 z-[60] bg-white/60 backdrop-blur-2xl border-b border-white/40'>
-                  <div className="max-w-4xl mx-auto w-full px-6 py-4 flex flex-wrap gap-4 items-center">
+                  <div className="max-w-6xl mx-auto w-full px-6 py-4 flex flex-wrap gap-4 items-center">
                     <div className="flex gap-1.5 bg-slate-900/5 p-1 rounded-xl">
                       <button className={`p-2 rounded-lg transition-all ${selectedTopic.alignment === 'left' ? 'bg-white shadow-sm text-orange-600' : 'text-slate-400 hover:text-slate-600'}`} title="Align Left" onClick={() => updateTopic(selectedTopic.id, { alignment: 'left' })}><AlignLeft size={18} /></button>
                       <button className={`p-2 rounded-lg transition-all ${selectedTopic.alignment === 'center' ? 'bg-white shadow-sm text-orange-600' : 'text-slate-400 hover:text-slate-600'}`} title="Align Center" onClick={() => updateTopic(selectedTopic.id, { alignment: 'center' })}><AlignCenter size={18} /></button>
                       <button className={`p-2 rounded-lg transition-all ${selectedTopic.alignment === 'right' ? 'bg-white shadow-sm text-orange-600' : 'text-slate-400 hover:text-slate-600'}`} title="Align Right" onClick={() => updateTopic(selectedTopic.id, { alignment: 'right' })}><AlignRight size={18} /></button>
+                    </div>
+
+                    <div className="flex gap-1.5 bg-slate-900/5 p-1 rounded-xl">
+                      <button 
+                        className="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all text-slate-500" 
+                        title="Export Word"
+                        onClick={() => {
+                            const exportData = topics.map(t => ({
+                              'Topic': t.title,
+                              'Content': (t.content || '').replace(/<[^>]*>?/gm, '')
+                            }));
+                            exportToWord(exportData, 'DPSS_Learning', 'DPSS LEARNING CATALOG');
+                        }}
+                      >
+                        <FileText size={18} />
+                      </button>
+                      <button 
+                        className="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all text-slate-500" 
+                        title="Export Excel"
+                        onClick={() => {
+                            const exportData = topics.map(t => ({
+                                'Topic': t.title,
+                                'Content': (t.content || '').replace(/<[^>]*>?/gm, '')
+                            }));
+                            exportToExcel(exportData, 'DPSS_Learning');
+                        }}
+                      >
+                        <FileSpreadsheet size={18} />
+                      </button>
                     </div>
 
                     <div className="flex gap-1.5 bg-slate-900/5 p-1 rounded-xl">
@@ -415,7 +448,7 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
                 </div>
 
                 <div className="flex-1 overflow-y-auto custom-scrollbar bg-transparent">
-                  <div className="max-w-4xl mx-auto w-full min-h-full flex flex-col">
+                  <div className="max-w-6xl mx-auto w-full min-h-full flex flex-col">
                     {/* Floating Selection Tooltip */}
                     {pickerPos && (
                       <div 

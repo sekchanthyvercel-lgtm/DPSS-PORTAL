@@ -71,7 +71,19 @@ export const subscribeToData = (
 
 export const saveData = async (data: AppData) => {
   const docRef = doc(db, DOC_PATH);
-  await setDoc(docRef, data, { merge: true });
+  
+  // Basic size estimation
+  const size = JSON.stringify(data).length;
+  if (size > 1000000) {
+    throw new Error("Data size follows the 1MB Firestore limit. Please cleanup unnecessary records.");
+  }
+
+  try {
+    await setDoc(docRef, data); 
+  } catch (error) {
+    console.error("Firestore Save Error:", error);
+    throw error;
+  }
 };
 
 export const createCloudBackup = async (data: AppData, type: 'Auto' | 'Manual' = 'Manual') => {

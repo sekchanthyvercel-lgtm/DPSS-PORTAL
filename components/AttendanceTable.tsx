@@ -5,8 +5,9 @@ import {
   Plus, UserCheck, 
   ChevronLeft, ChevronRight, ArrowUpDown, Calendar, Maximize2,
   Trash2, Zap, Check, AlertCircle, LayoutGrid, Search, EyeOff, Eye,
-  CheckSquare, Square, Lock, Unlock
+  CheckSquare, Square, Lock, Unlock, FileSpreadsheet, FileText
 } from 'lucide-react';
+import { exportToExcel, exportToWord } from '../services/excelService';
 
 interface Props {
   students: Student[];
@@ -334,6 +335,45 @@ export const AttendanceTable: React.FC<Props> = ({
             {isFrozen ? <Lock size={12}/> : <Unlock size={12}/>} {isFrozen ? 'FROZEN' : 'FREEZE'}
           </button>
 
+          <div className="flex items-center gap-1.5 p-1 bg-white/20 rounded-xl border border-white/10 backdrop-blur-md">
+            <button 
+              onClick={() => {
+                const dayKeys = Array.from({ length: daysInMonth }, (_, i) => `${monthKey}-${String(i + 1).padStart(2, '0')}`);
+                const exportData = filteredStudents.map((s, i) => {
+                  const row: any = { '#': i + 1, 'Student Name': s.name, 'Teacher': s.teachers || '', 'Level': s.level || '', 'Time': s.time || '', 'Assistant': s.assistant || '' };
+                  dayKeys.forEach((dk, di) => {
+                    const status = data.attendance[s.id]?.[dk];
+                    row[di + 1] = status === 0 ? 'P' : status === 0.25 ? 'L' : status === 1 ? 'A' : status === 2 ? 'AP' : '';
+                  });
+                  return row;
+                });
+                exportToExcel(exportData, `Attendance_${monthKey}`);
+              }}
+              className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" 
+              title="Export Excel"
+            >
+              <FileSpreadsheet size={18} />
+            </button>
+            <button 
+                onClick={() => {
+                  const dayKeys = Array.from({ length: daysInMonth }, (_, i) => `${monthKey}-${String(i + 1).padStart(2, '0')}`);
+                  const exportData = filteredStudents.map((s, i) => {
+                    const row: any = { '#': i + 1, 'Student Name': s.name, 'Teacher': s.teachers || '', 'Assistant': s.assistant || '' };
+                    dayKeys.forEach((dk, di) => {
+                      const status = data.attendance[s.id]?.[dk];
+                      row[di + 1] = status === 0 ? 'P' : status === 0.25 ? 'L' : status === 1 ? 'A' : status === 2 ? 'AP' : '-';
+                    });
+                    return row;
+                  });
+                  exportToWord(exportData, `Attendance_${monthKey}`, 'ATTENDANCE LOG');
+                }}
+                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" 
+                title="Export Word"
+            >
+              <FileText size={18} />
+            </button>
+          </div>
+
           {selectedIds.size > 0 && (
             <button 
               onClick={() => {
@@ -426,7 +466,7 @@ export const AttendanceTable: React.FC<Props> = ({
                   #
                 </th>
                 <th 
-                  className={`px-4 py-4 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest border-r border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors group sticky top-0 z-50 ${isFrozen ? 'left-0 bg-white/90 backdrop-blur-md shadow-[2px_0_5px_rgba(0,0,0,0.1)]' : 'bg-white'}`}
+                  className={`px-4 py-4 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest border-r border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors group sticky top-0 z-50 ${isFrozen ? 'left-0 bg-white shadow-[4px_0_10px_rgba(0,0,0,0.1)]' : 'bg-white'}`}
                   style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}
                   onClick={() => handleSort('name')}
                 >
@@ -477,10 +517,10 @@ export const AttendanceTable: React.FC<Props> = ({
                         {idx + 1}
                       </div>
                     </td>
-                    <td className={`px-5 border-r border-slate-200/10 shadow-sm ${isFrozen ? 'sticky left-0 z-30 bg-white/90 backdrop-blur-md shadow-[2px_0_5px_rgba(0,0,0,0.05)]' : 'bg-inherit'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                    <td className={`px-5 border-r border-slate-200/10 shadow-sm ${isFrozen ? 'sticky left-0 z-30 shadow-[4px_0_10px_rgba(0,0,0,0.05)] bg-white' : 'bg-inherit'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                       <div 
                         className={`font-black text-[#1B254B] uppercase tracking-tight truncate flex items-center min-h-[44px] ${isHidden ? 'opacity-30' : ''}`}
-                        style={{ fontSize: settings?.fontSize ? `${settings.fontSize}px` : '12px' }}
+                        style={{ fontSize: settings?.fontSize ? `${settings.fontSize}px` : '12px', color: '#1B254B' }}
                       >
                         {s.name}
                       </div>

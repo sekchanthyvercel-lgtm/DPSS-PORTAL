@@ -21,8 +21,11 @@ import {
   Square,
   Lock,
   Unlock,
-  Clock
+  Clock,
+  FileSpreadsheet,
+  FileText
 } from 'lucide-react';
+import { exportToExcel, exportToWord } from '../services/excelService';
 import { 
   format, 
   addDays, 
@@ -301,6 +304,44 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                         <p className="text-2xl font-black text-slate-800">0/0</p>
                     </div>
                     <div className="flex items-center gap-3 ml-4">
+                      <button onClick={() => setIsFrozen(!isFrozen)} className={`flex items-center gap-1.5 px-3 py-1.5 h-9 rounded-xl font-black uppercase text-[9px] transition-all border backdrop-blur-md ${isFrozen ? 'bg-amber-500/80 text-white border-amber-600 shadow-md' : 'bg-white/10 text-slate-900 border-white/20 hover:bg-white/20'}`}>
+                        {isFrozen ? <Lock size={12}/> : <Unlock size={12}/>} {isFrozen ? 'FROZEN' : 'FREEZE'}
+                      </button>
+
+                      <div className="flex items-center gap-1.5 p-1 bg-white/10 rounded-xl border border-white/20 backdrop-blur-md">
+                        <button 
+                          onClick={() => {
+                            const exportData = filteredStudents.map((s, i) => {
+                              const row: any = { '#': i + 1, 'Student Name': s.name, 'Priority': s.priority || '', 'Deadline': s.deadline || '' };
+                              days.forEach(day => {
+                                const dk = format(day, 'yyyy-MM-dd');
+                                row[`${format(day, 'EEE')} S1`] = data.dailyTasks?.[s.id]?.[`${dk}_1`] || '-';
+                                row[`${format(day, 'EEE')} S2`] = data.dailyTasks?.[s.id]?.[`${dk}_2`] || '-';
+                              });
+                              return row;
+                            });
+                            exportToExcel(exportData, 'Task_Hub');
+                          }}
+                          className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" 
+                          title="Export Excel"
+                        >
+                          <FileSpreadsheet size={18} />
+                        </button>
+                        <button 
+                            onClick={() => {
+                                const exportData = filteredStudents.map((s, i) => {
+                                  const row: any = { '#': i + 1, 'Student Name': s.name, 'Priority': s.priority || '', 'Deadline': s.deadline || '' };
+                                  return row;
+                                });
+                                exportToWord(exportData, 'Task_Hub', 'TASK HUB LOG');
+                            }}
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" 
+                            title="Export Word"
+                        >
+                          <FileText size={18} />
+                        </button>
+                      </div>
+
                       <button className="flex items-center gap-2 h-9 px-4 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition-all">
                         <Zap size={14} fill="currentColor" /> Strategic Plan
                       </button>
@@ -357,8 +398,8 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                     <table className="w-full border-collapse table-fixed min-w-[1500px]">
                         <thead className="sticky top-0 z-40 bg-white/10 backdrop-blur-md">
                             <tr className="border-b border-white/5 uppercase text-[9px] font-black text-slate-800">
-                                <th className={`w-10 py-5 text-center border-r border-white/5`}>#</th>
-                                <th className={`px-6 py-5 text-left border-r border-white/5 sticky top-0 z-50 transition-all group ${isFrozen ? 'left-0 bg-white/90 backdrop-blur-md shadow-[2px_0_5px_rgba(0,0,0,0.1)]' : 'bg-inherit'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                                <th className={`w-10 py-5 text-center border-r border-white/5 sticky top-0 bg-white/[0.05] z-40`}>#</th>
+                                <th className={`px-6 py-5 text-left border-r border-white/5 sticky top-0 z-50 transition-all group ${isFrozen ? 'left-0 bg-white shadow-[4px_0_10px_rgba(0,0,0,0.1)]' : 'bg-inherit'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                                     <div className="flex items-center justify-between">
                                       STUDENT NAME
                                     </div>
@@ -395,13 +436,14 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                                                 {idx + 1}
                                             </div>
                                         </td>
-                                        <td className={`px-6 border-r border-white/5 sticky z-30 transition-all ${isFrozen ? 'left-0 bg-white/90 backdrop-blur-md shadow-[2px_0_5px_rgba(0,0,0,0.05)]' : 'bg-inherit'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
-                                            <div className="flex items-center gap-3 min-h-[44px]">
+                                        <td className={`px-6 border-r border-white/5 sticky z-30 transition-all ${isFrozen ? 'left-0 bg-white shadow-[4px_0_10px_rgba(0,0,0,0.05)]' : 'bg-inherit'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                                            <div className="flex items-center gap-3 min-h-[44px]" style={{ backgroundColor: isFrozen ? 'white' : 'transparent' }}>
                                                 <div className={`w-1 h-8 rounded-full ${getLevelBorderColor(s.level).replace('border-l-', 'bg-')}`} />
                                                 <MultilineInput 
                                                     value={s.name} 
                                                     onChange={val => updateField(s.id, 'name', val)}
                                                     className="w-full bg-transparent font-black text-slate-900 text-xs outline-none"
+                                                    style={{ color: '#0f172a' }}
                                                 />
                                             </div>
                                         </td>

@@ -3,8 +3,9 @@ import { format } from 'date-fns';
 import { Student, FilterState, UserRole, AppSettings, StudentCategory } from '../types';
 import { 
     LayoutGrid, Search, Trash2, Zap, Plus, AlertCircle, Eye, EyeOff, CheckSquare, Square,
-    Lock, Unlock
+    Lock, Unlock, FileSpreadsheet, FileText
 } from 'lucide-react';
+import { exportToExcel, exportToWord } from '../services/excelService';
 
 const MultilineInput: React.FC<{
   value: string;
@@ -254,6 +255,44 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                       <button onClick={() => setIsFrozen(!isFrozen)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-black uppercase text-[9px] transition-all border backdrop-blur-md ${isFrozen ? 'bg-amber-500/80 text-white border-amber-600 shadow-md' : 'bg-white/10 text-slate-900 border-white/20 hover:bg-white/20'}`}>
                         {isFrozen ? <Lock size={12}/> : <Unlock size={12}/>} {isFrozen ? 'FROZEN' : 'FREEZE'}
                       </button>
+
+                      <div className="flex items-center gap-1.5 p-1 bg-white/10 rounded-xl border border-white/20 backdrop-blur-md">
+                        <button 
+                          onClick={() => {
+                            const exportData = filteredStudents.map((s, i) => {
+                              const row: any = { '#': i + 1, 'Student Name': s.name, 'Teacher': s.teachers || '', 'Assistant': s.assistant || '', 'Level': s.level || '' };
+                              for(let k=1; k<=7; k++) {
+                                row[`Log ${k}`] = s[`penaltyType${k}`] || '';
+                                row[`Date ${k}`] = s[`penaltyDate${k}`] || '';
+                              }
+                              row['Notes'] = s.penaltyComments || '';
+                              return row;
+                            });
+                            exportToExcel(exportData, category);
+                          }}
+                          className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" 
+                          title="Export Excel"
+                        >
+                          <FileSpreadsheet size={16} />
+                        </button>
+                        <button 
+                            onClick={() => {
+                                const exportData = filteredStudents.map((s, i) => {
+                                  const row: any = { '#': i + 1, 'Student Name': s.name, 'Teacher': s.teachers || '', 'Assistant': s.assistant || '' };
+                                  for(let k=1; k<=7; k++) {
+                                    row[`Log ${k}`] = s[`penaltyType${k}`] || '';
+                                    row[`Date ${k}`] = s[`penaltyDate${k}`] || '';
+                                  }
+                                  return row;
+                                });
+                                exportToWord(exportData, category, title.toUpperCase());
+                            }}
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" 
+                            title="Export Word"
+                        >
+                          <FileText size={16} />
+                        </button>
+                      </div>
                       {selectedIds.size > 0 && (
                           <button 
                             onClick={() => {
@@ -338,15 +377,15 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
               <table className="w-full border-collapse table-fixed min-w-[1400px]">
                   <thead className="sticky top-0 z-40 bg-white/[0.02] backdrop-blur-[2px] border-b border-white/5">
                       <tr>
-                        <th className="w-10 border-r border-white/5 text-[10px] font-black text-slate-900 sticky top-0 bg-white">
+                        <th className={`w-10 border-r border-white/5 text-[10px] font-black text-slate-900 sticky top-0 bg-white z-40`}>
                           <div className="flex items-center justify-center">
                             <button onClick={() => setSelectedIds(selectedIds.size === filteredStudents.length ? new Set() : new Set(filteredStudents.map(s => s.id)))}>
                               {selectedIds.size > 0 ? <CheckSquare size={14} className="text-orange-500" /> : <Square size={14} className="text-slate-400/30" />}
                             </button>
                           </div>
                         </th>
-                        <th className="w-10 border-r border-white/5 text-[10px] font-black text-slate-900 sticky top-0 bg-white">#</th>
-                        <th className={`border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 ${isFrozen ? 'left-0 z-50 bg-white/90 backdrop-blur-[4px] shadow-[2px_0_5px_rgba(0,0,0,0.1)]' : 'bg-white'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                        <th className={`w-10 border-r border-white/5 text-[10px] font-black text-slate-900 sticky top-0 bg-white z-40`}>#</th>
+                        <th className={`border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 z-50 ${isFrozen ? 'left-0 bg-white shadow-[4px_0_10px_rgba(0,0,0,0.1)]' : 'bg-white'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                           <div className="flex items-center justify-between">
                             Student Name
                           </div>
@@ -375,25 +414,25 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                   <tbody className="divide-y divide-slate-100">
                     {filteredStudents.map((s, idx) => (
                       <tr key={s.id} className={`h-8 hover:bg-white/20 transition-colors group ${getRowBg(idx)} ${s.isHidden ? 'opacity-30' : ''}`}>
-                        <td className="border-r border-slate-100 text-center bg-white/60">
+                        <td className={`border-r border-slate-100 text-center bg-white/60`}>
                           <div className="flex items-center justify-center min-h-[32px]">
                              <button onClick={() => { const ns = new Set(selectedIds); ns.has(s.id) ? ns.delete(s.id) : ns.add(s.id); setSelectedIds(ns); }}>
                                 {selectedIds.has(s.id) ? <CheckSquare size={14} className="text-orange-500" /> : <Square size={14} className="text-slate-400/30" />}
                              </button>
                           </div>
                         </td>
-                        <td className="border-r border-slate-100 text-center text-[10px] font-bold text-slate-400 bg-slate-50/40">
+                        <td className={`border-r border-slate-100 text-center text-[10px] font-bold text-slate-400 bg-slate-50/40`}>
                           <div className="flex items-center justify-center min-h-[32px]">
                             {idx + 1}
                           </div>
                         </td>
-                        <td className={`border-r border-slate-100 group ${isFrozen ? 'sticky left-0 z-20 bg-white/90 backdrop-blur-[4px] shadow-[2px_0_5px_rgba(0,0,0,0.05)]' : 'bg-white/60'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
-                            <div className="flex items-center min-h-[32px] w-full">
+                        <td className={`border-r border-slate-100 group ${isFrozen ? 'sticky left-0 z-20 shadow-[4px_0_10px_rgba(0,0,0,0.05)] bg-white' : 'bg-white/60'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                            <div className="flex items-center min-h-[32px] w-full" style={{ backgroundColor: isFrozen ? 'white' : 'transparent' }}>
                                 <MultilineInput 
                                     value={s.name} 
                                     onChange={val => updateField(s.id, 'name', val)} 
                                     className="w-full bg-transparent outline-none px-3 py-1 font-black text-[#1B254B] leading-tight" 
-                                    style={{ fontSize: settings?.fontSize ? `${settings.fontSize}px` : '11px' }}
+                                    style={{ fontSize: settings?.fontSize ? `${settings.fontSize}px` : '11px', color: '#1B254B' }}
                                 />
                             </div>
                         </td>

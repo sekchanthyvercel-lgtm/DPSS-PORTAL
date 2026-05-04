@@ -17,7 +17,8 @@ import { RecycleBin } from './components/RecycleBin';
 import { Dashboard } from './components/Dashboard';
 import { AppData, Student, CurrentUser, UserRole, ColumnConfig, Tab, ViewMode, AppSettings, StudentCategory } from './types';
 import { subscribeToData, saveData } from './services/firebase';
-import { Menu, X } from 'lucide-react';
+import { exportFullBackup, importFromExcel } from './services/excelService';
+import { Download, Upload, Menu, X } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { addMonths, format } from 'date-fns';
 
@@ -270,13 +271,25 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, [currentUser]);
 
-  const handleUpdate = (newData: AppData, skipHistory = false) => {
+  const handleUpdate = (updater: AppData | ((prev: AppData) => AppData), skipHistory = false) => {
+    setData(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
       if (!skipHistory) {
-        setHistory(prev => [...prev.slice(-19), data]); // Keep last 20 states
+        setHistory(h => [...h.slice(-19), prev]);
         setRedoStack([]);
       }
-      setData(newData);
-      saveData(newData);
+      saveData(next).catch(err => {
+        console.error("Failed to sync with cloud:", err);
+        // If it's a quota issue or size issue, alert the user
+        if (err.message?.includes('too large')) {
+          alert("The data is too large to save to the cloud (1MB limit). Please delete some old entries or records.");
+        } else {
+          // Revert or alert
+          alert("Cloud sync failed. Your changes might not be saved.");
+        }
+      });
+      return next;
+    });
   };
 
   const undo = () => {
@@ -442,6 +455,18 @@ const App: React.FC = () => {
         onRedo={redo}
         localBackground={localBackground}
         setLocalBackground={setLocalBackground}
+        onExport={() => exportFullBackup(data)}
+        onImport={async (file) => {
+          try {
+            const imported = await importFromExcel(file);
+            if (imported.length > 0) {
+              handleAddStudent(imported);
+              alert(`Successfully imported ${imported.length} students!`);
+            }
+          } catch (err) {
+            alert('Failed to import Excel file. Please ensure it follows the standard format.');
+          }
+        }}
       />
       
       <AIModal 
@@ -567,7 +592,11 @@ const App: React.FC = () => {
               />
             )}
             {activeTab === Tab.DPSS && (
-                <DPSSTable data={data} onUpdate={handleUpdate} />
+                <div className="flex-1 flex overflow-hidden bg-white/20">
+                  <div className="w-full h-full">
+                    <DPSSTable data={data} onUpdate={handleUpdate} />
+                  </div>
+                </div>
             )}
             {activeTab === Tab.Attendance && (
               <AttendanceTable 

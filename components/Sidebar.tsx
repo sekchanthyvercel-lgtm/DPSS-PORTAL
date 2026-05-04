@@ -1,5 +1,7 @@
 import React, { useRef } from 'react';
 import { 
+  Download,
+  Upload,
   LayoutDashboard, 
   LogOut, 
   CalendarCheck, 
@@ -55,6 +57,8 @@ interface SidebarProps {
   onRedo?: () => void;
   localBackground?: string;
   setLocalBackground?: (bg: string) => void;
+  onExport?: () => void;
+  onImport?: (file: File) => void;
 }
 
 const DEFAULT_BGS = [
@@ -90,9 +94,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onUndo,
   onRedo,
   localBackground,
-  setLocalBackground
+  setLocalBackground,
+  onExport,
+  onImport
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const excelImportRef = useRef<HTMLInputElement>(null);
 
   const updateFilter = (key: string, value: any) => {
     setFilters({ ...filters, [key]: value });
@@ -412,6 +419,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
               {/* Staff Contacts & Logout */}
               <div className="space-y-1">
+                <button 
+                  onClick={onExport}
+                  className="flex items-center gap-4 px-6 py-4 rounded-2xl text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50/40 transition-all w-full group border border-emerald-100"
+                >
+                  <Download size={20} className="group-hover:translate-y-1 transition-transform" />
+                  <div className="text-left">
+                    <span className="text-[11px] font-black uppercase tracking-widest leading-none block">Export Full Excel</span>
+                    <span className="text-[8px] font-bold opacity-60">Backup all data</span>
+                  </div>
+                </button>
+                <button 
+                  onClick={() => excelImportRef.current?.click()}
+                  className="flex items-center gap-4 px-6 py-4 rounded-2xl text-blue-600 hover:text-blue-700 hover:bg-blue-50/40 transition-all w-full group border border-blue-100"
+                >
+                  <Upload size={20} className="group-hover:-translate-y-1 transition-transform" />
+                  <div className="text-left">
+                    <span className="text-[11px] font-black uppercase tracking-widest leading-none block">Import Students</span>
+                    <span className="text-[8px] font-bold opacity-60">Restore from Excel</span>
+                  </div>
+                </button>
+                <input 
+                  type="file" 
+                  ref={excelImportRef} 
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) onImport?.(file);
+                    if (excelImportRef.current) excelImportRef.current.value = '';
+                  }} 
+                  className="hidden" 
+                  accept=".xlsx, .xls" 
+                />
+
                 <button 
                   onClick={onContactsOpen}
                   className="flex items-center gap-4 px-6 py-4 rounded-2xl text-slate-600 hover:text-slate-900 hover:bg-white/40 transition-all w-full group"
