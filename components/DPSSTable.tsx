@@ -9,8 +9,18 @@ interface DPSSTableProps {
 }
 
 const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
-  const [sidebarWidth, setSidebarWidth] = useState(300);
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) return 260;
+    return 300;
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setIsSidebarOpen(false);
+    }
+  }, []);
   const [pickerPos, setPickerPos] = useState<{ x: number, y: number } | null>(null);
   const [activeColor, setActiveColor] = useState<string | null>(null);
   const editorRef = useRef<HTMLDivElement>(null);
@@ -163,7 +173,8 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
   };
 
   const addTopic = (parentId?: string) => {
-    const newTopic: DPSSTopic = { id: uuidv4(), title: 'New Topic', content: '', alignment: 'left' };
+    const newTopicId = uuidv4();
+    const newTopic: DPSSTopic = { id: newTopicId, title: 'New Topic', content: '', alignment: 'left' };
     const updateTopics = (items: DPSSTopic[]): DPSSTopic[] => {
       if (!parentId) return [...items, newTopic];
       return items.map(item => {
@@ -173,6 +184,10 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
       });
     };
     onUpdate({ ...data, dpssTopics: updateTopics(topics) });
+    setSelectedTopicId(newTopicId);
+    if (window.innerWidth < 768) {
+        setIsSidebarOpen(false); // Close sidebar on mobile after adding to show content
+    }
   };
 
   const deleteTopic = (id: string) => {
@@ -215,11 +230,21 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
         const selection = window.getSelection();
         if (selection && selection.toString().length > 0) return;
         setSelectedTopicId(topic.id);
-      }} className={`p-2 my-1 rounded-lg cursor-pointer flex items-center justify-between ${selectedTopicId === topic.id ? 'bg-orange-100/50' : 'bg-white/5 hover:bg-white/10'}`}>
-        <span className="font-bold text-[13px] text-slate-700 truncate max-w-[180px]">{topic.title}</span>
-        <div className='flex gap-1 shrink-0'>
-            <button onClick={(e) => { e.stopPropagation(); addTopic(topic.id); }}><Plus size={14} className="text-slate-400 hover:text-green-500"/></button>
-            <button onClick={(e) => { e.stopPropagation(); deleteTopic(topic.id); }}><Trash2 size={14} className="text-slate-400 hover:text-red-500"/></button>
+      }} className={`p-3 my-2 rounded-xl cursor-pointer flex items-center justify-between transition-all ${selectedTopicId === topic.id ? 'bg-orange-100/80 shadow-sm' : 'bg-white/5 hover:bg-white/10'}`}>
+        <span className="font-bold text-sm text-slate-700 truncate max-w-[180px]">{topic.title}</span>
+        <div className='flex gap-2 shrink-0'>
+            <button 
+              onClick={(e) => { e.stopPropagation(); addTopic(topic.id); }}
+              className="p-2 hover:bg-black/5 rounded-lg transition-colors"
+            >
+              <Plus size={18} className="text-slate-400 hover:text-green-500"/>
+            </button>
+            <button 
+              onClick={(e) => { e.stopPropagation(); deleteTopic(topic.id); }}
+              className="p-2 hover:bg-black/5 rounded-lg transition-colors"
+            >
+              <Trash2 size={18} className="text-slate-400 hover:text-red-500"/>
+            </button>
         </div>
       </div>
       {topic.children?.map(child => renderTopic(child, depth + 1))}
@@ -227,14 +252,37 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
   );
 
   return (
-    <div className="flex h-[90vh] p-2 gap-2">
+    <div className="flex h-[90vh] p-2 gap-2 relative">
+      {/* Sidebar Toggle Button (Mobile) */}
+      {!isSidebarOpen && (
+        <button 
+          onClick={() => setIsSidebarOpen(true)}
+          className="md:hidden fixed left-4 bottom-4 z-[100] w-12 h-12 bg-orange-500 text-white rounded-full flex items-center justify-center shadow-2xl animate-bounce"
+        >
+          <AlignLeft size={24} />
+        </button>
+      )}
+
       {/* Resizable Sidebar with Fonts */}
       <div 
-        style={{ width: `${sidebarWidth}px` }}
-        className="bg-white/10 backdrop-blur-md rounded-3xl p-4 border border-white/20 flex flex-col gap-4 overflow-hidden relative group/sidebar"
+        style={{ 
+          width: isSidebarOpen ? `${sidebarWidth}px` : '0px',
+          opacity: isSidebarOpen ? 1 : 0,
+          marginLeft: isSidebarOpen ? '0px' : `-${sidebarWidth}px`,
+          padding: isSidebarOpen ? '1rem' : '0rem'
+        }}
+        className={`bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 flex flex-col gap-4 overflow-hidden relative group/sidebar transition-all duration-300 ease-in-out z-40 ${!isSidebarOpen ? 'pointer-events-none' : ''}`}
       >
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-black text-slate-800 tracking-tight">DPSS Portal</h2>
+        <div className="flex items-center justify-between min-w-[200px]">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-black text-slate-800 tracking-tight">Learning</h2>
+            <button 
+              onClick={() => setIsSidebarOpen(false)}
+              className="p-1 hover:bg-black/5 rounded-lg text-slate-400 md:hidden"
+            >
+              <Minus size={18} />
+            </button>
+          </div>
           <span className="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold uppercase">Hall Study</span>
         </div>
 
@@ -257,6 +305,13 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
       
       {/* Editor Area */}
       <div className="flex-1 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 relative flex flex-col overflow-hidden">
+        {/* Desktop Sidebar Toggle */}
+        <button 
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-50 p-1.5 bg-white/80 backdrop-blur-sm border border-white/20 rounded-full shadow-lg text-slate-400 hover:text-orange-500 hover:scale-110 transition-all hidden md:flex"
+        >
+          {isSidebarOpen ? <Minus size={14} /> : <Plus size={14} />}
+        </button>
         {selectedTopic ? (
             <div className="flex-1 flex flex-col overflow-hidden">
                 <div className="p-6 border-b border-white/10 bg-white/5">

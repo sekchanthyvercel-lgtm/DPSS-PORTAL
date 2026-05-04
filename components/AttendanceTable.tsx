@@ -412,12 +412,19 @@ export const AttendanceTable: React.FC<Props> = ({
           <table className="w-full border-collapse table-fixed min-w-[1200px]">
             <thead className="sticky top-0 z-40 bg-white/[0.02] backdrop-blur-[2px] border-b border-white/5">
               <tr>
-                <th className="w-10 h-10 border-r border-white/5 sticky top-0 bg-white/[0.02] backdrop-blur-[2px] text-center">
-                  <button onClick={() => setSelectedIds(selectedIds.size === filteredStudents.length ? new Set() : new Set(filteredStudents.map(s => s.id)))}>
-                      {selectedIds.size > 0 ? <CheckSquare size={14} className="text-orange-500 mx-auto" /> : <Square size={14} className="text-slate-900/30 mx-auto" />}
+                <th className={`w-10 h-10 border-r border-white/5 sticky top-0 bg-white/[0.02] backdrop-blur-[2px] text-center z-40`}>
+                  <button 
+                    onClick={() => setSelectedIds(selectedIds.size === filteredStudents.length ? new Set() : new Set(filteredStudents.map(s => s.id)))}
+                    className="w-10 h-10 flex items-center justify-center hover:bg-black/5 rounded-md"
+                  >
+                      {selectedIds.size > 0 ? <CheckSquare size={16} className="text-orange-500" /> : <Square size={16} className="text-slate-900/30" />}
                   </button>
                 </th>
-                <th className="px-4 py-4 text-center text-[10px] font-black uppercase text-slate-900 w-12 border-r border-white/5 sticky top-0 bg-white/[0.02] backdrop-blur-[2px]">#</th>
+                <th 
+                  className={`px-4 py-4 text-center text-[10px] font-black uppercase text-slate-900 w-12 border-r border-white/5 sticky top-0 bg-white/[0.02] backdrop-blur-[2px] z-40`}
+                >
+                  #
+                </th>
                 <th 
                   className={`px-4 py-4 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest border-r border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors group sticky top-0 z-50 ${isFrozen ? 'left-0 bg-white/90 backdrop-blur-md shadow-[2px_0_5px_rgba(0,0,0,0.1)]' : 'bg-white'}`}
                   style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}
@@ -458,21 +465,21 @@ export const AttendanceTable: React.FC<Props> = ({
                     key={s.id} 
                     className={`group transition-all hover:brightness-95 h-8 ${isHidden ? 'bg-slate-50' : rowBgClass}`}
                   >
-                    <td className="px-0 text-center border-r border-slate-200/10 bg-inherit w-10">
-                      <div className="flex items-center justify-center min-h-[32px]">
-                        <button onClick={() => { const ns = new Set(selectedIds); ns.has(s.id) ? ns.delete(s.id) : ns.add(s.id); setSelectedIds(ns); }}>
-                          {selectedIds.has(s.id) ? <CheckSquare size={14} className="text-orange-600" /> : <Square size={14} className="text-slate-400/30" />}
+                    <td className={`px-0 text-center border-r border-slate-200/10 bg-inherit w-10`}>
+                      <div className="flex items-center justify-center min-h-[44px]">
+                        <button onClick={() => { const ns = new Set(selectedIds); ns.has(s.id) ? ns.delete(s.id) : ns.add(s.id); setSelectedIds(ns); }} className="w-10 h-10 flex items-center justify-center hover:bg-black/5 rounded-md">
+                          {selectedIds.has(s.id) ? <CheckSquare size={16} className="text-orange-600" /> : <Square size={16} className="text-slate-400/30" />}
                         </button>
                       </div>
                     </td>
-                    <td className="px-4 text-center text-xs font-black text-slate-400 border-r border-slate-200/10 bg-inherit">
-                      <div className="flex items-center justify-center min-h-[32px]">
+                    <td className={`px-4 text-center text-xs font-black text-slate-400 border-r border-slate-200/10 bg-inherit w-12`}>
+                      <div className="flex items-center justify-center min-h-[44px]">
                         {idx + 1}
                       </div>
                     </td>
                     <td className={`px-5 border-r border-slate-200/10 shadow-sm ${isFrozen ? 'sticky left-0 z-30 bg-white/90 backdrop-blur-md shadow-[2px_0_5px_rgba(0,0,0,0.05)]' : 'bg-inherit'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                       <div 
-                        className={`font-black text-[#1B254B] uppercase tracking-tight truncate flex items-center min-h-[32px] ${isHidden ? 'opacity-30' : ''}`}
+                        className={`font-black text-[#1B254B] uppercase tracking-tight truncate flex items-center min-h-[44px] ${isHidden ? 'opacity-30' : ''}`}
                         style={{ fontSize: settings?.fontSize ? `${settings.fontSize}px` : '12px' }}
                       >
                         {s.name}

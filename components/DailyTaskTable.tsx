@@ -357,8 +357,8 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                     <table className="w-full border-collapse table-fixed min-w-[1500px]">
                         <thead className="sticky top-0 z-40 bg-white/10 backdrop-blur-md">
                             <tr className="border-b border-white/5 uppercase text-[9px] font-black text-slate-800">
-                                <th className="w-10 py-5 text-center border-r border-white/5">#</th>
-                                <th className={`px-6 py-5 text-left border-r border-white/5 sticky left-0 z-50 transition-all group ${isFrozen ? 'bg-white/90 backdrop-blur-md shadow-[2px_0_5px_rgba(0,0,0,0.1)]' : 'bg-inherit'}`} style={{ width: studentNameWidth }}>
+                                <th className={`w-10 py-5 text-center border-r border-white/5`}>#</th>
+                                <th className={`px-6 py-5 text-left border-r border-white/5 sticky top-0 z-50 transition-all group ${isFrozen ? 'left-0 bg-white/90 backdrop-blur-md shadow-[2px_0_5px_rgba(0,0,0,0.1)]' : 'bg-inherit'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                                     <div className="flex items-center justify-between">
                                       STUDENT NAME
                                     </div>
@@ -390,9 +390,13 @@ export const DailyTaskTable: React.FC<DailyTaskTableProps> = ({
                                 const rowBg = getRowBg(s.assistant);
                                 return (
                                     <tr key={s.id} className={`h-12 transition-all hover:brightness-95 group ${rowBg} ${s.isHidden ? 'opacity-30' : ''}`}>
-                                        <td className="text-center font-bold text-[10px] text-indigo-900/60 border-r border-white/5">{idx + 1}</td>
-                                        <td className={`px-6 border-r border-white/5 sticky left-0 z-30 transition-all ${isFrozen ? 'bg-white/90 backdrop-blur-md shadow-[2px_0_5px_rgba(0,0,0,0.05)]' : 'bg-inherit'}`} style={{ width: studentNameWidth }}>
-                                            <div className="flex items-center gap-3">
+                                        <td className={`text-center font-bold text-[10px] text-indigo-900/60 border-r border-white/5 bg-inherit`} style={{ width: 40 }}>
+                                            <div className="min-h-[44px] flex items-center justify-center">
+                                                {idx + 1}
+                                            </div>
+                                        </td>
+                                        <td className={`px-6 border-r border-white/5 sticky z-30 transition-all ${isFrozen ? 'left-0 bg-white/90 backdrop-blur-md shadow-[2px_0_5px_rgba(0,0,0,0.05)]' : 'bg-inherit'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                                            <div className="flex items-center gap-3 min-h-[44px]">
                                                 <div className={`w-1 h-8 rounded-full ${getLevelBorderColor(s.level).replace('border-l-', 'bg-')}`} />
                                                 <MultilineInput 
                                                     value={s.name} 

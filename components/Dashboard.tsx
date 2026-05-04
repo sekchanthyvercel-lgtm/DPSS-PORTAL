@@ -40,6 +40,30 @@ const getNameBg = (name: string, isAssistant: boolean) => {
   return palette[Math.abs(hash) % palette.length];
 };
 
+const getTeacherLightBg = (name: string) => {
+  const lightColors = [
+    'bg-blue-50/80',
+    'bg-emerald-50/80',
+    'bg-amber-50/80',
+    'bg-rose-50/80',
+    'bg-indigo-50/80',
+    'bg-violet-50/80',
+    'bg-orange-50/80',
+    'bg-teal-50/80',
+    'bg-cyan-50/80',
+    'bg-pink-50/80',
+    'bg-fuchsia-50/80',
+    'bg-sky-50/80',
+    'bg-lime-50/80',
+    'bg-yellow-50/80'
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return lightColors[Math.abs(hash) % lightColors.length];
+};
+
 const StatCard: React.FC<StatCardProps> = ({ title, total, breakdown, icon: Icon, isAssistant, onClick }) => {
   const bgGradient = getNameBg(title, isAssistant);
   
@@ -308,6 +332,60 @@ export const Dashboard: React.FC<Props> = ({
                     <p className="text-slate-400 font-black uppercase tracking-widest text-xs">No assistants found matching your search</p>
                 </div>
               )}
+            </div>
+          </section>
+          
+          {/* Students List Section */}
+          <section className="pb-10">
+            <div className="flex items-center gap-4 mb-8 px-2">
+              <div className="w-10 h-10 bg-indigo-500/20 text-indigo-600 rounded-2xl flex items-center justify-center">
+                <Users size={20} strokeWidth={3} />
+              </div>
+              <div>
+                <h2 className="text-lg font-black text-[#1B254B] uppercase tracking-[6px] leading-none">Full Student List</h2>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">{activeStudents.length} Active Students</p>
+              </div>
+              <div className="flex-1 h-px bg-gradient-to-r from-slate-200/50 to-transparent ml-4" />
+            </div>
+
+            <div className="bg-white/30 backdrop-blur-md rounded-[32px] border border-white/60 shadow-xl overflow-hidden">
+               <div className="overflow-x-auto">
+                 <table className="w-full text-left border-collapse">
+                   <thead>
+                     <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                       <th className="px-6 py-4">#</th>
+                       <th className="px-6 py-4">Student Name</th>
+                       <th className="px-6 py-4">Primary Teacher</th>
+                       <th className="px-6 py-4">Assistant</th>
+                       <th className="px-6 py-4 text-center">Session</th>
+                     </tr>
+                   </thead>
+                   <tbody className="divide-y divide-slate-100/50">
+                     {activeStudents.map((s, idx) => {
+                       const primaryTeacher = s.teachers?.split(/[&+,\/]+/)[0]?.trim() || 'N/A';
+                       const bgColor = primaryTeacher !== 'N/A' ? getTeacherLightBg(primaryTeacher) : 'bg-white/40';
+                       
+                       return (
+                         <tr key={s.id} className={`${bgColor} hover:brightness-95 transition-all text-xs font-bold text-slate-700`}>
+                           <td className="px-6 py-3 opacity-50">{idx + 1}</td>
+                           <td className="px-6 py-3 font-black text-slate-900 uppercase tracking-tight">{s.name}</td>
+                           <td className="px-6 py-3">
+                             <span className="px-2 py-1 bg-white/60 rounded-lg text-[10px] font-black uppercase text-indigo-600 border border-indigo-100 shadow-sm">
+                               {s.teachers || 'N/A'}
+                             </span>
+                           </td>
+                           <td className="px-6 py-3 opacity-70 italic">{s.assistant || 'N/A'}</td>
+                           <td className="px-6 py-3 text-center">
+                             <span className="text-[9px] font-black bg-slate-900/5 px-2 py-1 rounded-md text-slate-500">
+                               {s.time || '-'}
+                             </span>
+                           </td>
+                         </tr>
+                       );
+                     })}
+                   </tbody>
+                 </table>
+               </div>
             </div>
           </section>
         </div>

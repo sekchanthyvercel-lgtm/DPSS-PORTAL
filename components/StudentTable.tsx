@@ -422,12 +422,12 @@ export const StudentTable: React.FC<StudentTableProps> = ({
               <table className="border-collapse table-fixed bg-transparent" style={{ width: totalWidth, minWidth: '100%' }}>
                   <thead>
                     <tr className="bg-white/[0.01] border-b border-white/5 h-10 backdrop-blur-[1px]">
-                        <th className={`border-r border-white/5 sticky top-0 z-40 bg-white/[0.01]`} style={{ width: 45 }}>
-                            <button onClick={() => setSelectedIds(selectedIds.size === filteredStudents.length ? new Set() : new Set(filteredStudents.map(s => s.id)))}>
-                                {selectedIds.size > 0 ? <CheckSquare size={16} className="text-primary-500 mx-auto" /> : <Square size={16} className="text-slate-900/30 mx-auto" />}
+                        <th className={`border-r border-white/5 sticky top-0 z-50 bg-white/[0.01]`} style={{ width: 45 }}>
+                            <button onClick={() => setSelectedIds(selectedIds.size === filteredStudents.length ? new Set() : new Set(filteredStudents.map(s => s.id)))} className="w-full h-10 flex items-center justify-center">
+                                {selectedIds.size > 0 ? <CheckSquare size={16} className="text-primary-500" /> : <Square size={16} className="text-slate-900/30" />}
                             </button>
                         </th>
-                        <th className={`border-r border-white/5 sticky top-0 z-40 bg-white/[0.02] text-center text-[10px] font-black text-slate-900`} style={{ width: 40 }}>#</th>
+                        <th className={`border-r border-white/5 sticky top-0 z-50 bg-white/[0.02] text-center text-[10px] font-black text-slate-900`} style={{ width: 40 }}>#</th>
                         <th className={`px-3 border-r border-white/5 sticky top-0 z-50 text-slate-900 font-black text-[11px] uppercase tracking-tighter cursor-pointer ${isFrozen ? 'left-0 bg-white/90 backdrop-blur-[4px] shadow-[2px_0_5px_rgba(0,0,0,0.1)]' : 'bg-white/[0.01]'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
                           <div className="flex items-center justify-between">
                             STUDENT NAME
@@ -436,7 +436,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                         </th>
                         
                         {columns.map((col, idx) => {
-                            let stickyLeft = isFrozen && idx === 0 ? studentNameWidth : undefined;
+                            let stickyLeft = (isFrozen && idx === 0) ? (85 + studentNameWidth) : undefined;
                             const isSorted = sortConfig?.key === col.key;
                             return (
                                 <th 
@@ -484,15 +484,15 @@ export const StudentTable: React.FC<StudentTableProps> = ({
 
                           return (
                             <tr key={s.id} className={`h-8 transition-all hover:brightness-95`} style={{ backgroundColor: rowBg, color: textColor }}>
-                                <td className={`text-center border-r border-white/5`} style={{ backgroundColor: rowBg }}>
-                                    <div className="flex items-center justify-center h-full">
-                                        <button onClick={() => { const ns = new Set(selectedIds); ns.has(s.id) ? ns.delete(s.id) : ns.add(s.id); setSelectedIds(ns); }}>
-                                          {selectedIds.has(s.id) ? <CheckSquare size={14} className="text-primary-600" /> : <Square size={14} className="text-slate-400/30" />}
+                                <td className={`text-center border-r border-white/5`} style={{ backgroundColor: rowBg, width: 45 }}>
+                                    <div className="flex items-center justify-center min-h-[44px]">
+                                        <button onClick={() => { const ns = new Set(selectedIds); ns.has(s.id) ? ns.delete(s.id) : ns.add(s.id); setSelectedIds(ns); }} className="w-10 h-10 flex items-center justify-center hover:bg-black/10 rounded">
+                                          {selectedIds.has(s.id) ? <CheckSquare size={16} className="text-primary-600" /> : <Square size={16} className="text-slate-400/30" />}
                                         </button>
                                     </div>
                                 </td>
-                                <td className={`text-center text-[10px] font-black border-r border-slate-200/30`} style={{ backgroundColor: rowBg, color: '#94a3b8' }}>
-                                    <div className="flex items-center justify-center min-h-[32px] leading-tight">
+                                <td className={`text-center text-[10px] font-black border-r border-slate-200/30`} style={{ backgroundColor: rowBg, color: '#94a3b8', width: 40 }}>
+                                    <div className="flex items-center justify-center min-h-[44px] leading-tight">
                                         {i + 1}
                                     </div>
                                 </td>
@@ -507,13 +507,14 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                     </div>
                                 </td>
                                 
-                                {columns.map((col, idx) => {
-                                    return (
-                                      <td 
-                                          key={col.id} 
-                                          className={`p-0 border-r border-slate-200/20`}
-                                          style={{ backgroundColor: rowBg }}
-                                      >
+                                 {columns.map((col, idx) => {
+                                     let colStickyLeft = (isFrozen && idx === 0) ? (85 + studentNameWidth) : undefined;
+                                     return (
+                                       <td 
+                                           key={col.id} 
+                                           className={`p-0 border-r border-slate-200/20 ${colStickyLeft !== undefined ? 'sticky z-20 shadow-[1px_0_0_0_rgba(0,0,0,0.05)] bg-inherit' : ''}`}
+                                           style={{ backgroundColor: rowBg, left: colStickyLeft }}
+                                       >
                                           <div className="flex items-center min-h-[32px] w-full">
                                               <MultilineInput 
                                                   value={String(s[col.key] || '')} 
