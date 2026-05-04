@@ -230,20 +230,23 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
         const selection = window.getSelection();
         if (selection && selection.toString().length > 0) return;
         setSelectedTopicId(topic.id);
-      }} className={`p-3 my-2 rounded-xl cursor-pointer flex items-center justify-between transition-all ${selectedTopicId === topic.id ? 'bg-orange-100/80 shadow-sm' : 'bg-white/5 hover:bg-white/10'}`}>
-        <span className="font-bold text-sm text-slate-700 truncate max-w-[180px]">{topic.title}</span>
-        <div className='flex gap-2 shrink-0'>
+        if (window.innerWidth < 768) {
+            setIsSidebarOpen(false);
+        }
+      }} className={`p-4 my-2 rounded-2xl cursor-pointer flex items-center justify-between group transition-all duration-300 ${selectedTopicId === topic.id ? 'bg-orange-500 text-white shadow-[0_8px_20px_rgba(249,115,22,0.3)] scale-[1.02]' : 'bg-white/40 hover:bg-white/60 text-slate-700'}`}>
+        <span className={`font-black text-xs uppercase tracking-tight truncate flex-1 ${selectedTopicId === topic.id ? 'text-white' : 'text-slate-700'}`}>{topic.title}</span>
+        <div className='flex gap-1 shrink-0 ml-2'>
             <button 
               onClick={(e) => { e.stopPropagation(); addTopic(topic.id); }}
-              className="p-2 hover:bg-black/5 rounded-lg transition-colors"
+              className={`p-2 rounded-lg transition-colors ${selectedTopicId === topic.id ? 'hover:bg-white/20 text-white' : 'hover:bg-orange-50 text-orange-500'}`}
             >
-              <Plus size={18} className="text-slate-400 hover:text-green-500"/>
+              <Plus size={16} strokeWidth={3}/>
             </button>
             <button 
               onClick={(e) => { e.stopPropagation(); deleteTopic(topic.id); }}
-              className="p-2 hover:bg-black/5 rounded-lg transition-colors"
+              className={`p-2 rounded-lg transition-colors ${selectedTopicId === topic.id ? 'hover:bg-white/20 text-white' : 'hover:bg-red-50 text-red-500'}`}
             >
-              <Trash2 size={18} className="text-slate-400 hover:text-red-500"/>
+              <Trash2 size={16} strokeWidth={3}/>
             </button>
         </div>
       </div>
@@ -252,12 +255,20 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
   );
 
   return (
-    <div className="flex h-[90vh] p-2 gap-2 relative">
+    <div className="flex h-[calc(100vh-120px)] p-2 gap-4 relative overflow-hidden">
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-[90]"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar Toggle Button (Mobile) */}
       {!isSidebarOpen && (
         <button 
           onClick={() => setIsSidebarOpen(true)}
-          className="md:hidden fixed left-4 bottom-4 z-[100] w-12 h-12 bg-orange-500 text-white rounded-full flex items-center justify-center shadow-2xl animate-bounce"
+          className="md:hidden fixed left-6 top-6 z-[100] w-12 h-12 bg-white text-slate-800 rounded-2xl flex items-center justify-center shadow-2xl border border-slate-100 active:scale-95 transition-all"
         >
           <AlignLeft size={24} />
         </button>
@@ -266,168 +277,165 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
       {/* Resizable Sidebar with Fonts */}
       <div 
         style={{ 
-          width: isSidebarOpen ? `${sidebarWidth}px` : '0px',
+          width: isSidebarOpen ? (typeof window !== 'undefined' && window.innerWidth < 768 ? '100%' : `${sidebarWidth}px`) : '0px',
+          maxWidth: typeof window !== 'undefined' && window.innerWidth < 768 ? '85%' : '600px',
           opacity: isSidebarOpen ? 1 : 0,
-          marginLeft: isSidebarOpen ? '0px' : `-${sidebarWidth}px`,
-          padding: isSidebarOpen ? '1rem' : '0rem'
+          transform: isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
         }}
-        className={`bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 flex flex-col gap-4 overflow-hidden relative group/sidebar transition-all duration-300 ease-in-out z-40 ${!isSidebarOpen ? 'pointer-events-none' : ''}`}
+        className={`bg-white/95 backdrop-blur-xl rounded-[32px] border border-white/50 flex flex-col gap-4 overflow-hidden fixed md:relative left-2 top-2 bottom-2 md:left-0 md:top-0 md:bottom-0 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] z-[100] md:z-40 shadow-2xl md:shadow-none ${!isSidebarOpen ? 'pointer-events-none' : ''}`}
       >
-        <div className="flex items-center justify-between min-w-[200px]">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-black text-slate-800 tracking-tight">Learning</h2>
-            <button 
-              onClick={() => setIsSidebarOpen(false)}
-              className="p-1 hover:bg-black/5 rounded-lg text-slate-400 md:hidden"
-            >
-              <Minus size={18} />
-            </button>
+        <div className="p-6 pb-2">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                Learning
+                <div className="p-1.5 bg-orange-500 text-white rounded-lg md:hidden" onClick={() => setIsSidebarOpen(false)}>
+                   <Minus size={14} />
+                </div>
+              </h2>
+              <span className="text-[10px] text-orange-500 font-black uppercase tracking-widest mt-1">Catalog View</span>
+            </div>
+            <span className="text-[10px] bg-slate-900 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest">DPSS</span>
           </div>
-          <span className="text-[10px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold uppercase">Hall Study</span>
+
+          <button onClick={() => addTopic()} className="w-full py-4 bg-gradient-to-br from-orange-400 to-orange-600 text-white rounded-[20px] text-xs font-black flex items-center justify-center gap-3 hover:brightness-110 shadow-xl shadow-orange-200 transition-all mt-6 active:scale-[0.98]">
+            <Plus size={18} strokeWidth={3} /> ADD NEW TOPIC
+          </button>
         </div>
 
-        <button onClick={() => addTopic()} className="w-full py-3 bg-orange-500 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 hover:bg-orange-600 shadow-lg shadow-orange-200 transition-all mt-4">
-          <Plus size={16} /> Add New Topic
-        </button>
-
-        <div className="flex-1 overflow-y-auto pr-2 space-y-1 custom-scrollbar">
-            {topics.map(t => renderTopic(t))}
+        <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-1 custom-scrollbar">
+            {topics.length > 0 ? (
+              topics.map(t => renderTopic(t))
+            ) : (
+              <div className="h-40 flex flex-col items-center justify-center text-slate-300 text-center px-6">
+                <Minus size={24} className="opacity-20 mb-2" />
+                <p className="text-[10px] font-black uppercase tracking-widest opacity-40">No entries found</p>
+              </div>
+            )}
         </div>
 
-        {/* Resize Handle */}
+        {/* Resize Handle (Desktop Only) */}
         <div 
           onMouseDown={onResizeStart}
-          className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-orange-500/20 active:bg-orange-500/40 transition-colors z-50 flex items-center justify-center"
+          className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-orange-500/20 active:bg-orange-500/40 transition-colors z-[110] hidden md:flex items-center justify-center"
         >
-            <div className="w-0.5 h-8 bg-slate-300 rounded-full group-hover/sidebar:opacity-100 opacity-30 transition-opacity" />
+            <div className="w-0.5 h-12 bg-slate-200 rounded-full opacity-0 group-hover/sidebar:opacity-100 transition-opacity" />
         </div>
       </div>
       
       {/* Editor Area */}
-      <div className="flex-1 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 relative flex flex-col overflow-hidden">
-        {/* Desktop Sidebar Toggle */}
+      <div className="flex-1 min-w-0 bg-white/40 backdrop-blur-md rounded-[40px] border border-white/60 relative flex flex-col overflow-hidden shadow-sm">
+        {/* Desktop Sidebar Toggle Toggle Button Overhanging */}
         <button 
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-50 p-1.5 bg-white/80 backdrop-blur-sm border border-white/20 rounded-full shadow-lg text-slate-400 hover:text-orange-500 hover:scale-110 transition-all hidden md:flex"
+          className="absolute left-0 top-6 -translate-x-1/2 z-50 w-10 h-10 bg-white border border-slate-100 rounded-full shadow-xl flex items-center justify-center text-slate-400 hover:text-orange-500 transition-all hidden md:flex group"
         >
-          {isSidebarOpen ? <Minus size={14} /> : <Plus size={14} />}
+          <div className={`transition-transform duration-500 ${isSidebarOpen ? 'rotate-180' : 'rotate-0'}`}>
+            <AlignLeft size={18} strokeWidth={3} />
+          </div>
         </button>
+
         {selectedTopic ? (
             <div className="flex-1 flex flex-col overflow-hidden">
-                <div className="p-6 border-b border-white/10 bg-white/5">
-                    <input 
-                        value={selectedTopic.title} 
-                        onChange={(e) => updateTopic(selectedTopic.id, { title: e.target.value })}
-                        className="w-full text-4xl font-black text-slate-900 bg-transparent outline-none p-2 border-b-2 border-orange-500/20 focus:border-orange-500 transition-all"
-                        placeholder="Topic Title..."
-                    />
+                <div className="p-8 pb-4 bg-white/20">
+                   <div className="max-w-4xl mx-auto w-full">
+                      <input 
+                          value={selectedTopic.title} 
+                          onChange={(e) => updateTopic(selectedTopic.id, { title: e.target.value })}
+                          className="w-full text-4xl md:text-5xl font-black text-[#1B254B] bg-transparent outline-none py-2 border-b-4 border-orange-500/20 focus:border-orange-500 transition-all uppercase tracking-tight placeholder:text-slate-200"
+                          placeholder="Untitled Topic..."
+                      />
+                   </div>
                 </div>
                 
-                <div className='flex flex-wrap gap-3 p-3 items-center bg-white/30 backdrop-blur-xl z-20 border-b border-white/10'>
-                    <div className="flex gap-1 bg-white/40 p-1 rounded-lg">
-                      <button className="p-1.5 hover:bg-white rounded transition-colors" title="Align Left" onClick={() => updateTopic(selectedTopic.id, { alignment: 'left' })}><AlignLeft size={16} /></button>
-                      <button className="p-1.5 hover:bg-white rounded transition-colors" title="Align Center" onClick={() => updateTopic(selectedTopic.id, { alignment: 'center' })}><AlignCenter size={16} /></button>
-                      <button className="p-1.5 hover:bg-white rounded transition-colors" title="Align Right" onClick={() => updateTopic(selectedTopic.id, { alignment: 'right' })}><AlignRight size={16} /></button>
+                <div className='sticky top-0 z-[60] bg-white/60 backdrop-blur-2xl border-b border-white/40'>
+                  <div className="max-w-4xl mx-auto w-full px-6 py-4 flex flex-wrap gap-4 items-center">
+                    <div className="flex gap-1.5 bg-slate-900/5 p-1 rounded-xl">
+                      <button className={`p-2 rounded-lg transition-all ${selectedTopic.alignment === 'left' ? 'bg-white shadow-sm text-orange-600' : 'text-slate-400 hover:text-slate-600'}`} title="Align Left" onClick={() => updateTopic(selectedTopic.id, { alignment: 'left' })}><AlignLeft size={18} /></button>
+                      <button className={`p-2 rounded-lg transition-all ${selectedTopic.alignment === 'center' ? 'bg-white shadow-sm text-orange-600' : 'text-slate-400 hover:text-slate-600'}`} title="Align Center" onClick={() => updateTopic(selectedTopic.id, { alignment: 'center' })}><AlignCenter size={18} /></button>
+                      <button className={`p-2 rounded-lg transition-all ${selectedTopic.alignment === 'right' ? 'bg-white shadow-sm text-orange-600' : 'text-slate-400 hover:text-slate-600'}`} title="Align Right" onClick={() => updateTopic(selectedTopic.id, { alignment: 'right' })}><AlignRight size={18} /></button>
                     </div>
 
-                    <div className="h-6 w-px bg-white/30 mx-1" />
-
-                    <div className="flex gap-1 bg-white/40 p-1 rounded-lg">
+                    <div className="flex gap-1.5 bg-slate-900/5 p-1 rounded-xl">
                       <button 
-                        className="p-1.5 hover:bg-white rounded transition-colors text-slate-700" 
+                        className="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all text-slate-500" 
                         title="Add Box"
                         onClick={() => {
-                          const html = `<div style="border: 2px solid #e2e8f0; padding: 20px; border-radius: 16px; margin: 15px 0; background: rgba(255,255,255,0.3);">Box Content...</div><p><br></p>`;
+                          const html = `<div style="border: 2px solid #e2e8f0; padding: 24px; border-radius: 24px; margin: 20px 0; background: rgba(255,255,255,0.5); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);">Box Content...</div><p><br></p>`;
                           document.execCommand('insertHTML', false, html);
                         }}
                       >
-                        <Square size={16} />
+                        <Square size={18} />
                       </button>
                       
                       <button 
-                        className="p-1.5 hover:bg-white rounded transition-colors text-slate-700" 
-                        title="Add Callout Block"
+                        className="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all text-slate-500" 
+                        title="Add Callout"
                         onClick={() => {
-                          const html = `<div style="background: rgba(248,250,252,0.8); border-left: 6px solid #64748b; padding: 16px; border-radius: 8px; margin: 15px 0; font-style: italic; color: #334155;">Block information...</div><p><br></p>`;
+                          const html = `<div style="background: rgba(248,250,252,0.8); border-left: 8px solid #f97316; padding: 20px; border-radius: 12px; margin: 20px 0; font-style: italic; color: #334155; font-size: 1.1em; line-height: 1.6;">Important insight here...</div><p><br></p>`;
                           document.execCommand('insertHTML', false, html);
                         }}
                       >
-                        <Quote size={16} />
+                        <Quote size={18} />
                       </button>
 
                       <button 
-                        className="p-1.5 hover:bg-white rounded transition-colors text-slate-700" 
-                        title="Add Divider"
-                        onClick={() => {
-                          const html = `<hr style="border: none; border-top: 2px solid rgba(0,0,0,0.1); margin: 25px 0;"><p><br></p>`;
-                          document.execCommand('insertHTML', false, html);
-                        }}
-                      >
-                        <Minus size={16} />
-                      </button>
-
-                      <button 
-                        className="p-1.5 hover:bg-white rounded transition-colors text-slate-700" 
+                        className="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all text-slate-500" 
                         title="Add 2-Column Grid"
                         onClick={() => {
-                          const html = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;"><div style="border: 1px dashed rgba(0,0,0,0.1); padding: 15px; border-radius: 12px;">Column 1</div><div style="border: 1px dashed rgba(0,0,0,0.1); padding: 15px; border-radius: 12px;">Column 2</div></div><p><br></p>`;
+                          const html = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0;"><div style="border: 1px dashed #cbd5e1; padding: 20px; border-radius: 16px;">Column 1</div><div style="border: 1px dashed #cbd5e1; padding: 20px; border-radius: 16px;">Column 2</div></div><p><br></p>`;
                           document.execCommand('insertHTML', false, html);
                         }}
                       >
-                        <Layout size={16} />
+                        <Layout size={18} />
                       </button>
                     </div>
 
-                    <div className="h-6 w-px bg-white/30 mx-1" />
-
-                    <div className="flex items-center gap-2 bg-white/40 p-1 px-3 rounded-lg border border-white/40 transition-all">
-                      <Highlighter size={14} className={activeColor ? 'text-orange-500 animate-pulse' : 'text-slate-400'} />
-                      <div className="flex gap-1.5">
+                    <div className="flex items-center gap-3 bg-white/80 p-1.5 px-4 rounded-xl border border-slate-100 shadow-sm transition-all ml-auto md:ml-0">
+                      <Highlighter size={16} className={activeColor ? 'text-orange-500' : 'text-slate-400'} />
+                      <div className="flex gap-2">
                         {colors.map(c => (
                           <button
                             key={c.value}
                             onClick={() => setActiveColor(activeColor === c.value ? null : c.value)}
-                            className={`w-5 h-5 rounded-full border-2 transition-all hover:scale-110 shadow-sm ${activeColor === c.value ? 'border-orange-500 scale-125' : 'border-white/40'}`}
+                            className={`w-6 h-6 rounded-full border-2 transition-all hover:scale-125 shadow-sm ${activeColor === c.value ? 'border-orange-500 scale-125 ring-2 ring-orange-200' : 'border-white'}`}
                             style={{ backgroundColor: c.value === 'transparent' ? '#f8fafc' : c.value }}
                             title={c.name}
                           >
-                            {c.value === 'transparent' && <span className="text-[8px] font-black opacity-30">✕</span>}
+                            {c.value === 'transparent' && <span className="text-[10px] font-black opacity-20">✕</span>}
                           </button>
                         ))}
                       </div>
-                      {activeColor && (
-                        <button onClick={() => setActiveColor(null)} className="ml-1 text-[9px] font-black bg-white/60 hover:bg-white px-1.5 rounded uppercase tracking-tighter text-slate-500">
-                          Stop
-                        </button>
-                      )}
                     </div>
 
-                    <button onClick={insertDate} className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-bold hover:bg-orange-600 shadow-sm transition-colors">
-                      <Calendar size={14} /> Insert Date
+                    <button onClick={insertDate} className="ml-auto w-full md:w-auto flex items-center justify-center gap-3 px-6 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 shadow-xl transition-all active:scale-95">
+                      <Calendar size={18} strokeWidth={3} /> INSERT DATE
                     </button>
+                  </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-white/5">
+                <div className="flex-1 overflow-y-auto custom-scrollbar bg-transparent">
+                  <div className="max-w-4xl mx-auto w-full min-h-full flex flex-col">
                     {/* Floating Selection Tooltip */}
                     {pickerPos && (
                       <div 
-                        className="fixed z-50 bg-white/90 backdrop-blur p-2 rounded-2xl shadow-2xl border border-white flex gap-2 animate-in fade-in zoom-in slide-in-from-bottom-2 duration-200"
+                        className="fixed z-[100] bg-white/95 backdrop-blur-xl p-3 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] border border-white flex gap-3 animate-in fade-in zoom-in slide-in-from-bottom-4 duration-300"
                         style={{ 
                           left: pickerPos.x, 
                           top: pickerPos.y, 
                           transform: 'translateX(-50%)' 
                         }}
-                        onMouseDown={(e) => e.preventDefault()} // Prevent focus loss
+                        onMouseDown={(e) => e.preventDefault()}
                       >
                         {colors.map(color => (
                             <button 
                                 key={color.value}
-                                className={`w-6 h-6 rounded-full border border-black/5 hover:scale-110 transition-transform ${color.value === 'transparent' ? 'bg-slate-100 flex items-center justify-center' : ''}`}
+                                className={`w-8 h-8 rounded-full border border-black/5 hover:scale-125 transition-all shadow-sm ${color.value === 'transparent' ? 'bg-slate-50 flex items-center justify-center' : ''}`}
                                 style={{ backgroundColor: color.value }}
                                 onClick={() => applyColor(color.value)}
                                 title={color.name}
                             >
-                              {color.value === 'transparent' && <span className="text-[8px] font-black opacity-40">✕</span>}
+                              {color.value === 'transparent' && <Trash2 size={12} className="opacity-40" />}
                             </button>
                         ))}
                       </div>
@@ -450,22 +458,39 @@ const DPSSTable: React.FC<DPSSTableProps> = ({ data, onUpdate }) => {
                             lastContentRef.current = newContent;
                         }}
                         style={{ 
-                          textAlign: selectedTopic.alignment, 
+                          textAlign: selectedTopic.alignment as any, 
                           minHeight: '80vh',
                           fontSize: `${dpssSettings.fontSize}px`,
                           fontFamily: dpssSettings.fontFamily,
                           userSelect: 'text'
                         }}
-                        className="w-full outline-none p-10 rounded-3xl text-slate-800 leading-relaxed font-medium select-text cursor-text relative z-10"
+                        className="w-full h-full outline-none p-10 md:p-16 rounded-[40px] text-slate-800 leading-[1.8] font-medium selection:bg-orange-200"
                     />
+                  </div>
                 </div>
             </div>
         ) : (
-            <div className="h-full flex flex-col items-center justify-center gap-4 text-slate-400">
-              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
-                <MousePointer2 size={32} />
-              </div>
-              <p className="font-bold text-lg">Select a topic to start editing</p>
+            <div className="h-full flex flex-col items-center justify-center p-12 text-center animate-in fade-in duration-700">
+               <div className="relative mb-12">
+                  <div className="w-32 h-32 bg-gradient-to-br from-white/60 to-white/20 rounded-[48px] border border-white/50 backdrop-blur-xl flex items-center justify-center shadow-2xl animate-pulse">
+                    <div className="w-16 h-16 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin" />
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <MousePointer2 size={40} className="text-slate-300 drop-shadow-lg" />
+                  </div>
+               </div>
+               <h2 className="text-2xl md:text-3xl font-black text-[#1B254B] uppercase tracking-[8px] mb-4">
+                 CURRICULUM EMPTY
+               </h2>
+               <p className="max-w-md text-slate-400 font-bold text-xs uppercase tracking-widest leading-relaxed">
+                 Select a learning module from the side catalog to begin your mastery advancement
+               </p>
+               <button 
+                 onClick={() => setIsSidebarOpen(true)}
+                 className="mt-12 px-8 py-4 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-[3px] hover:bg-orange-500 transition-all shadow-2xl active:scale-95"
+               >
+                 Open Learning Catalog
+               </button>
             </div>
         )}
       </div>
