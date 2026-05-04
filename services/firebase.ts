@@ -1,39 +1,53 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, onSnapshot, setDoc, getDoc, getDocFromServer } from 'firebase/firestore';
-import { getAuth, signInAnonymously } from 'firebase/auth'; 
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth'; 
 import { AppData, BackupEntry } from '../types';
+import firebaseConfig from '../firebase-applet-config.json';
 
-// 1. Your Firebase Configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyAIo9Tjed8cUr_K7RPRl2QYIQD1S9JAMY4",
-  authDomain: "dps-staff-portal-5e911.firebaseapp.com",
-  projectId: "dps-staff-portal-5e911",
-  storageBucket: "dps-staff-portal-5e911.firebasestorage.app",
-  messagingSenderId: "671583941979",
-  appId: "1:671583941979:web:c23c0f527cefabfe3fd67e",
-  measurementId: "G-VR9Z385GFV"
-};
-
-// 2. Initialize Firebase
+// 1. Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId || undefined);
 export const auth = getAuth(app);
 
 const DOC_PATH = 'portal/data';
 
 let isOffline = false;
 
-// 3. Auto-Authenticate
-let authPromise = signInAnonymously(auth).catch(console.error);
+// 2. Auth state tracking
+let resolveAuth: (value: any) => void;
+let authPromise = new Promise((resolve) => {
+  resolveAuth = resolve;
+});
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    console.log("Firebase Authenticated as:", user.uid);
+    resolveAuth(user);
+    isOffline = false;
+  } else {
+    // Attempt sign in if not logged in
+    signInAnonymously(auth).catch((error) => {
+      console.error("Anonymous Auth Failed:", error);
+      isOffline = true;
+      // We don't resolve here because we want sequential attempts or manual intervention
+    });
+  }
+});
+
 export const ensureAuth = () => authPromise;
 
 async function testConnection() {
   try {
+    // Try to reach the database
     await getDocFromServer(doc(db, 'test', 'connection'));
+    console.log("Firebase connection verified.");
   } catch (error) {
-    if(error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Please check your Firebase configuration.");
-      isOffline = true;
+    if(error instanceof Error) {
+      console.warn("Firebase status check:", error.message);
+      if (error.message.includes('offline') || error.message.includes('permission-denied')) {
+        // Permission denied on test/connection is OK if rules are strict, 
+        // but offline is a real problem.
+      }
     }
   }
 }
@@ -81,23 +95,58 @@ export const subscribeToData = (
   onData: (data: AppData) => void,
   onError: (error: any) => void
 ) => {
-  const docRef = doc(db, DOC_PATH);
+  const metaRef = doc(db, 'portal', 'data_meta');
   
-  const unsubscribe = onSnapshot(docRef, (docSnap) => {
+  const unsubscribe = onSnapshot(metaRef, async (docSnap) => {
     if (docSnap.exists()) {
-      const data = docSnap.data() as AppData;
-      // Provide defaults if missing
-      onData({
-        ...data,
-        students: data.students || [],
-        attendance: data.attendance || {},
-        systemLocked: data.systemLocked || false
-      });
+      const meta = docSnap.data();
+      const numChunks = meta.chunks || 1;
+      
+      try {
+        let fullJson = '';
+        for (let i = 0; i < numChunks; i++) {
+          const chunkSnap = await getDoc(doc(db, 'portal', `data_chunk_${i}`));
+          if (chunkSnap.exists()) {
+            fullJson += chunkSnap.data().data;
+          }
+        }
+        const data = JSON.parse(fullJson) as AppData;
+        onData({
+          ...data,
+          students: data.students || [],
+          attendance: data.attendance || {},
+          systemLocked: data.systemLocked || false
+        });
+      } catch (err) {
+        console.error("Error reading chunks:", err);
+        onError(err);
+      }
     } else {
-      // Document doesn't exist yet, initialize it
-      const initialData: AppData = { students: [], attendance: {}, systemLocked: false, settings: { fontSize: 12, fontFamily: "'Inter', sans-serif" } };
-      setDoc(docRef, initialData).catch(err => handleFirestoreError(err, OperationType.WRITE, DOC_PATH));
-      onData(initialData);
+      // Fallback to legacy single document
+      try {
+        const legacySnap = await getDoc(doc(db, DOC_PATH));
+        if (legacySnap.exists()) {
+          const data = legacySnap.data() as AppData;
+          onData({
+            ...data,
+            students: data.students || [],
+            attendance: data.attendance || {},
+            systemLocked: data.systemLocked || false
+          });
+          // Migrate legacy payload to chunks
+          console.log("Migrating legacy data to chunked format...");
+          saveData(data).catch(console.error);
+        } else {
+          // Initialize fresh payload
+          const initialData: AppData = { students: [], attendance: {}, systemLocked: false, settings: { fontSize: 12, fontFamily: "'Inter', sans-serif" } };
+          saveData(initialData).catch(err => handleFirestoreError(err, OperationType.WRITE, 'portal'));
+          // Call onData with initial state proactively
+          onData(initialData);
+        }
+      } catch (err) {
+        console.error("Error checking legacy data:", err);
+        onError(err);
+      }
     }
   }, (error) => {
     isOffline = true;
@@ -108,26 +157,28 @@ export const subscribeToData = (
 };
 
 export const saveData = async (data: AppData) => {
-  const docRef = doc(db, DOC_PATH);
-  
   await ensureAuth();
 
-  // Basic size estimation
   const json = JSON.stringify(data);
-  const size = json.length;
-  // Firestore limit is 1,048,576 bytes. Let's warn at 900KB.
-  if (size > 1000000) {
-    console.warn("Approaching Firestore 1MB limit:", size);
-  }
+  const CHUNK_SIZE = 900000; // 900KB chunks
+  const chunks = [];
   
-  if (size > 1048500) {
-    throw new Error("DATA_TOO_LARGE: The database has reached the 1MB limit. Please delete old records in Maintenance.");
+  for (let i = 0; i < json.length; i += CHUNK_SIZE) {
+    chunks.push(json.substring(i, i + CHUNK_SIZE));
   }
 
   try {
-    await setDoc(docRef, data); 
+    // Save chunks first
+    for (let i = 0; i < chunks.length; i++) {
+      await setDoc(doc(db, 'portal', `data_chunk_${i}`), { data: chunks[i] });
+    }
+    // Update meta to trigger subscribers
+    await setDoc(doc(db, 'portal', 'data_meta'), { 
+      chunks: chunks.length,
+      updatedAt: new Date().getTime() // Force trigger across clients
+    });
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, DOC_PATH);
+    handleFirestoreError(error, OperationType.WRITE, 'portal');
   }
 };
 

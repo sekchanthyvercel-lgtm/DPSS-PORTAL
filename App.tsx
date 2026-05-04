@@ -295,14 +295,22 @@ const App: React.FC = () => {
       }
       saveData(next).catch(err => {
         console.error("Failed to sync with cloud:", err);
-        // If it's a quota issue or size issue, alert the user
-        if (err.message?.includes('too large') || err.message?.includes('1MB')) {
+        let errorBody = err.message;
+        try {
+          const parsed = JSON.parse(err.message);
+          errorBody = parsed.error || err.message;
+        } catch (e) {
+          // Not JSON
+        }
+
+        if (errorBody.toLowerCase().includes('too large') || errorBody.toLowerCase().includes('1mb')) {
           alert("The data is too large to save to the cloud (1MB limit). Please delete some old entries or records in the maintenance panel.");
-        } else if (err.message?.includes('permission')) {
-          alert("Cloud sync failed: Permission denied. Please ensure you are logged in and have access.");
+        } else if (errorBody.toLowerCase().includes('permission')) {
+          alert(`Cloud sync failed: Permission denied. This usually means Anonymous Auth is not enabled in Firebase Console. Details: ${errorBody}`);
+        } else if (errorBody.toLowerCase().includes('quota')) {
+          alert("Cloud sync failed: Firestore Quota Exceeded. You have hit the free daily usage limits in Firebase. The quota resets tomorrow.");
         } else {
-          // Revert or alert
-          alert("Cloud sync failed. Your changes might not be saved. Check your internet connection.");
+          alert(`Cloud sync failed: ${errorBody}. Your changes might not be saved. Check if Firebase is enabled.`);
         }
       });
       return next;
@@ -317,7 +325,7 @@ const App: React.FC = () => {
     setData(previous);
     saveData(previous).catch(err => {
       console.error("Undo sync failed:", err);
-      alert("Undo failed to sync with cloud.");
+      alert(`Undo failed to sync with cloud: ${err.message}`);
     });
   };
 
@@ -329,7 +337,7 @@ const App: React.FC = () => {
     setData(next);
     saveData(next).catch(err => {
         console.error("Redo sync failed:", err);
-        alert("Redo failed to sync with cloud.");
+        alert(`Redo failed to sync with cloud: ${err.message}`);
     });
   };
 
