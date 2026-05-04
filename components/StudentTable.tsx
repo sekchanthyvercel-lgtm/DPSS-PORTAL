@@ -138,6 +138,10 @@ export const StudentTable: React.FC<StudentTableProps> = ({
     return 180;
   });
 
+  const CHECKBOX_WIDTH = 45;
+  const NUMBER_WIDTH = 40;
+  const NAME_START = isFrozen ? (CHECKBOX_WIDTH + NUMBER_WIDTH) : 0;
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('dps_studentNameWidth', studentNameWidth.toString());
@@ -169,7 +173,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
         const matchesLevel = !filters.level || String(s.level || '').toUpperCase().includes(filters.level.toUpperCase());
         const matchesBehavior = !filters.behavior || String(s.behavior || '').toUpperCase().includes(filters.behavior.toUpperCase());
         const matchesVisibility = filters.showHidden || !s.isHidden;
-        const matchesCategory = s.category === 'Hall';
+        const matchesCategory = s.category === 'Hall' || !s.category;
         
         return matchesSearch && matchesTeacher && matchesAssistant && matchesTime && matchesLevel && matchesBehavior && matchesVisibility && matchesCategory;
     });
@@ -455,13 +459,13 @@ export const StudentTable: React.FC<StudentTableProps> = ({
               <table className="border-collapse table-fixed bg-transparent" style={{ width: totalWidth, minWidth: '100%' }}>
                   <thead>
                     <tr className="bg-white/[0.01] border-b border-white/5 h-10 backdrop-blur-[1px]">
-                        <th className={`border-r border-white/5 sticky top-0 z-40 bg-white/[0.01]`} style={{ width: 45 }}>
+                        <th className={`border-r border-white/5 sticky top-0 z-40 bg-white/[0.01] ${isFrozen ? 'left-0 z-50 bg-white shadow-[2px_0_0_0_rgba(0,0,0,0.05)]' : ''}`} style={{ width: CHECKBOX_WIDTH, left: isFrozen ? 0 : undefined }}>
                             <button onClick={() => setSelectedIds(selectedIds.size === filteredStudents.length ? new Set() : new Set(filteredStudents.map(s => s.id)))} className="w-full h-10 flex items-center justify-center">
                                 {selectedIds.size > 0 ? <CheckSquare size={16} className="text-primary-500" /> : <Square size={16} className="text-slate-900/30" />}
                             </button>
                         </th>
-                        <th className={`border-r border-white/5 sticky top-0 z-40 bg-white/[0.02] text-center text-[10px] font-black text-slate-900`} style={{ width: 40 }}>#</th>
-                        <th className={`px-3 border-r border-white/5 sticky top-0 z-50 text-slate-900 font-black text-[11px] uppercase tracking-tighter cursor-pointer ${isFrozen ? 'left-0 bg-white shadow-[4px_0_10px_rgba(0,0,0,0.1)]' : 'bg-white/[0.01]'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                        <th className={`border-r border-white/5 sticky top-0 z-40 bg-white/[0.02] text-center text-[10px] font-black text-slate-900 ${isFrozen ? 'sticky z-50 bg-white shadow-[2px_0_0_0_rgba(0,0,0,0.05)]' : ''}`} style={{ width: NUMBER_WIDTH, left: isFrozen ? CHECKBOX_WIDTH : undefined }}>#</th>
+                        <th className={`px-3 border-r border-white/5 sticky top-0 z-50 text-slate-900 font-black text-[11px] uppercase tracking-tighter cursor-pointer ${isFrozen ? 'bg-white shadow-[4px_0_10px_rgba(0,0,0,0.1)]' : 'bg-white/[0.01]'}`} style={{ width: studentNameWidth, left: isFrozen ? NAME_START : undefined }}>
                           <div className="flex items-center justify-between">
                             STUDENT NAME
                           </div>
@@ -515,23 +519,23 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                           }
 
                           return (
-                            <tr key={s.id} className={`h-8 transition-all hover:brightness-95`} style={{ backgroundColor: rowBg, color: textColor }}>
-                                <td className={`text-center border-r border-white/5`} style={{ width: 45 }}>
+                             <tr key={s.id} className={`h-8 transition-all hover:brightness-95`} style={{ backgroundColor: rowBg, color: textColor }}>
+                                <td className={`text-center border-r border-white/5 ${isFrozen ? 'sticky left-0 z-20 bg-white shadow-[2px_0_0_0_rgba(0,0,0,0.05)]' : ''}`} style={{ width: CHECKBOX_WIDTH, left: isFrozen ? 0 : undefined, backgroundColor: isFrozen ? 'white' : 'transparent' }}>
                                     <div className="flex items-center justify-center min-h-[44px]">
                                         <button onClick={() => { const ns = new Set(selectedIds); ns.has(s.id) ? ns.delete(s.id) : ns.add(s.id); setSelectedIds(ns); }} className="w-10 h-10 flex items-center justify-center hover:bg-black/10 rounded">
                                           {selectedIds.has(s.id) ? <CheckSquare size={16} className="text-primary-600" /> : <Square size={16} className="text-slate-400/30" />}
                                         </button>
                                     </div>
                                 </td>
-                                <td className={`text-center text-[10px] font-black border-r border-slate-200/30`} style={{ color: '#94a3b8', width: 40 }}>
+                                <td className={`text-center text-[10px] font-black border-r border-slate-200/30 ${isFrozen ? 'sticky z-20 bg-white shadow-[2px_0_0_0_rgba(0,0,0,0.05)]' : ''}`} style={{ color: '#94a3b8', width: NUMBER_WIDTH, left: isFrozen ? CHECKBOX_WIDTH : undefined, backgroundColor: isFrozen ? 'white' : 'transparent' }}>
                                     <div className="flex items-center justify-center min-h-[44px] leading-tight">
                                         {i + 1}
                                     </div>
                                 </td>
-                                 <td className={`px-0 border-r border-slate-200/30 group ${isFrozen ? 'sticky left-0 z-20 shadow-[4px_0_10px_rgba(0,0,0,0.05)] bg-white' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                                 <td className={`px-0 border-r border-slate-200/30 group ${isFrozen ? 'sticky z-20 shadow-[4px_0_10px_rgba(0,0,0,0.05)] bg-white' : ''}`} style={{ width: studentNameWidth, left: isFrozen ? NAME_START : undefined }}>
                                     <div className="flex items-center min-h-[32px] w-full" style={{ backgroundColor: isFrozen ? 'white' : 'transparent' }}>
                                         <MultilineInput 
-                                          value={s.name} 
+                                          value={s.name || 'Student Name'} 
                                           onChange={val => updateField(s.id, 'name', val)} 
                                           className="w-full bg-transparent outline-none focus:bg-white/40 font-black tracking-tight px-3 py-1 scrollbar-none leading-tight" 
                                           style={{ color: '#1b254b', fontSize: settings?.fontSize ? `${settings.fontSize}px` : '11px' }} 

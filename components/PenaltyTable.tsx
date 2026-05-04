@@ -117,7 +117,11 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
     document.removeEventListener('touchend', onResizeEnd);
   };
 
-  const penaltyStudents = useMemo(() => students.filter(s => s.category === category && !s.deletedAt), [students, category]);
+  const CHECKBOX_WIDTH = 40;
+  const NUMBER_WIDTH = 40;
+  const NAME_START = isFrozen ? (CHECKBOX_WIDTH + NUMBER_WIDTH) : 0;
+
+  const penaltyStudents = useMemo(() => students.filter(s => (s.category === category || (!s.category && category === 'Penalty')) && !s.deletedAt), [students, category]);
 
   const localTeachers = useMemo(() => {
     const ts = new Set<string>();
@@ -377,15 +381,15 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
               <table className="w-full border-collapse table-fixed min-w-[1400px]">
                   <thead className="sticky top-0 z-40 bg-white/[0.02] backdrop-blur-[2px] border-b border-white/5">
                       <tr>
-                        <th className={`w-10 border-r border-white/5 text-[10px] font-black text-slate-900 sticky top-0 bg-white z-40`}>
+                        <th className={`w-10 border-r border-white/5 text-[10px] font-black text-slate-900 sticky top-0 z-40 ${isFrozen ? 'left-0 bg-white shadow-[2px_0_0_0_rgba(0,0,0,0.05)]' : 'bg-white'}`} style={{ width: CHECKBOX_WIDTH, left: isFrozen ? 0 : undefined }}>
                           <div className="flex items-center justify-center">
                             <button onClick={() => setSelectedIds(selectedIds.size === filteredStudents.length ? new Set() : new Set(filteredStudents.map(s => s.id)))}>
                               {selectedIds.size > 0 ? <CheckSquare size={14} className="text-orange-500" /> : <Square size={14} className="text-slate-400/30" />}
                             </button>
                           </div>
                         </th>
-                        <th className={`w-10 border-r border-white/5 text-[10px] font-black text-slate-900 sticky top-0 bg-white z-40`}>#</th>
-                        <th className={`border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 z-50 ${isFrozen ? 'left-0 bg-white shadow-[4px_0_10px_rgba(0,0,0,0.1)]' : 'bg-white'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                        <th className={`w-10 border-r border-white/5 text-[10px] font-black text-slate-900 sticky top-0 z-40 ${isFrozen ? 'bg-white shadow-[2px_0_0_0_rgba(0,0,0,0.05)]' : 'bg-white'}`} style={{ width: NUMBER_WIDTH, left: isFrozen ? CHECKBOX_WIDTH : undefined }}>#</th>
+                        <th className={`border-r border-white/5 text-[10px] font-black text-slate-900 text-left px-3 sticky top-0 z-50 ${isFrozen ? 'bg-white shadow-[4px_0_10px_rgba(0,0,0,0.1)]' : 'bg-white'}`} style={{ width: studentNameWidth, left: isFrozen ? NAME_START : undefined }}>
                           <div className="flex items-center justify-between">
                             Student Name
                           </div>
@@ -414,19 +418,19 @@ export const PenaltyTable: React.FC<PenaltyTableProps> = ({
                   <tbody className="divide-y divide-slate-100">
                     {filteredStudents.map((s, idx) => (
                       <tr key={s.id} className={`h-8 hover:bg-white/20 transition-colors group ${getRowBg(idx)} ${s.isHidden ? 'opacity-30' : ''}`}>
-                        <td className={`border-r border-slate-100 text-center bg-white/60`}>
+                        <td className={`border-r border-slate-100 text-center ${isFrozen ? 'sticky left-0 z-20 bg-white shadow-[2px_0_0_0_rgba(0,0,0,0.05)]' : 'bg-white/60'}`} style={{ left: isFrozen ? 0 : undefined }}>
                           <div className="flex items-center justify-center min-h-[32px]">
                              <button onClick={() => { const ns = new Set(selectedIds); ns.has(s.id) ? ns.delete(s.id) : ns.add(s.id); setSelectedIds(ns); }}>
                                 {selectedIds.has(s.id) ? <CheckSquare size={14} className="text-orange-500" /> : <Square size={14} className="text-slate-400/30" />}
                              </button>
                           </div>
                         </td>
-                        <td className={`border-r border-slate-100 text-center text-[10px] font-bold text-slate-400 bg-slate-50/40`}>
+                        <td className={`border-r border-slate-100 text-center text-[10px] font-bold text-slate-400 ${isFrozen ? 'sticky z-20 bg-white shadow-[2px_0_0_0_rgba(0,0,0,0.05)]' : 'bg-slate-50/40'}`} style={{ left: isFrozen ? CHECKBOX_WIDTH : undefined }}>
                           <div className="flex items-center justify-center min-h-[32px]">
                             {idx + 1}
                           </div>
                         </td>
-                        <td className={`border-r border-slate-100 group ${isFrozen ? 'sticky left-0 z-20 shadow-[4px_0_10px_rgba(0,0,0,0.05)] bg-white' : 'bg-white/60'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                        <td className={`border-r border-slate-100 group ${isFrozen ? 'sticky z-20 shadow-[4px_0_10px_rgba(0,0,0,0.05)] bg-white' : 'bg-white/60'}`} style={{ width: studentNameWidth, left: isFrozen ? NAME_START : undefined }}>
                             <div className="flex items-center min-h-[32px] w-full" style={{ backgroundColor: isFrozen ? 'white' : 'transparent' }}>
                                 <MultilineInput 
                                     value={s.name} 

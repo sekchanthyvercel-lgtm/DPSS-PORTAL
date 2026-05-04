@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { AppData, BackupEntry, ModuleLocks } from '../types';
 import { 
   ShieldCheck, RefreshCw, Clock, Lock, Unlock, Download, Upload, Database, ExternalLink, Camera, Sparkles,
-  CalendarDays, CalendarRange, History
+  CalendarDays, CalendarRange, History, AlertCircle
 } from 'lucide-react';
 import { getCloudBackups, createCloudBackup } from '../services/firebase';
 import { format, differenceInDays } from 'date-fns';
@@ -83,8 +83,56 @@ export const MaintenancePanel: React.FC<Props> = ({ data, onUpdate }) => {
     }
   };
 
+  const dataSize = useMemo(() => {
+    return JSON.stringify(data).length;
+  }, [data]);
+
+  const handlePruneAttendance = (months: number) => {
+    const threshold = new Date();
+    threshold.setMonth(threshold.getMonth() - months);
+    
+    if (confirm(`Are you sure you want to delete ALL attendance records older than ${months} months? This cannot be undone.`)) {
+        const newAttendance = { ...data.attendance };
+        let count = 0;
+        
+        Object.keys(newAttendance).forEach(studentId => {
+            const records = { ...(newAttendance[studentId] || {}) };
+            Object.keys(records).forEach(date => {
+                const d = new Date(date);
+                if (d < threshold) {
+                    delete records[date];
+                    count++;
+                }
+            });
+            newAttendance[studentId] = records;
+        });
+        
+        onUpdate({ ...data, attendance: newAttendance });
+        alert(`Cleanup complete! Removed ${count} old attendance entries.`);
+    }
+  };
+
+  const handleClearRecycleBin = () => {
+    if (confirm("Permanently delete ALL items in the Recycle Bin? This will reduce database size.")) {
+        const filtered = data.students.filter(s => !s.deletedAt);
+        onUpdate({ ...data, students: filtered });
+        alert("Recycle Bin cleared!");
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col p-8 overflow-hidden bg-slate-50">
+      {/* DB Size Warning */}
+      {dataSize > 800000 && (
+          <div className="bg-orange-600 text-white p-4 rounded-2xl flex items-center justify-between mb-6 animate-pulse">
+              <div className="flex items-center gap-3 font-black uppercase text-xs">
+                  <AlertCircle size={20} />
+                  Database Warning: Approaching 1MB limit ({Math.round(dataSize / 1024)}KB)
+              </div>
+              <p className="text-[10px] font-bold">Please use Cleanup tools below to avoid sync failures.</p>
+          </div>
+      )}
+
       <div className="max-w-6xl mx-auto w-full space-y-8 h-full flex flex-col">
         
         <div className="flex items-center justify-between">
@@ -271,6 +319,30 @@ export const MaintenancePanel: React.FC<Props> = ({ data, onUpdate }) => {
                     </div>
 
                     <div className="grid gap-6">
+                        <div className="bg-slate-50 rounded-[32px] p-8 border border-slate-200 flex items-center gap-8 shadow-sm">
+                            <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center text-orange-500 shadow-xl border border-slate-100">
+                                <Sparkles size={32} />
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="font-black text-[#1B254B] uppercase">Database Optimization</h4>
+                                <p className="text-xs text-slate-500 mt-1">Reduce database size by removing old attendance history or emptying the recycle bin. Current size: {Math.round(JSON.stringify(data).length / 1024)}KB.</p>
+                                <div className="flex flex-wrap gap-3 mt-4">
+                                    <button 
+                                        onClick={() => handlePruneAttendance(3)}
+                                        className="px-6 py-2 bg-orange-100 text-orange-600 rounded-xl text-[10px] font-black uppercase hover:bg-orange-200 transition-all"
+                                    >
+                                        Prune Attendance (&gt;3 Months)
+                                    </button>
+                                    <button 
+                                        onClick={handleClearRecycleBin}
+                                        className="px-6 py-2 bg-red-100 text-red-600 rounded-xl text-[10px] font-black uppercase hover:bg-red-200 transition-all"
+                                    >
+                                        Empty Recycle Bin
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="bg-slate-50 rounded-[32px] p-8 border border-slate-200 flex items-center gap-8 shadow-sm">
                             <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center text-primary-500 shadow-xl border border-slate-100">
                                 <Download size={32} />

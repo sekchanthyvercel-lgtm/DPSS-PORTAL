@@ -265,8 +265,23 @@ const App: React.FC = () => {
           newData.settings.columns = newCols;
         }
       }
-      setData(newData);
-      setLoading(false);
+            // Migration: Ensure all students have a category
+            let hasChanges = false;
+            const migratedStudents = newData.students.map((s: any) => {
+              if (!s.category) {
+                hasChanges = true;
+                return { ...s, category: 'Hall' };
+              }
+              return s;
+            });
+            if (hasChanges) {
+              newData.students = migratedStudents;
+              // Persist the migration
+              saveData(newData).catch(console.error);
+            }
+
+            setData(newData);
+            setLoading(false);
     }, () => setLoading(false));
     return () => unsubscribe();
   }, [currentUser]);
@@ -281,11 +296,13 @@ const App: React.FC = () => {
       saveData(next).catch(err => {
         console.error("Failed to sync with cloud:", err);
         // If it's a quota issue or size issue, alert the user
-        if (err.message?.includes('too large')) {
-          alert("The data is too large to save to the cloud (1MB limit). Please delete some old entries or records.");
+        if (err.message?.includes('too large') || err.message?.includes('1MB')) {
+          alert("The data is too large to save to the cloud (1MB limit). Please delete some old entries or records in the maintenance panel.");
+        } else if (err.message?.includes('permission')) {
+          alert("Cloud sync failed: Permission denied. Please ensure you are logged in and have access.");
         } else {
           // Revert or alert
-          alert("Cloud sync failed. Your changes might not be saved.");
+          alert("Cloud sync failed. Your changes might not be saved. Check your internet connection.");
         }
       });
       return next;
@@ -298,7 +315,10 @@ const App: React.FC = () => {
     setRedoStack(prev => [...prev, data]);
     setHistory(prev => prev.slice(0, -1));
     setData(previous);
-    saveData(previous);
+    saveData(previous).catch(err => {
+      console.error("Undo sync failed:", err);
+      alert("Undo failed to sync with cloud.");
+    });
   };
 
   const redo = () => {
@@ -307,7 +327,10 @@ const App: React.FC = () => {
     setHistory(prev => [...prev, data]);
     setRedoStack(prev => prev.slice(0, -1));
     setData(next);
-    saveData(next);
+    saveData(next).catch(err => {
+        console.error("Redo sync failed:", err);
+        alert("Redo failed to sync with cloud.");
+    });
   };
 
   useEffect(() => {

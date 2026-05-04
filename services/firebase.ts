@@ -24,7 +24,8 @@ const DOC_PATH = 'portal/data';
 let isOffline = false;
 
 // 3. Auto-Authenticate
-signInAnonymously(auth).catch(console.error);
+let authPromise = signInAnonymously(auth).catch(console.error);
+export const ensureAuth = () => authPromise;
 
 async function testConnection() {
   try {
@@ -37,6 +38,43 @@ async function testConnection() {
   }
 }
 testConnection();
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 
 // 4. Real-time Subscription logic needed by App.tsx
 export const subscribeToData = (
@@ -57,8 +95,8 @@ export const subscribeToData = (
       });
     } else {
       // Document doesn't exist yet, initialize it
-      const initialData: AppData = { students: [], attendance: {}, systemLocked: false };
-      setDoc(docRef, initialData).catch(onError);
+      const initialData: AppData = { students: [], attendance: {}, systemLocked: false, settings: { fontSize: 12, fontFamily: "'Inter', sans-serif" } };
+      setDoc(docRef, initialData).catch(err => handleFirestoreError(err, OperationType.WRITE, DOC_PATH));
       onData(initialData);
     }
   }, (error) => {
@@ -72,17 +110,24 @@ export const subscribeToData = (
 export const saveData = async (data: AppData) => {
   const docRef = doc(db, DOC_PATH);
   
+  await ensureAuth();
+
   // Basic size estimation
-  const size = JSON.stringify(data).length;
+  const json = JSON.stringify(data);
+  const size = json.length;
+  // Firestore limit is 1,048,576 bytes. Let's warn at 900KB.
   if (size > 1000000) {
-    throw new Error("Data size follows the 1MB Firestore limit. Please cleanup unnecessary records.");
+    console.warn("Approaching Firestore 1MB limit:", size);
+  }
+  
+  if (size > 1048500) {
+    throw new Error("DATA_TOO_LARGE: The database has reached the 1MB limit. Please delete old records in Maintenance.");
   }
 
   try {
     await setDoc(docRef, data); 
   } catch (error) {
-    console.error("Firestore Save Error:", error);
-    throw error;
+    handleFirestoreError(error, OperationType.WRITE, DOC_PATH);
   }
 };
 

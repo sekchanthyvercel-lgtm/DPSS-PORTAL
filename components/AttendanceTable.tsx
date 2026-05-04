@@ -176,6 +176,10 @@ export const AttendanceTable: React.FC<Props> = ({
   const daysInMonth = getDaysInMonth(viewDate);
   const dayDisplay = format(viewDate, 'd');
 
+  const CHECKBOX_WIDTH = 45;
+  const NUMBER_WIDTH = 45;
+  const NAME_START = isFrozen ? (CHECKBOX_WIDTH + NUMBER_WIDTH) : 0;
+
   /**
    * Fixes: Error in file components/AttendanceTable.tsx on line 133: Cannot find name 'handleSort'.
    */
@@ -197,7 +201,7 @@ export const AttendanceTable: React.FC<Props> = ({
         (s.time && s.time.toLowerCase().includes(query)) ||
         (s.teachers && s.teachers.toLowerCase().includes(query));
 
-      return (s.category === 'Class' || s.category === 'Hall') && 
+      return (s.category === 'Class' || s.category === 'Hall' || !s.category) && 
         (filters.showHidden || !s.isHidden) && 
         matchesSearch && 
         (!filters.teacher || (s.teachers && s.teachers.toUpperCase().includes(filters.teacher.toUpperCase()))) && 
@@ -452,7 +456,7 @@ export const AttendanceTable: React.FC<Props> = ({
           <table className="w-full border-collapse table-fixed min-w-[1200px]">
             <thead className="sticky top-0 z-40 bg-white/[0.02] backdrop-blur-[2px] border-b border-white/5">
               <tr>
-                <th className={`w-10 h-10 border-r border-white/5 sticky top-0 bg-white/[0.02] backdrop-blur-[2px] text-center z-40`}>
+                <th className={`w-10 h-10 border-r border-white/5 sticky top-0 bg-white/[0.02] backdrop-blur-[2px] text-center z-40 ${isFrozen ? 'left-0 z-50 bg-white shadow-[2px_0_0_0_rgba(0,0,0,0.05)]' : ''}`} style={{ width: CHECKBOX_WIDTH, left: isFrozen ? 0 : undefined }}>
                   <button 
                     onClick={() => setSelectedIds(selectedIds.size === filteredStudents.length ? new Set() : new Set(filteredStudents.map(s => s.id)))}
                     className="w-10 h-10 flex items-center justify-center hover:bg-black/5 rounded-md"
@@ -461,13 +465,14 @@ export const AttendanceTable: React.FC<Props> = ({
                   </button>
                 </th>
                 <th 
-                  className={`px-4 py-4 text-center text-[10px] font-black uppercase text-slate-900 w-12 border-r border-white/5 sticky top-0 bg-white/[0.02] backdrop-blur-[2px] z-40`}
+                  className={`px-4 py-4 text-center text-[10px] font-black uppercase text-slate-900 border-r border-white/5 sticky top-0 bg-white/[0.02] backdrop-blur-[2px] z-40 ${isFrozen ? 'sticky z-50 bg-white shadow-[2px_0_0_0_rgba(0,0,0,0.05)]' : ''}`}
+                  style={{ width: NUMBER_WIDTH, left: isFrozen ? CHECKBOX_WIDTH : undefined }}
                 >
                   #
                 </th>
                 <th 
-                  className={`px-4 py-4 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest border-r border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors group sticky top-0 z-50 ${isFrozen ? 'left-0 bg-white shadow-[4px_0_10px_rgba(0,0,0,0.1)]' : 'bg-white'}`}
-                  style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}
+                  className={`px-4 py-4 text-left text-[10px] font-black uppercase text-slate-400 tracking-widest border-r border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors group sticky top-0 z-50 ${isFrozen ? 'bg-white shadow-[4px_0_10px_rgba(0,0,0,0.1)]' : 'bg-white'}`}
+                  style={{ width: studentNameWidth, left: isFrozen ? NAME_START : undefined }}
                   onClick={() => handleSort('name')}
                 >
                   <div className="flex items-center justify-between">
@@ -505,19 +510,19 @@ export const AttendanceTable: React.FC<Props> = ({
                     key={s.id} 
                     className={`group transition-all hover:brightness-95 h-8 ${isHidden ? 'bg-slate-50' : rowBgClass}`}
                   >
-                    <td className={`px-0 text-center border-r border-slate-200/10 bg-inherit w-10`}>
+                    <td className={`px-0 text-center border-r border-slate-200/10 bg-inherit w-10 ${isFrozen ? 'sticky left-0 z-20 bg-white shadow-[2px_0_0_0_rgba(0,0,0,0.05)]' : ''}`} style={{ left: isFrozen ? 0 : undefined }}>
                       <div className="flex items-center justify-center min-h-[44px]">
                         <button onClick={() => { const ns = new Set(selectedIds); ns.has(s.id) ? ns.delete(s.id) : ns.add(s.id); setSelectedIds(ns); }} className="w-10 h-10 flex items-center justify-center hover:bg-black/5 rounded-md">
                           {selectedIds.has(s.id) ? <CheckSquare size={16} className="text-orange-600" /> : <Square size={16} className="text-slate-400/30" />}
                         </button>
                       </div>
                     </td>
-                    <td className={`px-4 text-center text-xs font-black text-slate-400 border-r border-slate-200/10 bg-inherit w-12`}>
+                    <td className={`px-4 text-center text-xs font-black text-slate-400 border-r border-slate-200/10 bg-inherit w-12 ${isFrozen ? 'sticky z-20 bg-white shadow-[2px_0_0_0_rgba(0,0,0,0.05)]' : ''}`} style={{ left: isFrozen ? CHECKBOX_WIDTH : undefined }}>
                       <div className="flex items-center justify-center min-h-[44px]">
                         {idx + 1}
                       </div>
                     </td>
-                    <td className={`px-5 border-r border-slate-200/10 shadow-sm ${isFrozen ? 'sticky left-0 z-30 shadow-[4px_0_10px_rgba(0,0,0,0.05)] bg-white' : 'bg-inherit'}`} style={{ width: studentNameWidth, left: isFrozen ? 0 : undefined }}>
+                    <td className={`px-5 border-r border-slate-200/10 shadow-sm ${isFrozen ? 'sticky z-20 shadow-[4px_0_10px_rgba(0,0,0,0.05)] bg-white' : 'bg-inherit'}`} style={{ width: studentNameWidth, left: isFrozen ? NAME_START : undefined }}>
                       <div 
                         className={`font-black text-[#1B254B] uppercase tracking-tight truncate flex items-center min-h-[44px] ${isHidden ? 'opacity-30' : ''}`}
                         style={{ fontSize: settings?.fontSize ? `${settings.fontSize}px` : '12px', color: '#1B254B' }}
